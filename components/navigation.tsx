@@ -1,13 +1,24 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Phone, Mail } from "lucide-react"
+import { Menu, X, Phone, Mail, User } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY
+      setIsScrolled(scrollTop > 50)
+    }
+
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   const handleNavClick = (href: string) => {
     setIsMenuOpen(false)
@@ -32,23 +43,36 @@ export default function Navigation() {
   return (
     <>
       {/* Top contact bar */}
-      <div className="hidden lg:block bg-indigo-deep text-white py-2">
+      <div
+        className={`hidden lg:block bg-indigo-deep text-white py-2 fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled ? "opacity-90" : "opacity-100"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4" />
-                <span>+233 24 123 4567</span>
+                <span>+233 54 354 3356</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4" />
-                <span>info@amartconsult.com</span>
+                <span>amartconsult1@gmail.com</span>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-sm">
                 <span className="text-terracotta">🏆</span> GIA Certified Architectural Firm
               </div>
+              <a
+                href="https://linko.page/ry6zcs6o1qsu"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-white hover:text-terracotta transition-colors duration-300 font-medium flex items-center space-x-1"
+              >
+                <User className="h-3 w-3" />
+                <span>Nathan's Card</span>
+              </a>
               <Link
                 href="/portal/login"
                 className="text-sm text-white hover:text-terracotta transition-colors duration-300 font-medium"
@@ -60,7 +84,11 @@ export default function Navigation() {
         </div>
       </div>
 
-      <nav className="bg-white border-b border-gray-200 shadow-sm">
+      <nav
+        className={`bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm fixed top-10 lg:top-10 left-0 right-0 z-40 transition-all duration-300 ${
+          isScrolled ? "opacity-85 shadow-lg" : "opacity-100"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
@@ -144,7 +172,7 @@ export default function Navigation() {
             isMenuOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0 overflow-hidden"
           }`}
         >
-          <div className="bg-white border-t border-gray-200 shadow-lg">
+          <div className="bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
             <div className="px-4 pt-4 pb-6 space-y-2">
               {navItems.map((item, index) => (
                 <Link
@@ -182,6 +210,9 @@ export default function Navigation() {
           </div>
         </div>
       </nav>
+
+      <div className="h-10 lg:h-10"></div>
+      <div className="h-20"></div>
     </>
   )
 }

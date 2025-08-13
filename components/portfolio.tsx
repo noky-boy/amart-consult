@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -174,11 +175,13 @@ export default function Portfolio() {
                         </Badge>
                       ))}
                     </div>
-                    <Button size="sm" className="bg-terracotta hover:bg-terracotta/90 text-white">
-                      <Eye className="w-4 h-4 mr-2" />
-                      View Details
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
+                    <Link href={`/portfolio/${project.id}`}>
+                      <Button size="sm" className="bg-terracotta hover:bg-terracotta/90 text-white">
+                        <Eye className="w-4 h-4 mr-2" />
+                        View Details
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </Link>
                   </div>
                 </div>
 
@@ -197,9 +200,11 @@ export default function Portfolio() {
 
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-xl font-serif font-bold text-indigo-deep group-hover:text-terracotta transition-colors">
-                    {project.title}
-                  </h3>
+                  <Link href={`/portfolio/${project.id}`}>
+                    <h3 className="text-xl font-serif font-bold text-indigo-deep group-hover:text-terracotta transition-colors cursor-pointer">
+                      {project.title}
+                    </h3>
+                  </Link>
                   <Badge variant="outline" className="text-xs border-terracotta text-terracotta">
                     {project.category}
                   </Badge>

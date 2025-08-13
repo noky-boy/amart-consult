@@ -310,12 +310,21 @@ export default function Contact() {
               </div>
               <h3 className="font-serif font-bold text-xl text-indigo-deep mb-3 text-center">Call Us</h3>
               <a
-                href="tel:+233123456789"
+                href="tel:+233543543356"
                 className="text-lg font-semibold text-terracotta hover:text-terracotta-warm transition-colors duration-200 block mb-2 text-center break-words"
               >
-                +233 123 456 789
+                +233 54 354 3356
               </a>
               <p className="text-sm text-gray-600 mb-4 text-center">Mon-Fri 8AM-6PM</p>
+              <a
+                href="https://linko.page/ry6zcs6o1qsu"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-2 text-sm text-indigo-deep hover:text-terracotta transition-colors duration-300 font-medium"
+              >
+                <User className="h-4 w-4" />
+                <span>Save Contact</span>
+              </a>
               <div className="w-12 h-0.5 bg-gradient-to-r from-terracotta to-terracotta-warm mx-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
           </div>
@@ -329,12 +338,21 @@ export default function Contact() {
               </div>
               <h3 className="font-serif font-bold text-xl text-indigo-deep mb-3 text-center">Email Us</h3>
               <a
-                href="mailto:projects@amartconsult.com"
+                href="mailto:amartconsult1@gmail.com"
                 className="text-lg font-semibold text-terracotta hover:text-terracotta-warm transition-colors duration-200 block mb-2 text-center break-all"
               >
-                projects@amartconsult.com
+                amartconsult1@gmail.com
               </a>
               <p className="text-sm text-gray-600 mb-4 text-center">We respond within 24hrs</p>
+              <a
+                href="https://linko.page/ry6zcs6o1qsu"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-2 text-sm text-indigo-deep hover:text-terracotta transition-colors duration-300 font-medium"
+              >
+                <User className="h-4 w-4" />
+                <span>Save Contact</span>
+              </a>
               <div className="w-12 h-0.5 bg-gradient-to-r from-terracotta to-terracotta-warm mx-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
           </div>

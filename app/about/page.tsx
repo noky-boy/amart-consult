@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { ArrowRight, CheckCircle, Users, Award, Clock, MapPin, Phone, Mail } from "lucide-react"
+import { ArrowRight, CheckCircle, Users, Award, Clock, MapPin, Phone, Mail, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -55,6 +55,59 @@ export default function AboutPage() {
                 <div className="text-2xl font-bold">8+</div>
                 <div className="text-sm">Years of Excellence</div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Professional Credentials Showcase Section */}
+      <section className="py-16 bg-gradient-to-r from-sand-beige/20 to-sand-beige/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-serif font-bold text-gray-900 mb-4">
+              Our Professional Credentials
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Certified excellence and proven expertise in architectural design and construction management
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 items-center">
+            {/* Professional Service Flier */}
+            <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
+              <img
+                src="/resources/marketing/amc-services-flier.jpg"
+                alt="AMC Professional Services"
+                className="w-full h-48 object-cover rounded-lg mb-4"
+              />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Comprehensive Services</h3>
+              <p className="text-gray-600 text-sm">
+                Architectural Design | Bill of Quantities | Construction Management
+              </p>
+            </div>
+
+            {/* GIA Certification Flier */}
+            <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
+              <img
+                src="/resources/marketing/amc-certification-flier.jpg"
+                alt="GIA Certified Professional"
+                className="w-full h-48 object-cover rounded-lg mb-4"
+              />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">GIA Certified</h3>
+              <p className="text-gray-600 text-sm">Ghana Institution of Architects Registered Professional</p>
+            </div>
+
+            {/* Diaspora Specialist Flier */}
+            <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
+              <img
+                src="/resources/marketing/amc-diaspora-flier.jpg"
+                alt="Diaspora Specialist Services"
+                className="w-full h-48 object-cover rounded-lg mb-4"
+              />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Diaspora Specialist</h3>
+              <p className="text-gray-600 text-sm">
+                Serving Ghanaian communities worldwide with remote project management
+              </p>
             </div>
           </div>
         </div>
@@ -225,6 +278,13 @@ export default function AboutPage() {
                         <span>GIA Certified</span>
                       </div>
                     </div>
+                    <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg p-2 shadow-lg">
+                      <img
+                        src="/resources/marketing/amc-founder-credential.jpg"
+                        alt="Nathan Amarteifio Credentials"
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                    </div>
                   </div>
                   <div className="p-8 md:p-12 flex flex-col justify-center">
                     <h3 className="text-2xl md:text-3xl font-serif font-bold text-gray-900 mb-2">Nathan Amarteifio</h3>
@@ -243,17 +303,51 @@ export default function AboutPage() {
                     <div className="space-y-3">
                       <div className="flex items-center gap-3 text-gray-600">
                         <Phone className="h-4 w-4 text-terracotta" />
-                        <span>+233 XX XXX XXXX</span>
+                        <span>+233 54 354 3356</span>
                       </div>
                       <div className="flex items-center gap-3 text-gray-600">
                         <Mail className="h-4 w-4 text-terracotta" />
-                        <span>nathan@amartconsult.com</span>
+                        <span>amartconsult1@gmail.com</span>
+                      </div>
+                      <div className="pt-4">
+                        <a
+                          href="https://linko.page/ry6zcs6o1qsu"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center space-x-2 bg-terracotta hover:bg-terracotta-warm text-white px-4 py-2 rounded-lg transition-colors duration-300 font-medium"
+                        >
+                          <User className="h-4 w-4" />
+                          <span>Save Contact Card</span>
+                        </a>
                       </div>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          <div className="mt-16 text-center">
+            <h3 className="text-xl font-semibold text-gray-900 mb-8">Our Marketing & Promotional Materials</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+              {[
+                { src: "/resources/marketing/amc-social-1.jpg", alt: "AMC Social Media Design 1" },
+                { src: "/resources/marketing/amc-social-2.jpg", alt: "AMC Social Media Design 2" },
+                { src: "/resources/marketing/amc-social-3.jpg", alt: "AMC Social Media Design 3" },
+                { src: "/resources/marketing/amc-social-4.jpg", alt: "AMC Social Media Design 4" },
+              ].map((flier, index) => (
+                <div key={index} className="group cursor-pointer">
+                  <img
+                    src={flier.src || "/placeholder.svg"}
+                    alt={flier.alt}
+                    className="w-full h-32 object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow duration-300 group-hover:scale-105 transform transition-transform"
+                  />
+                </div>
+              ))}
+            </div>
+            <p className="text-sm text-gray-500 mt-4">
+              Professional marketing materials showcasing our brand identity and services
+            </p>
           </div>
         </div>
       </section>

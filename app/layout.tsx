@@ -4,6 +4,7 @@ import { Montserrat, Open_Sans } from "next/font/google"
 import "./globals.css"
 import Navigation from "@/components/navigation"
 import WhatsAppFloat from "@/components/whatsapp-float"
+import Footer from "@/components/footer"
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -35,6 +36,7 @@ export default function RootLayout({
         <Navigation />
         {children}
         <WhatsAppFloat />
+        <Footer />
       </body>
     </html>
   )
