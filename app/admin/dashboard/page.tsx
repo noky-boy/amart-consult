@@ -1,6 +1,6 @@
-import { TabsList, TabsTrigger } from "@ui/tabs"
-import { Button } from "@ui/button"
-import { CardContent } from "@ui/card"
+import { TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
+import { CardContent } from "@/components/ui/card"
 import { Link } from "next/link"
 import { TrendingUp, Users, Mail, FileText, MessageSquare, BarChart3 } from "lucide-react"
 
