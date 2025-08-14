@@ -7,7 +7,6 @@ import { Search, Calendar, User, ArrowRight, Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import NewsletterSignup from "@/components/newsletter-signup"
 
 // Sample blog data
 const blogPosts = [
@@ -305,7 +304,18 @@ export default function BlogPage() {
           <div className="lg:w-1/3">
             <div className="sticky top-8 space-y-8">
               {/* Newsletter Signup */}
-              <NewsletterSignup variant="sidebar" showIncentive={true} />
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-serif font-bold text-gray-900 mb-4">Stay Updated</h3>
+                  <p className="text-gray-600 mb-4">
+                    Get the latest architectural insights and project updates delivered to your inbox.
+                  </p>
+                  <div className="space-y-3">
+                    <Input type="email" placeholder="Your email address" />
+                    <Button className="w-full bg-indigo-deep hover:bg-indigo-deep/90">Subscribe</Button>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Popular Categories */}
               <Card>
