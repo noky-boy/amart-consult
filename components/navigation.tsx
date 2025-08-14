@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Phone, Mail, User } from "lucide-react"
+import { Menu, X, Phone, Mail, User } from "@/components/ui/icons"
 import Image from "next/image"
 import Link from "next/link"
 

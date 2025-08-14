@@ -6,17 +6,20 @@ export default function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0)
 
   const slideImages = [
-    "/placeholder.svg?height=1080&width=1920",
-    "/placeholder.svg?height=1080&width=1920",
-    "/placeholder.svg?height=1080&width=1920",
-    "/placeholder.svg?height=1080&width=1920",
-    "/placeholder.svg?height=1080&width=1920",
+    "/resources/hero/modern-residential-villa.jpg",
+    "/resources/hero/commercial-complex.jpg",
+    "/resources/hero/contemporary-glass-house.jpg",
+    "/resources/hero/luxury-pool-villa.jpg",
+    "/resources/hero/evening-modern-home.jpg",
+    "/resources/hero/minimalist-single-story.jpg",
+    "/resources/hero/urban-apartment-complex.jpg",
+    "/resources/hero/colorful-townhouses.jpg",
   ]
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slideImages.length)
-    }, 4000) // Slightly faster transitions for better engagement
+    }, 6500) // Increased from 4000ms to 6500ms for better image appreciation
 
     return () => clearInterval(timer)
   }, [slideImages.length])
@@ -27,12 +30,12 @@ export default function Hero() {
         {slideImages.map((image, index) => (
           <div
             key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+            className={`absolute inset-0 transition-opacity duration-1500 ease-in-out ${
               index === currentSlide ? "opacity-100" : "opacity-0"
             }`}
           >
             <div
-              className="w-full h-full bg-cover bg-center bg-no-repeat transform transition-transform duration-[4000ms] ease-out"
+              className="w-full h-full bg-cover bg-center bg-no-repeat transform transition-transform duration-[6500ms] ease-out"
               style={{
                 backgroundImage: `url(${image})`,
                 transform: index === currentSlide ? "scale(1.05)" : "scale(1)",
