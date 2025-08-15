@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { Building, Users, Award, CheckCircle } from "lucide-react"
+import { Building, Users, Award, CheckCircle } from "@/components/ui/icons"
 
 export default function Statistics() {
   const stats = [

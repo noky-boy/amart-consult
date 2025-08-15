@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { MessageCircle, X } from "lucide-react"
+import { MessageCircle, X } from "@/components/ui/icons"
 
 interface WhatsAppMessage {
   text: string
@@ -31,7 +31,7 @@ export default function WhatsAppFloat() {
   ]
 
   const handleWhatsAppClick = (message?: string) => {
-    const phoneNumber = "233543543356" // Updated to actual number
+    const phoneNumber = "233543543356" // +233 54 354 3356
     const defaultMessage = "Hello! I'm interested in Amart Consult's architectural services."
     const finalMessage = message || defaultMessage
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(finalMessage)}`

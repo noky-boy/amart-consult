@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Check, Clock, FileText, Users, Building2, Star } from "@/components/ui/icons"
+import WhatsAppConsultationForm from "./whatsapp-consultation-form"
 
 const services = [
   {
@@ -74,6 +75,7 @@ const services = [
 
 export default function Services() {
   const [selectedType, setSelectedType] = useState<"residential" | "commercial">("residential")
+  const [isWhatsAppFormOpen, setIsWhatsAppFormOpen] = useState(false)
 
   return (
     <section className="py-20 bg-gradient-to-b from-white via-sand-light/30 to-white">
@@ -264,6 +266,7 @@ export default function Services() {
             Not sure which package is right for you? Let's discuss your project needs and find the perfect solution.
           </p>
           <Button
+            onClick={() => setIsWhatsAppFormOpen(true)}
             size="lg"
             className="bg-terracotta hover:bg-terracotta-hover text-white px-10 py-4 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
           >
@@ -271,6 +274,8 @@ export default function Services() {
           </Button>
         </div>
       </div>
+
+      <WhatsAppConsultationForm isOpen={isWhatsAppFormOpen} onClose={() => setIsWhatsAppFormOpen(false)} />
     </section>
   )
 }

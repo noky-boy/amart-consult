@@ -36,22 +36,34 @@ export default function Footer() {
             <h3 className="text-lg font-serif font-semibold text-white">Our Services</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/services" className="text-slate-300 hover:text-terracotta transition-colors">
+                <Link
+                  href="/services/architectural-designs"
+                  className="text-slate-300 hover:text-terracotta transition-colors"
+                >
                   Architectural Designs
                 </Link>
               </li>
               <li>
-                <Link href="/services" className="text-slate-300 hover:text-terracotta transition-colors">
+                <Link
+                  href="/services/bill-of-quantities"
+                  className="text-slate-300 hover:text-terracotta transition-colors"
+                >
                   Bill of Quantities
                 </Link>
               </li>
               <li>
-                <Link href="/services" className="text-slate-300 hover:text-terracotta transition-colors">
+                <Link
+                  href="/services/construction-management"
+                  className="text-slate-300 hover:text-terracotta transition-colors"
+                >
                   Construction Management
                 </Link>
               </li>
               <li>
-                <Link href="/services" className="text-slate-300 hover:text-terracotta transition-colors">
+                <Link
+                  href="/services/project-consultation"
+                  className="text-slate-300 hover:text-terracotta transition-colors"
+                >
                   Project Consultation
                 </Link>
               </li>

@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Menu, X, Phone, Mail, User } from "@/components/ui/icons"
 import Image from "next/image"
 import Link from "next/link"
+import WhatsAppConsultationForm from "./whatsapp-consultation-form"
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isWhatsAppFormOpen, setIsWhatsAppFormOpen] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,11 +25,15 @@ export default function Navigation() {
   const handleNavClick = (href: string) => {
     setIsMenuOpen(false)
     if (href.startsWith("/")) {
-      // For page routes, scroll to top after navigation
       setTimeout(() => {
         window.scrollTo({ top: 0, behavior: "smooth" })
       }, 100)
     }
+  }
+
+  const openWhatsAppForm = () => {
+    setIsWhatsAppFormOpen(true)
+    setIsMenuOpen(false)
   }
 
   const navItems = [
@@ -42,7 +48,6 @@ export default function Navigation() {
 
   return (
     <>
-      {/* Top contact bar */}
       <div
         className={`hidden lg:block bg-indigo-deep text-white py-2 fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled ? "opacity-90" : "opacity-100"
@@ -91,7 +96,6 @@ export default function Navigation() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
-            {/* Logo */}
             <Link href="/" className="flex-shrink-0 group cursor-pointer" onClick={() => handleNavClick("/")}>
               <Image
                 src="/images/amart-logo.png"
@@ -103,7 +107,6 @@ export default function Navigation() {
               />
             </Link>
 
-            {/* Desktop Navigation */}
             <div className="hidden lg:block">
               <div className="flex items-center space-x-1">
                 {navItems.map((item) => (
@@ -121,7 +124,6 @@ export default function Navigation() {
               </div>
             </div>
 
-            {/* Desktop CTA Buttons */}
             <div className="hidden lg:flex items-center space-x-4">
               <Link href="/portal/login">
                 <Button
@@ -140,12 +142,14 @@ export default function Navigation() {
                 <Phone className="h-4 w-4 mr-2" />
                 Call Now
               </Button>
-              <Button className="bg-gradient-to-r from-terracotta to-terracotta-warm hover:from-terracotta-warm hover:to-terracotta text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
+              <Button
+                onClick={openWhatsAppForm}
+                className="bg-gradient-to-r from-terracotta to-terracotta-warm hover:from-terracotta-warm hover:to-terracotta text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+              >
                 Get Free Consultation
               </Button>
             </div>
 
-            {/* Mobile menu button */}
             <div className="lg:hidden">
               <Button
                 variant="ghost"
@@ -166,7 +170,6 @@ export default function Navigation() {
           </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
         <div
           className={`lg:hidden transition-all duration-300 ease-in-out ${
             isMenuOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0 overflow-hidden"
@@ -202,7 +205,10 @@ export default function Navigation() {
                   <Phone className="h-4 w-4 mr-2" />
                   Call Now
                 </Button>
-                <Button className="w-full bg-gradient-to-r from-terracotta to-terracotta-warm hover:from-terracotta-warm hover:to-terracotta text-white shadow-lg transition-all duration-300">
+                <Button
+                  onClick={openWhatsAppForm}
+                  className="w-full bg-gradient-to-r from-terracotta to-terracotta-warm hover:from-terracotta-warm hover:to-terracotta text-white shadow-lg transition-all duration-300"
+                >
                   Get Free Consultation
                 </Button>
               </div>
@@ -213,6 +219,8 @@ export default function Navigation() {
 
       <div className="h-10 lg:h-10"></div>
       <div className="h-20"></div>
+
+      <WhatsAppConsultationForm isOpen={isWhatsAppFormOpen} onClose={() => setIsWhatsAppFormOpen(false)} />
     </>
   )
 }

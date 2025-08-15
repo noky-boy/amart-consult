@@ -1,6 +1,6 @@
 "use client"
 
-import { Facebook, Twitter, Linkedin, Link, Share2 } from "lucide-react"
+import { Facebook, Twitter, Linkedin, Link, Share2 } from "@/components/ui/icons"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
