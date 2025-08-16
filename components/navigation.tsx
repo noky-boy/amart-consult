@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Phone, Mail, User } from "@/components/ui/icons"
 import Image from "next/image"
@@ -11,6 +12,7 @@ export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isWhatsAppFormOpen, setIsWhatsAppFormOpen] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -42,9 +44,19 @@ export default function Navigation() {
     { name: "Portfolio", href: "#portfolio" },
     { name: "About", href: "/about" },
     { name: "Blog", href: "/blog" },
-    { name: "Resources", href: "#resources" },
+    { name: "Resources", href: "/resources" },
     { name: "Contact", href: "#contact" },
   ]
+
+  const isActiveLink = (href: string) => {
+    if (href === "/") {
+      return pathname === "/"
+    }
+    if (href.startsWith("#")) {
+      return pathname === "/" && window.location.hash === href
+    }
+    return pathname.startsWith(href)
+  }
 
   return (
     <>
@@ -93,35 +105,53 @@ export default function Navigation() {
         className={`bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm fixed top-10 lg:top-10 left-0 right-0 z-40 transition-all duration-300 ${
           isScrolled ? "opacity-85 shadow-lg" : "opacity-100"
         }`}
+        role="navigation"
+        aria-label="Main navigation"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <Link href="/" className="flex-shrink-0 group cursor-pointer" onClick={() => handleNavClick("/")}>
               <Image
                 src="/images/amart-logo.png"
-                alt="Amart Consult"
+                alt="Amart Consult - Home"
                 width={140}
                 height={46}
-                className="h-12 w-auto transition-all duration-300 group-hover:scale-105 group-hover:brightness-110 group-hover:drop-shadow-md"
+                className="h-12 w-auto transition-all duration-300 group-hover:scale-105 group-hover:brightness-110 group-hover:drop-shadow-md focus-visible:ring-enhanced"
                 priority
               />
             </Link>
 
             <div className="hidden lg:block">
-              <div className="flex items-center space-x-1">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => handleNavClick(item.href)}
-                    className="relative px-4 py-2 text-gray-700 hover:text-indigo-deep font-medium text-sm transition-all duration-300 group"
-                  >
-                    <span className="relative z-10">{item.name}</span>
-                    <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-terracotta to-indigo-deep transition-all duration-300 group-hover:w-full"></div>
-                    <div className="absolute inset-0 bg-gradient-to-r from-terracotta/5 to-indigo-deep/5 rounded-lg opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
-                  </Link>
-                ))}
-              </div>
+              <nav role="navigation" aria-label="Primary navigation">
+                <ul className="flex items-center space-x-1">
+                  {navItems.map((item) => (
+                    <li key={item.name}>
+                      <Link
+                        href={item.href}
+                        onClick={() => handleNavClick(item.href)}
+                        className={`relative px-4 py-2 font-medium text-sm transition-all duration-300 group focus-visible:ring-enhanced rounded-md ${
+                          isActiveLink(item.href)
+                            ? "text-indigo-deep bg-indigo-deep/5"
+                            : "text-gray-700 hover:text-indigo-deep"
+                        }`}
+                        aria-current={isActiveLink(item.href) ? "page" : undefined}
+                      >
+                        <span className="relative z-10">{item.name}</span>
+                        <div
+                          className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-terracotta to-indigo-deep transition-all duration-300 ${
+                            isActiveLink(item.href) ? "w-full" : "w-0 group-hover:w-full"
+                          }`}
+                        ></div>
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-r from-terracotta/5 to-indigo-deep/5 rounded-lg transition-opacity duration-300 ${
+                            isActiveLink(item.href) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                          }`}
+                        ></div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
             </div>
 
             <div className="hidden lg:flex items-center space-x-4">
@@ -129,7 +159,8 @@ export default function Navigation() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-indigo-deep hover:text-terracotta hover:bg-indigo-deep/5 transition-all duration-300"
+                  className="text-indigo-deep hover:text-terracotta hover:bg-indigo-deep/5 transition-all duration-300 focus-visible:ring-enhanced"
+                  aria-label="Sign in to client portal"
                 >
                   Sign In
                 </Button>
@@ -137,14 +168,16 @@ export default function Navigation() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-indigo-deep text-indigo-deep hover:bg-indigo-deep hover:text-white transition-all duration-300 bg-transparent"
+                className="border-indigo-deep text-indigo-deep hover:bg-indigo-deep hover:text-white transition-all duration-300 bg-transparent focus-visible:ring-enhanced"
+                aria-label="Call Amart Consult now"
               >
-                <Phone className="h-4 w-4 mr-2" />
+                <Phone className="h-4 w-4 mr-2" aria-hidden="true" />
                 Call Now
               </Button>
               <Button
                 onClick={openWhatsAppForm}
-                className="bg-gradient-to-r from-terracotta to-terracotta-warm hover:from-terracotta-warm hover:to-terracotta text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                className="bg-gradient-to-r from-terracotta to-terracotta-warm hover:from-terracotta-warm hover:to-terracotta text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 focus-visible:ring-enhanced"
+                aria-label="Get free architectural consultation via WhatsApp"
               >
                 Get Free Consultation
               </Button>
@@ -155,7 +188,10 @@ export default function Navigation() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="relative p-2 hover:bg-gray-100 transition-colors duration-300"
+                className="relative p-2 hover:bg-gray-100 transition-colors duration-300 focus-visible:ring-enhanced"
+                aria-expanded={isMenuOpen}
+                aria-controls="mobile-menu"
+                aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
               >
                 <div className="relative w-6 h-6">
                   <Menu
@@ -174,6 +210,7 @@ export default function Navigation() {
           className={`lg:hidden transition-all duration-300 ease-in-out ${
             isMenuOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0 overflow-hidden"
           }`}
+          id="mobile-menu"
         >
           <div className="bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
             <div className="px-4 pt-4 pb-6 space-y-2">
@@ -181,9 +218,14 @@ export default function Navigation() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="block px-4 py-3 text-gray-700 hover:text-indigo-deep hover:bg-gradient-to-r hover:from-terracotta/5 hover:to-indigo-deep/5 rounded-lg font-medium transition-all duration-300 transform hover:translate-x-2"
+                  className={`block px-4 py-3 font-medium transition-all duration-300 transform hover:translate-x-2 rounded-lg ${
+                    isActiveLink(item.href)
+                      ? "text-indigo-deep bg-gradient-to-r from-terracotta/10 to-indigo-deep/10 border-l-4 border-indigo-deep"
+                      : "text-gray-700 hover:text-indigo-deep hover:bg-gradient-to-r hover:from-terracotta/5 hover:to-indigo-deep/5"
+                  }`}
                   onClick={() => handleNavClick(item.href)}
                   style={{ animationDelay: `${index * 50}ms` }}
+                  aria-current={isActiveLink(item.href) ? "page" : undefined}
                 >
                   {item.name}
                 </Link>
@@ -193,21 +235,24 @@ export default function Navigation() {
                 <Link href="/portal/login">
                   <Button
                     variant="ghost"
-                    className="w-full text-indigo-deep hover:text-terracotta hover:bg-indigo-deep/5 transition-all duration-300 justify-start"
+                    className="w-full text-indigo-deep hover:text-terracotta hover:bg-indigo-deep/5 transition-all duration-300 justify-start focus-visible:ring-enhanced"
+                    aria-label="Sign in to client portal"
                   >
                     Client Portal Sign In
                   </Button>
                 </Link>
                 <Button
                   variant="outline"
-                  className="w-full border-indigo-deep text-indigo-deep hover:bg-indigo-deep hover:text-white transition-all duration-300 bg-transparent"
+                  className="w-full border-indigo-deep text-indigo-deep hover:bg-indigo-deep hover:text-white transition-all duration-300 bg-transparent focus-visible:ring-enhanced"
+                  aria-label="Call Amart Consult now"
                 >
-                  <Phone className="h-4 w-4 mr-2" />
+                  <Phone className="h-4 w-4 mr-2" aria-hidden="true" />
                   Call Now
                 </Button>
                 <Button
                   onClick={openWhatsAppForm}
-                  className="w-full bg-gradient-to-r from-terracotta to-terracotta-warm hover:from-terracotta-warm hover:to-terracotta text-white shadow-lg transition-all duration-300"
+                  className="w-full bg-gradient-to-r from-terracotta to-terracotta-warm hover:from-terracotta-warm hover:to-terracotta text-white shadow-lg transition-all duration-300 focus-visible:ring-enhanced"
+                  aria-label="Get free architectural consultation via WhatsApp"
                 >
                   Get Free Consultation
                 </Button>

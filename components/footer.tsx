@@ -1,10 +1,20 @@
 "use client"
 
 import Link from "next/link"
-import { Phone, Mail, MapPin, Clock, ExternalLink } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { Phone, Mail, MapPin, Clock, ExternalLink } from "@/components/ui/icons"
 import NewsletterSignup from "@/components/newsletter-signup"
 
 export default function Footer() {
+  const pathname = usePathname()
+
+  const isActiveLink = (href: string) => {
+    if (href === "/") {
+      return pathname === "/"
+    }
+    return pathname.startsWith(href)
+  }
+
   return (
     <footer className="bg-slate-900 text-white">
       <div className="border-b border-slate-800">
@@ -38,7 +48,11 @@ export default function Footer() {
               <li>
                 <Link
                   href="/services/architectural-designs"
-                  className="text-slate-300 hover:text-terracotta transition-colors"
+                  className={`transition-colors ${
+                    isActiveLink("/services/architectural-designs")
+                      ? "text-terracotta font-medium"
+                      : "text-slate-300 hover:text-terracotta"
+                  }`}
                 >
                   Architectural Designs
                 </Link>
@@ -46,7 +60,11 @@ export default function Footer() {
               <li>
                 <Link
                   href="/services/bill-of-quantities"
-                  className="text-slate-300 hover:text-terracotta transition-colors"
+                  className={`transition-colors ${
+                    isActiveLink("/services/bill-of-quantities")
+                      ? "text-terracotta font-medium"
+                      : "text-slate-300 hover:text-terracotta"
+                  }`}
                 >
                   Bill of Quantities
                 </Link>
@@ -54,7 +72,11 @@ export default function Footer() {
               <li>
                 <Link
                   href="/services/construction-management"
-                  className="text-slate-300 hover:text-terracotta transition-colors"
+                  className={`transition-colors ${
+                    isActiveLink("/services/construction-management")
+                      ? "text-terracotta font-medium"
+                      : "text-slate-300 hover:text-terracotta"
+                  }`}
                 >
                   Construction Management
                 </Link>
@@ -62,13 +84,24 @@ export default function Footer() {
               <li>
                 <Link
                   href="/services/project-consultation"
-                  className="text-slate-300 hover:text-terracotta transition-colors"
+                  className={`transition-colors ${
+                    isActiveLink("/services/project-consultation")
+                      ? "text-terracotta font-medium"
+                      : "text-slate-300 hover:text-terracotta"
+                  }`}
                 >
                   Project Consultation
                 </Link>
               </li>
               <li>
-                <Link href="/portal/login" className="text-slate-300 hover:text-terracotta transition-colors">
+                <Link
+                  href="/portal/login"
+                  className={`transition-colors ${
+                    isActiveLink("/portal/login")
+                      ? "text-terracotta font-medium"
+                      : "text-slate-300 hover:text-terracotta"
+                  }`}
+                >
                   Client Portal
                 </Link>
               </li>
@@ -80,28 +113,55 @@ export default function Footer() {
             <h3 className="text-lg font-serif font-semibold text-white">Quick Links</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/" className="text-slate-300 hover:text-terracotta transition-colors">
+                <Link
+                  href="/"
+                  className={`transition-colors ${
+                    isActiveLink("/") && pathname === "/"
+                      ? "text-terracotta font-medium"
+                      : "text-slate-300 hover:text-terracotta"
+                  }`}
+                >
                   Home
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-slate-300 hover:text-terracotta transition-colors">
+                <Link
+                  href="/about"
+                  className={`transition-colors ${
+                    isActiveLink("/about") ? "text-terracotta font-medium" : "text-slate-300 hover:text-terracotta"
+                  }`}
+                >
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/portfolio" className="text-slate-300 hover:text-terracotta transition-colors">
+                <Link
+                  href="/portfolio"
+                  className={`transition-colors ${
+                    isActiveLink("/portfolio") ? "text-terracotta font-medium" : "text-slate-300 hover:text-terracotta"
+                  }`}
+                >
                   Portfolio
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-slate-300 hover:text-terracotta transition-colors">
+                <Link
+                  href="/blog"
+                  className={`transition-colors ${
+                    isActiveLink("/blog") ? "text-terracotta font-medium" : "text-slate-300 hover:text-terracotta"
+                  }`}
+                >
                   Blog
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-slate-300 hover:text-terracotta transition-colors">
-                  Contact
+                <Link
+                  href="/resources"
+                  className={`transition-colors ${
+                    isActiveLink("/resources") ? "text-terracotta font-medium" : "text-slate-300 hover:text-terracotta"
+                  }`}
+                >
+                  Resources
                 </Link>
               </li>
             </ul>

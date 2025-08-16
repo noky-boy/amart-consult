@@ -6,6 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import Breadcrumb from "@/components/breadcrumb"
 import {
   ArrowLeft,
   Calendar,
@@ -19,7 +20,7 @@ import {
   Share2,
   Download,
   ArrowRight,
-} from "lucide-react"
+} from "@/components/ui/icons"
 
 interface ProjectData {
   id: number
@@ -252,24 +253,32 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
     }
   }
 
+  const breadcrumbItems = [{ label: "Portfolio", href: "/portfolio" }, { label: project.title }]
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <div className="bg-white border-b sticky top-0 z-40">
+      <nav className="bg-white border-b sticky top-0 z-40" role="navigation" aria-label="Project navigation">
         <div className="container mx-auto px-4 py-4">
-          <Link href="/" className="inline-flex items-center text-indigo-deep hover:text-terracotta transition-colors">
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Portfolio
-          </Link>
+          <div className="flex items-center justify-between">
+            <Breadcrumb items={breadcrumbItems} />
+            <Link
+              href="/portfolio"
+              className="inline-flex items-center text-indigo-deep hover:text-terracotta transition-colors focus-visible:ring-enhanced rounded-md px-2 py-1"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" aria-hidden="true" />
+              Back to Portfolio
+            </Link>
+          </div>
         </div>
-      </div>
+      </nav>
 
       {/* Hero Section */}
-      <section className="relative h-[70vh] overflow-hidden">
+      <section className="relative h-[70vh] overflow-hidden" aria-label="Project showcase">
         <div className="relative h-full">
           <Image
             src={allImages[currentImageIndex] || "/placeholder.svg"}
-            alt={project.title}
+            alt={`${project.title} - Main project image showing architectural design`}
             fill
             className="object-cover"
             priority
@@ -279,15 +288,17 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
           {/* Navigation Arrows */}
           <button
             onClick={prevImage}
-            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all"
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all focus-visible:ring-enhanced"
+            aria-label="View previous project image"
           >
-            <ChevronLeft className="w-6 h-6 text-white" />
+            <ChevronLeft className="w-6 h-6 text-white" aria-hidden="true" />
           </button>
           <button
             onClick={nextImage}
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all"
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all focus-visible:ring-enhanced"
+            aria-label="View next project image"
           >
-            <ChevronRight className="w-6 h-6 text-white" />
+            <ChevronRight className="w-6 h-6 text-white" aria-hidden="true" />
           </button>
 
           {/* Project Info Overlay */}
@@ -302,15 +313,18 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
               <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4">{project.title}</h1>
               <div className="flex flex-wrap items-center gap-6 text-lg">
                 <div className="flex items-center">
-                  <MapPin className="w-5 h-5 mr-2" />
+                  <MapPin className="w-5 h-5 mr-2" aria-hidden="true" />
+                  <span className="sr-only">Location: </span>
                   {project.location}
                 </div>
                 <div className="flex items-center">
-                  <Calendar className="w-5 h-5 mr-2" />
+                  <Calendar className="w-5 h-5 mr-2" aria-hidden="true" />
+                  <span className="sr-only">Year completed: </span>
                   {project.year}
                 </div>
                 <div className="flex items-center">
-                  <Clock className="w-5 h-5 mr-2" />
+                  <Clock className="w-5 h-5 mr-2" aria-hidden="true" />
+                  <span className="sr-only">Project duration: </span>
                   {project.duration}
                 </div>
               </div>
@@ -318,14 +332,17 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
           </div>
 
           {/* Image Thumbnails */}
-          <div className="absolute bottom-4 right-4 flex gap-2">
+          <div className="absolute bottom-4 right-4 flex gap-2" role="tablist" aria-label="Project image navigation">
             {allImages.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
-                className={`w-3 h-3 rounded-full transition-all ${
+                className={`w-3 h-3 rounded-full transition-all focus-visible:ring-enhanced ${
                   index === currentImageIndex ? "bg-white" : "bg-white/50"
                 }`}
+                role="tab"
+                aria-selected={index === currentImageIndex}
+                aria-label={`View image ${index + 1} of ${allImages.length}`}
               />
             ))}
           </div>
@@ -333,10 +350,10 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
       </section>
 
       {/* Project Content */}
-      <div className="container mx-auto px-4 py-16">
+      <main className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-12">
+          <article className="lg:col-span-2 space-y-12">
             {/* Project Overview */}
             <section>
               <h2 className="text-3xl font-serif font-bold text-indigo-deep mb-6">Project Overview</h2>
@@ -422,7 +439,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                 ))}
               </div>
             </section>
-          </div>
+          </article>
 
           {/* Sidebar */}
           <div className="space-y-8">
@@ -563,14 +580,14 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                 design solutions.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="bg-white text-indigo-deep hover:bg-sand">
+                <Button size="lg" className="bg-white text-indigo-deep hover:bg-sand focus-visible:ring-enhanced">
                   Get Free Consultation
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                  <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-white text-white hover:bg-white hover:text-indigo-deep bg-transparent"
+                  className="border-white text-white hover:bg-white hover:text-indigo-deep bg-transparent focus-visible:ring-enhanced"
                 >
                   View All Projects
                 </Button>
@@ -578,7 +595,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
             </CardContent>
           </Card>
         </section>
-      </div>
+      </main>
 
       {/* Lightbox */}
       {isLightboxOpen && (
