@@ -6,76 +6,98 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge"
 import { Check, Clock, FileText, Users, Building2, Star } from "@/components/ui/icons"
 import WhatsAppConsultationForm from "./whatsapp-consultation-form"
+import type { ServicePackage } from "@/sanity/lib/types"
+import { formatPrice } from "@/lib/sanity-utils"
 
-const services = [
-  {
-    id: 1,
-    title: "Concept & Design Package",
-    subtitle: "Initial Planning & Development",
-    duration: "2-4 weeks",
-    priceResidential: "From GHS 5,000",
-    priceCommercial: "From GHS 10,000",
-    icon: FileText,
-    popular: false,
-    deliverables: [
-      "Site visit and analysis",
-      "2D floor plans",
-      "Building elevations",
-      "Feasibility study",
-      "Initial concept sketches",
-    ],
-    bestFor: "Initial planning and concept development",
-    description:
-      "Perfect for clients who want to explore design possibilities and understand project feasibility before committing to full development.",
-  },
-  {
-    id: 2,
-    title: "Design & Visualization Package",
-    subtitle: "Complete Design Visualization",
-    duration: "4-8 weeks",
-    priceResidential: "From GHS 20,000",
-    priceCommercial: "From GHS 40,000",
-    icon: Building2,
-    popular: true,
-    deliverables: [
-      "Construction-ready drawings",
-      "Detailed 3D renderings",
-      "Material specifications",
-      "Interior design guidance",
-      "Structural planning",
-      "MEP coordination",
-    ],
-    bestFor: "Complete design visualization",
-    description:
-      "Our most comprehensive design package that provides everything needed to visualize and plan your project in detail.",
-  },
-  {
-    id: 3,
-    title: "Full Design-to-Build Package",
-    subtitle: "Turnkey Project Management",
-    duration: "6+ months",
-    priceResidential: "10-15% of construction cost",
-    priceCommercial: "10-15% of construction cost",
-    icon: Users,
-    popular: false,
-    deliverables: [
-      "Complete project management",
-      "Design to construction handover",
-      "Contractor coordination",
-      "Quality control supervision",
-      "Timeline management",
-      "Budget oversight",
-      "Final project handover",
-    ],
-    bestFor: "Turnkey project execution",
-    description:
-      "End-to-end project management from initial design through final construction handover, ensuring seamless execution.",
-  },
-]
+interface ServicesProps {
+  packages?: ServicePackage[]
+}
 
-export default function Services() {
+export default function Services({ packages = [] }: ServicesProps) {
   const [selectedType, setSelectedType] = useState<"residential" | "commercial">("residential")
   const [isWhatsAppFormOpen, setIsWhatsAppFormOpen] = useState(false)
+
+  const services =
+    packages.length > 0
+      ? packages.map((pkg, index) => ({
+          id: pkg._id,
+          title: pkg.name,
+          subtitle: pkg.description.substring(0, 50) + "...",
+          duration: "2-4 weeks", // This could be added to CMS schema
+          priceResidential: pkg.price ? formatPrice(pkg.price, pkg.currency) : "Contact for quote",
+          priceCommercial: pkg.price ? formatPrice(pkg.price * 2, pkg.currency) : "Contact for quote",
+          icon: index === 0 ? FileText : index === 1 ? Building2 : Users,
+          popular: pkg.popular,
+          deliverables: pkg.features || [],
+          bestFor: pkg.category || "General projects",
+          description: pkg.description,
+        }))
+      : [
+          // Fallback static data
+          {
+            id: 1,
+            title: "Concept & Design Package",
+            subtitle: "Initial Planning & Development",
+            duration: "2-4 weeks",
+            priceResidential: "From GHS 5,000",
+            priceCommercial: "From GHS 10,000",
+            icon: FileText,
+            popular: false,
+            deliverables: [
+              "Site visit and analysis",
+              "2D floor plans",
+              "Building elevations",
+              "Feasibility study",
+              "Initial concept sketches",
+            ],
+            bestFor: "Initial planning and concept development",
+            description:
+              "Perfect for clients who want to explore design possibilities and understand project feasibility before committing to full development.",
+          },
+          {
+            id: 2,
+            title: "Design & Visualization Package",
+            subtitle: "Complete Design Visualization",
+            duration: "4-8 weeks",
+            priceResidential: "From GHS 20,000",
+            priceCommercial: "From GHS 40,000",
+            icon: Building2,
+            popular: true,
+            deliverables: [
+              "Construction-ready drawings",
+              "Detailed 3D renderings",
+              "Material specifications",
+              "Interior design guidance",
+              "Structural planning",
+              "MEP coordination",
+            ],
+            bestFor: "Complete design visualization",
+            description:
+              "Our most comprehensive design package that provides everything needed to visualize and plan your project in detail.",
+          },
+          {
+            id: 3,
+            title: "Full Design-to-Build Package",
+            subtitle: "Turnkey Project Management",
+            duration: "6+ months",
+            priceResidential: "10-15% of construction cost",
+            priceCommercial: "10-15% of construction cost",
+            icon: Users,
+            popular: false,
+            deliverables: [
+              "Complete project management",
+              "Design to construction handover",
+              "Contractor coordination",
+              "Quality control supervision",
+              "Timeline management",
+              "Budget oversight",
+              "Final project handover",
+            ],
+            bestFor: "Turnkey project execution",
+            description:
+              "End-to-end project management from initial design through final construction handover, ensuring seamless execution.",
+          },
+        ]
 
   return (
     <section className="py-20 bg-gradient-to-b from-white via-sand-light/30 to-white">

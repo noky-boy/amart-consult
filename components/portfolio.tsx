@@ -1,108 +1,65 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Calendar, MapPin, Eye, ArrowRight } from "lucide-react"
+import { Calendar, MapPin, Eye, ArrowRight } from "@/components/ui/icons"
 import WhatsAppConsultationForm from "./whatsapp-consultation-form"
+import OptimizedImage from "./optimized-image"
+import type { Portfolio as PortfolioType } from "@/sanity/lib/types"
 
 type ProjectCategory = "All" | "Residential" | "Commercial" | "Renovations"
 
-interface Project {
-  id: number
-  title: string
-  category: Exclude<ProjectCategory, "All">
-  year: number
-  location: string
-  tier: number
-  image: string
-  description: string
-  features: string[]
-  beforeImage?: string
+interface PortfolioProps {
+  projects?: PortfolioType[]
 }
 
-const projects: Project[] = [
-  {
-    id: 1,
-    title: "Modern Villa, East Legon",
-    category: "Residential",
-    year: 2024,
-    location: "East Legon, Accra",
-    tier: 3,
-    image: "/placeholder.svg?height=400&width=600",
-    description: "Contemporary luxury villa featuring sustainable design elements and smart home integration.",
-    features: ["Smart Home System", "Solar Integration", "Infinity Pool", "Home Theater"],
-  },
-  {
-    id: 2,
-    title: "Beachfront Renovation, Ada",
-    category: "Renovations",
-    year: 2023,
-    location: "Ada Foah, Greater Accra",
-    tier: 3,
-    image: "/placeholder.svg?height=400&width=600",
-    beforeImage: "/placeholder.svg?height=400&width=600",
-    description: "Complete transformation of a beachfront property into a modern coastal retreat.",
-    features: ["Coastal Design", "Storm Resistance", "Ocean Views", "Outdoor Living"],
-  },
-  {
-    id: 3,
-    title: "Office Complex, Kumasi",
-    category: "Commercial",
-    year: 2024,
-    location: "Kumasi, Ashanti Region",
-    tier: 3,
-    image: "/placeholder.svg?height=400&width=600",
-    description: "Multi-story office complex designed for maximum efficiency and employee wellness.",
-    features: ["LEED Certified", "Co-working Spaces", "Rooftop Garden", "EV Charging"],
-  },
-  {
-    id: 4,
-    title: "Luxury Apartment Interior",
-    category: "Residential",
-    year: 2023,
-    location: "Airport Hills, Accra",
-    tier: 2,
-    image: "/placeholder.svg?height=400&width=600",
-    description: "Sophisticated interior design for a high-end apartment with custom furnishings.",
-    features: ["Custom Furniture", "Ambient Lighting", "Walk-in Closet", "Wine Cellar"],
-  },
-  {
-    id: 5,
-    title: "Executive Residence, Airport Hills",
-    category: "Residential",
-    year: 2024,
-    location: "Airport Hills, Accra",
-    tier: 3,
-    image: "/placeholder.svg?height=400&width=600",
-    description: "Grand executive residence combining classical elegance with modern amenities.",
-    features: ["Grand Foyer", "Executive Office", "Guest Quarters", "Security System"],
-  },
-  {
-    id: 6,
-    title: "Retail Shop Design, Tema",
-    category: "Commercial",
-    year: 2023,
-    location: "Tema, Greater Accra",
-    tier: 2,
-    image: "/placeholder.svg?height=400&width=600",
-    description: "Contemporary retail space designed to enhance customer experience and product visibility.",
-    features: ["Display Systems", "LED Lighting", "POS Integration", "Storage Solutions"],
-  },
-]
-
-const categories: ProjectCategory[] = ["All", "Residential", "Commercial", "Renovations"]
-
-export default function Portfolio() {
+export default function Portfolio({ projects = [] }: PortfolioProps) {
   const [activeCategory, setActiveCategory] = useState<ProjectCategory>("All")
-  const [hoveredProject, setHoveredProject] = useState<number | null>(null)
+  const [hoveredProject, setHoveredProject] = useState<string | null>(null)
   const [isWhatsAppFormOpen, setIsWhatsAppFormOpen] = useState(false)
 
+  const portfolioProjects =
+    projects.length > 0
+      ? projects.map((project) => ({
+          id: project._id,
+          title: project.title,
+          category: (project.category.charAt(0).toUpperCase() + project.category.slice(1)) as Exclude<
+            ProjectCategory,
+            "All"
+          >,
+          year: new Date(project.completionDate || Date.now()).getFullYear(),
+          location: project.location || "Ghana",
+          tier: project.featured ? 3 : 2,
+          image: project.images?.[0]?.url || "/placeholder.svg?height=400&width=600",
+          description: project.description,
+          features: project.services || ["Modern Design", "Quality Construction"],
+          slug: project.slug.current,
+        }))
+      : [
+          // Fallback static data
+          {
+            id: "1",
+            title: "Modern Villa, East Legon",
+            category: "Residential" as const,
+            year: 2024,
+            location: "East Legon, Accra",
+            tier: 3,
+            image: "/placeholder.svg?height=400&width=600",
+            description: "Contemporary luxury villa featuring sustainable design elements and smart home integration.",
+            features: ["Smart Home System", "Solar Integration", "Infinity Pool", "Home Theater"],
+            slug: "modern-villa-east-legon",
+          },
+        ]
+
+  const categories: ProjectCategory[] = ["All", "Residential", "Commercial", "Renovations"]
+
   const filteredProjects =
-    activeCategory === "All" ? projects : projects.filter((project) => project.category === activeCategory)
+    activeCategory === "All"
+      ? portfolioProjects
+      : portfolioProjects.filter((project) => project.category === activeCategory)
 
   const getTierBadgeColor = (tier: number) => {
     switch (tier) {
@@ -156,12 +113,15 @@ export default function Portfolio() {
                 onMouseLeave={() => setHoveredProject(null)}
               >
                 <div className="relative overflow-hidden">
-                  <Image
-                    src={project.image || "/placeholder.svg"}
+                  <OptimizedImage
+                    src={project.image}
                     alt={project.title}
-                    width={600}
-                    height={400}
-                    className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
+                    aspectRatio="4:3"
+                    objectFit="cover"
+                    className="w-full transition-transform duration-500 group-hover:scale-110"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    quality={85}
+                    placeholder="blur"
                   />
 
                   {/* Overlay */}
@@ -178,7 +138,7 @@ export default function Portfolio() {
                           </Badge>
                         ))}
                       </div>
-                      <Link href={`/portfolio/${project.id}`}>
+                      <Link href={`/portfolio/${project.slug}`}>
                         <Button size="sm" className="bg-terracotta hover:bg-terracotta/90 text-white">
                           <Eye className="w-4 h-4 mr-2" />
                           View Details
@@ -203,7 +163,7 @@ export default function Portfolio() {
 
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-3">
-                    <Link href={`/portfolio/${project.id}`}>
+                    <Link href={`/portfolio/${project.slug}`}>
                       <h3 className="text-xl font-serif font-bold text-indigo-deep group-hover:text-terracotta transition-colors cursor-pointer">
                         {project.title}
                       </h3>

@@ -148,6 +148,12 @@ export const ChevronRight = ({ className = "", ...props }: React.SVGProps<SVGSVG
   </svg>
 )
 
+export const ChevronLeft = ({ className = "", ...props }: React.SVGProps<SVGSVGElement>) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+  </svg>
+)
+
 export const Circle = ({ className = "", ...props }: React.SVGProps<SVGSVGElement>) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24" {...props}>
     <circle cx="12" cy="12" r="10" />
@@ -330,13 +336,6 @@ export const Lock = ({ className = "", ...props }: React.SVGProps<SVGSVGElement>
   </svg>
 )
 
-export const CheckIcon = Check
-export const ChevronDownIcon = ChevronDown
-export const ChevronUpIcon = ChevronUp
-export const ChevronRightIcon = ChevronRight
-export const XIcon = X
-export const CircleIcon = Circle
-
 export const Calculator = ({ className = "", ...props }: React.SVGProps<SVGSVGElement>) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
     <rect x="4" y="2" width="16" height="20" rx="2" strokeWidth={2} />
@@ -381,6 +380,47 @@ export const Download = ({ className = "", ...props }: React.SVGProps<SVGSVGElem
   </svg>
 )
 
+export const Search = ({ className = "", ...props }: React.SVGProps<SVGSVGElement>) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+    <circle cx="11" cy="11" r="8" strokeWidth={2} />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35" />
+  </svg>
+)
+
+export const Filter = ({ className = "", ...props }: React.SVGProps<SVGSVGElement>) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+    <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46" strokeWidth={2} />
+  </svg>
+)
+
+export const ExternalLink = ({ className = "", ...props }: React.SVGProps<SVGSVGElement>) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+    />
+  </svg>
+)
+
+export const Home = ({ className = "", ...props }: React.SVGProps<SVGSVGElement>) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m0 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+    />
+  </svg>
+)
+
+export const Quote = ({ className = "", ...props }: React.SVGProps<SVGSVGElement>) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24" {...props}>
+    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+  </svg>
+)
+
 // Export all icons as a fallback system
 export const FallbackIcons = {
   Menu,
@@ -400,6 +440,7 @@ export const FallbackIcons = {
   MessageSquare,
   Send,
   ChevronRight,
+  ChevronLeft,
   Circle,
   Eye,
   EyeOff,
@@ -424,11 +465,19 @@ export const FallbackIcons = {
   TrendingUp,
   Settings,
   Download,
-  // Aliases
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  ChevronRightIcon,
-  XIcon,
-  CircleIcon,
+  Search,
+  Filter,
+  ExternalLink,
+  Home,
+  Quote,
 }
+
+// Aliases
+const CheckIcon = Check
+const ChevronDownIcon = ChevronDown
+const ChevronUpIcon = ChevronUp
+const ChevronRightIcon = ChevronRight
+const XIcon = X
+const CircleIcon = Circle
+
+export { CheckIcon, ChevronDownIcon, ChevronUpIcon, ChevronRightIcon, XIcon, CircleIcon }

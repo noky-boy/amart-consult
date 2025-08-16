@@ -1,13 +1,13 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import Image from "next/image"
 import Link from "next/link"
-import { Search, Calendar, User, ArrowRight, Filter } from "lucide-react"
+import { Search, Calendar, User, ArrowRight, Filter } from "@/components/ui/icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import NewsletterSignup from "@/components/newsletter-signup"
+import OptimizedImage from "@/components/optimized-image"
 
 // Sample blog data
 const blogPosts = [
@@ -188,12 +188,15 @@ export default function BlogPage() {
                   {featuredPosts.map((post) => (
                     <Card key={post.id} className="group hover:shadow-lg transition-shadow duration-300">
                       <div className="relative overflow-hidden rounded-t-lg">
-                        <Image
+                        <OptimizedImage
                           src={post.image || "/placeholder.svg"}
                           alt={post.title}
-                          width={600}
-                          height={300}
-                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                          aspectRatio="4:3"
+                          objectFit="cover"
+                          className="w-full group-hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          quality={85}
+                          placeholder="blur"
                         />
                         <div className="absolute top-4 left-4">
                           <span className="bg-terracotta text-white px-3 py-1 rounded-full text-sm font-medium">
@@ -236,13 +239,16 @@ export default function BlogPage() {
                     <Card key={post.id} className="group hover:shadow-lg transition-shadow duration-300">
                       <div className="flex flex-col sm:flex-row">
                         <div className="sm:w-1/3">
-                          <div className="relative overflow-hidden rounded-l-lg h-48 sm:h-full">
-                            <Image
+                          <div className="relative overflow-hidden rounded-l-lg">
+                            <OptimizedImage
                               src={post.image || "/placeholder.svg"}
                               alt={post.title}
-                              width={400}
-                              height={200}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              aspectRatio="4:3"
+                              objectFit="cover"
+                              className="w-full group-hover:scale-105 transition-transform duration-300"
+                              sizes="(max-width: 640px) 100vw, 33vw"
+                              quality={80}
+                              placeholder="blur"
                             />
                             <div className="absolute top-4 left-4">
                               <span className="bg-terracotta text-white px-3 py-1 rounded-full text-sm font-medium">
@@ -337,12 +343,16 @@ export default function BlogPage() {
                     {blogPosts.slice(0, 3).map((post) => (
                       <Link key={post.id} href={`/blog/${post.id}`} className="block group">
                         <div className="flex gap-3">
-                          <Image
+                          <OptimizedImage
                             src={post.image || "/placeholder.svg"}
                             alt={post.title}
                             width={80}
                             height={60}
-                            className="w-20 h-15 object-cover rounded flex-shrink-0"
+                            aspectRatio="4:3"
+                            objectFit="cover"
+                            className="w-20 flex-shrink-0 rounded"
+                            sizes="80px"
+                            quality={75}
                           />
                           <div>
                             <h4 className="font-medium text-gray-900 group-hover:text-indigo-deep transition-colors line-clamp-2 text-sm">
