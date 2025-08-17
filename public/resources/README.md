@@ -67,32 +67,32 @@ This directory contains organized assets for the Amart Consult website.
 - Icons: SVG format preferred, 24x24px base size
 </plaintext>
 
-```plaintext file="public/resources/hero/.gitkeep"
+\`\`\`plaintext file="public/resources/hero/.gitkeep"
 # Placeholder file to maintain directory structure
 # Hero section images and 3D building visualizations go here
 </plaintext>
 
-```plaintext file="public/resources/portfolio/.gitkeep"
+\`\`\`plaintext file="public/resources/portfolio/.gitkeep"
 # Placeholder file to maintain directory structure
 # Project showcase and completed building images go here
 </plaintext>
 
-```plaintext file="public/resources/team/.gitkeep"
+\`\`\`plaintext file="public/resources/team/.gitkeep"
 # Placeholder file to maintain directory structure
 # Team member photos and professional headshots go here
 </plaintext>
 
-```plaintext file="public/resources/services/.gitkeep"
+\`\`\`plaintext file="public/resources/services/.gitkeep"
 # Placeholder file to maintain directory structure
 # Service-related imagery and architectural drawings go here
 </plaintext>
 
-```plaintext file="public/resources/blog/.gitkeep"
+\`\`\`plaintext file="public/resources/blog/.gitkeep"
 # Placeholder file to maintain directory structure
 # Blog post featured images and article illustrations go here
 </plaintext>
 
-```plaintext file="public/resources/marketing/.gitkeep"
+\`\`\`plaintext file="public/resources/marketing/.gitkeep"
 # Placeholder file to maintain directory structure
 # Social media flyers and promotional materials go here
 # 
@@ -102,12 +102,12 @@ This directory contains organized assets for the Amart Consult website.
 # - Brand-consistent promotional designs
 </plaintext>
 
-```plaintext file="public/resources/logos/.gitkeep"
+\`\`\`plaintext file="public/resources/logos/.gitkeep"
 # Placeholder file to maintain directory structure
 # Company logos and brand assets go here
 </plaintext>
 
-```plaintext file="public/resources/icons/.gitkeep"
+\`\`\`plaintext file="public/resources/icons/.gitkeep"
 # Placeholder file to maintain directory structure
 # Custom icons and UI elements go here
 </plaintext>
