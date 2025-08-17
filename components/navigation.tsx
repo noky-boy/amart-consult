@@ -53,7 +53,7 @@ export default function Navigation() {
       return pathname === "/"
     }
     if (href.startsWith("#")) {
-      return pathname === "/" && window.location.hash === href
+      return pathname === "/" && typeof window !== "undefined" && window.location.hash === href
     }
     return pathname.startsWith(href)
   }
