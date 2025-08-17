@@ -6,7 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "migrate-content": "tsx scripts/migrate-content.ts",
+    "migrate-content": "node --env-file=.env.local ./node_modules/tsx/dist/cli.mjs scripts/migrate-content.ts",
     "start": "next start",
     "studio": "sanity dev"
   },
@@ -48,6 +48,7 @@
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
     "date-fns": "latest",
+    "dotenv": "^17.2.1",
     "embla-carousel-react": "8.5.1",
     "geist": "^1.3.1",
     "input-otp": "1.4.1",
@@ -68,7 +69,7 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "tsx": "^4.19.2",
-    "vaul": "^0.9.9",
+    "vaul": "^1.1.2",
     "zod": "3.25.67"
   },
   "devDependencies": {

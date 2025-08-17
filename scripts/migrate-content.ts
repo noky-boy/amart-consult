@@ -1,4 +1,16 @@
-import { client } from "../sanity/lib/client"
+import * as dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+
+console.log("Project ID:", process.env.NEXT_PUBLIC_SANITY_PROJECT_ID);
+console.log("Dataset:", process.env.NEXT_PUBLIC_SANITY_DATASET);
+console.log("Token exists:", !!process.env.SANITY_API_TOKEN);
+
+import { writeClient as client } from "../sanity/lib/writeClient";
+
+if (!process.env.SANITY_API_TOKEN) {
+  console.error("❌ Missing SANITY_API_TOKEN in .env.local");
+  process.exit(1);
+}
 
 // Static services data from components/services.tsx
 const servicesData = [
@@ -59,7 +71,7 @@ const servicesData = [
     popular: false,
     category: "residential",
   },
-]
+];
 
 // Static portfolio data from components/portfolio.tsx
 const portfolioData = [
@@ -67,7 +79,8 @@ const portfolioData = [
     _type: "portfolio",
     title: "Modern Villa, East Legon",
     slug: { current: "modern-villa-east-legon" },
-    description: "Contemporary luxury villa featuring sustainable design elements and smart home integration.",
+    description:
+      "Contemporary luxury villa featuring sustainable design elements and smart home integration.",
     category: "residential",
     location: "East Legon, Accra",
     completionDate: "2024-01-01",
@@ -86,7 +99,8 @@ const portfolioData = [
     _type: "portfolio",
     title: "Beachfront Renovation, Ada",
     slug: { current: "beachfront-renovation-ada" },
-    description: "Complete transformation of a beachfront property into a modern coastal retreat.",
+    description:
+      "Complete transformation of a beachfront property into a modern coastal retreat.",
     category: "renovation",
     location: "Ada Foah, Greater Accra",
     completionDate: "2023-01-01",
@@ -105,7 +119,8 @@ const portfolioData = [
     _type: "portfolio",
     title: "Office Complex, Kumasi",
     slug: { current: "office-complex-kumasi" },
-    description: "Multi-story office complex designed for maximum efficiency and employee wellness.",
+    description:
+      "Multi-story office complex designed for maximum efficiency and employee wellness.",
     category: "commercial",
     location: "Kumasi, Ashanti Region",
     completionDate: "2024-01-01",
@@ -124,7 +139,8 @@ const portfolioData = [
     _type: "portfolio",
     title: "Luxury Apartment Interior",
     slug: { current: "luxury-apartment-interior" },
-    description: "Sophisticated interior design for a high-end apartment with custom furnishings.",
+    description:
+      "Sophisticated interior design for a high-end apartment with custom furnishings.",
     category: "residential",
     location: "Airport Hills, Accra",
     completionDate: "2023-01-01",
@@ -143,7 +159,8 @@ const portfolioData = [
     _type: "portfolio",
     title: "Executive Residence, Airport Hills",
     slug: { current: "executive-residence-airport-hills" },
-    description: "Grand executive residence combining classical elegance with modern amenities.",
+    description:
+      "Grand executive residence combining classical elegance with modern amenities.",
     category: "residential",
     location: "Airport Hills, Accra",
     completionDate: "2024-01-01",
@@ -162,7 +179,8 @@ const portfolioData = [
     _type: "portfolio",
     title: "Retail Shop Design, Tema",
     slug: { current: "retail-shop-design-tema" },
-    description: "Contemporary retail space designed to enhance customer experience and product visibility.",
+    description:
+      "Contemporary retail space designed to enhance customer experience and product visibility.",
     category: "commercial",
     location: "Tema, Greater Accra",
     completionDate: "2023-01-01",
@@ -177,7 +195,7 @@ const portfolioData = [
       },
     ],
   },
-]
+];
 
 // Core services data for individual service pages
 const coreServicesData = [
@@ -185,7 +203,8 @@ const coreServicesData = [
     _type: "service",
     title: "Architectural Designs",
     slug: { current: "architectural-designs" },
-    description: "Comprehensive architectural design services from concept to construction-ready drawings.",
+    description:
+      "Comprehensive architectural design services from concept to construction-ready drawings.",
     icon: "Building2",
     features: [
       "Conceptual design development",
@@ -197,15 +216,18 @@ const coreServicesData = [
     process: [
       {
         title: "Initial Consultation",
-        description: "Understanding your vision, requirements, and site constraints",
+        description:
+          "Understanding your vision, requirements, and site constraints",
       },
       {
         title: "Concept Development",
-        description: "Creating initial design concepts and spatial arrangements",
+        description:
+          "Creating initial design concepts and spatial arrangements",
       },
       {
         title: "Design Development",
-        description: "Refining designs with detailed drawings and specifications",
+        description:
+          "Refining designs with detailed drawings and specifications",
       },
       {
         title: "Construction Documents",
@@ -222,7 +244,8 @@ const coreServicesData = [
     _type: "service",
     title: "Bill of Quantities",
     slug: { current: "bill-of-quantities" },
-    description: "Accurate cost estimation and quantity surveying services for construction projects.",
+    description:
+      "Accurate cost estimation and quantity surveying services for construction projects.",
     icon: "Calculator",
     features: [
       "Detailed material quantification",
@@ -250,7 +273,8 @@ const coreServicesData = [
       },
     ],
     seo: {
-      metaTitle: "Bill of Quantities Services Ghana | Construction Cost Estimation",
+      metaTitle:
+        "Bill of Quantities Services Ghana | Construction Cost Estimation",
       metaDescription:
         "Professional bill of quantities and cost estimation services in Ghana. Accurate construction cost analysis for your building projects.",
     },
@@ -259,7 +283,8 @@ const coreServicesData = [
     _type: "service",
     title: "Construction Management",
     slug: { current: "construction-management" },
-    description: "End-to-end construction management ensuring quality, timeline, and budget compliance.",
+    description:
+      "End-to-end construction management ensuring quality, timeline, and budget compliance.",
     icon: "Users",
     features: [
       "Project planning and scheduling",
@@ -271,15 +296,18 @@ const coreServicesData = [
     process: [
       {
         title: "Project Planning",
-        description: "Developing comprehensive project schedules and resource allocation",
+        description:
+          "Developing comprehensive project schedules and resource allocation",
       },
       {
         title: "Team Coordination",
-        description: "Managing contractors, suppliers, and project stakeholders",
+        description:
+          "Managing contractors, suppliers, and project stakeholders",
       },
       {
         title: "Quality Oversight",
-        description: "Ensuring construction meets design specifications and standards",
+        description:
+          "Ensuring construction meets design specifications and standards",
       },
       {
         title: "Project Delivery",
@@ -296,7 +324,8 @@ const coreServicesData = [
     _type: "service",
     title: "Project Consultation",
     slug: { current: "project-consultation" },
-    description: "Expert consultation services for all phases of your construction and design projects.",
+    description:
+      "Expert consultation services for all phases of your construction and design projects.",
     icon: "MessageCircle",
     features: [
       "Feasibility studies and analysis",
@@ -324,12 +353,13 @@ const coreServicesData = [
       },
     ],
     seo: {
-      metaTitle: "Construction Project Consultation Ghana | Expert Advisory Services",
+      metaTitle:
+        "Construction Project Consultation Ghana | Expert Advisory Services",
       metaDescription:
         "Expert construction and design consultation services in Ghana. Professional advisory for successful project planning and execution.",
     },
   },
-]
+];
 
 // Sample blog posts
 const blogPostsData = [
@@ -396,12 +426,13 @@ const blogPostsData = [
       },
     ],
     seo: {
-      metaTitle: "Sustainable Building Materials West Africa | Eco-Friendly Construction",
+      metaTitle:
+        "Sustainable Building Materials West Africa | Eco-Friendly Construction",
       metaDescription:
         "Guide to sustainable building materials in West Africa. Discover eco-friendly construction options for your building projects.",
     },
   },
-]
+];
 
 // Sample testimonials
 const testimonialsData = [
@@ -438,7 +469,7 @@ const testimonialsData = [
     featured: false,
     date: "2023-11-20",
   },
-]
+];
 
 // Sample FAQs
 const faqsData = [
@@ -514,102 +545,108 @@ const faqsData = [
     order: 4,
     featured: true,
   },
-]
+];
 
 // Migration functions
 async function migrateServices() {
-  console.log("Migrating services data...")
+  console.log("Migrating services data...");
   for (const service of coreServicesData) {
     try {
-      await client.create(service)
-      console.log(`✓ Created service: ${service.title}`)
+      await client.create(service);
+      console.log(`✓ Created service: ${service.title}`);
     } catch (error) {
-      console.error(`✗ Failed to create service ${service.title}:`, error)
+      console.error(`✗ Failed to create service ${service.title}:`, error);
     }
   }
 }
 
 async function migratePackages() {
-  console.log("Migrating service packages...")
+  console.log("Migrating service packages...");
   for (const pkg of servicesData) {
     try {
-      await client.create(pkg)
-      console.log(`✓ Created package: ${pkg.name}`)
+      await client.create(pkg);
+      console.log(`✓ Created package: ${pkg.name}`);
     } catch (error) {
-      console.error(`✗ Failed to create package ${pkg.name}:`, error)
+      console.error(`✗ Failed to create package ${pkg.name}:`, error);
     }
   }
 }
 
 async function migratePortfolio() {
-  console.log("Migrating portfolio data...")
+  console.log("Migrating portfolio data...");
   for (const project of portfolioData) {
     try {
-      await client.create(project)
-      console.log(`✓ Created portfolio item: ${project.title}`)
+      await client.create(project);
+      console.log(`✓ Created portfolio item: ${project.title}`);
     } catch (error) {
-      console.error(`✗ Failed to create portfolio item ${project.title}:`, error)
+      console.error(
+        `✗ Failed to create portfolio item ${project.title}:`,
+        error
+      );
     }
   }
 }
 
 async function migrateBlogPosts() {
-  console.log("Migrating blog posts...")
+  console.log("Migrating blog posts...");
   for (const post of blogPostsData) {
     try {
-      await client.create(post)
-      console.log(`✓ Created blog post: ${post.title}`)
+      await client.create(post);
+      console.log(`✓ Created blog post: ${post.title}`);
     } catch (error) {
-      console.error(`✗ Failed to create blog post ${post.title}:`, error)
+      console.error(`✗ Failed to create blog post ${post.title}:`, error);
     }
   }
 }
 
 async function migrateTestimonials() {
-  console.log("Migrating testimonials...")
+  console.log("Migrating testimonials...");
   for (const testimonial of testimonialsData) {
     try {
-      await client.create(testimonial)
-      console.log(`✓ Created testimonial: ${testimonial.name}`)
+      await client.create(testimonial);
+      console.log(`✓ Created testimonial: ${testimonial.name}`);
     } catch (error) {
-      console.error(`✗ Failed to create testimonial ${testimonial.name}:`, error)
+      console.error(
+        `✗ Failed to create testimonial ${testimonial.name}:`,
+        error
+      );
     }
   }
 }
 
 async function migrateFAQs() {
-  console.log("Migrating FAQs...")
+  console.log("Migrating FAQs...");
   for (const faq of faqsData) {
     try {
-      await client.create(faq)
-      console.log(`✓ Created FAQ: ${faq.question}`)
+      await client.create(faq);
+      console.log(`✓ Created FAQ: ${faq.question}`);
     } catch (error) {
-      console.error(`✗ Failed to create FAQ ${faq.question}:`, error)
+      console.error(`✗ Failed to create FAQ ${faq.question}:`, error);
     }
   }
 }
 
 // Main migration function
 async function migrateAllContent() {
-  console.log("Starting content migration to Sanity CMS...")
+  console.log("Starting content migration to Sanity CMS...");
 
   try {
-    await migrateServices()
-    await migratePackages()
-    await migratePortfolio()
-    await migrateBlogPosts()
-    await migrateTestimonials()
-    await migrateFAQs()
+    await migrateServices();
+    await migratePackages();
+    await migratePortfolio();
+    await migrateBlogPosts();
+    await migrateTestimonials();
+    await migrateFAQs();
 
-    console.log("✅ Content migration completed successfully!")
+    console.log("✅ Content migration completed successfully!");
   } catch (error) {
-    console.error("❌ Migration failed:", error)
+    console.error("❌ Migration failed:", error);
   }
 }
 
 // Run migration if this script is executed directly
 if (require.main === module) {
-  migrateAllContent()
+  migrateAllContent();
 }
 
-export { migrateAllContent }
+export { migrateAllContent };
