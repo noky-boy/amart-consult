@@ -40,7 +40,7 @@ export default function ArchitecturalDesignsPage() {
             </div>
             <div className="relative">
               <img
-                src="/resources/hero/contemporary-glass-house.jpg"
+                src="/resources/hero/Hero_image4.webp"
                 alt="Architectural Design"
                 className="rounded-2xl shadow-2xl w-full h-96 object-cover"
               />

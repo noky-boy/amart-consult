@@ -7,25 +7,23 @@ export default function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0)
 
   const slideImages = [
-    "/resources/hero/modern-residential-villa.jpg",
-    "/resources/hero/commercial-complex.jpg",
-    "/resources/hero/contemporary-glass-house.jpg",
-    "/resources/hero/luxury-pool-villa.jpg",
-    "/resources/hero/evening-modern-home.jpg",
-    "/resources/hero/minimalist-single-story.jpg",
-    "/resources/hero/urban-apartment-complex.jpg",
-    "/resources/hero/colorful-townhouses.jpg",
+    "/resources/hero/Hero_image1.webp",
+    "/resources/hero/Hero_image2.webp",
+    "/resources/hero/Hero_image3.webp",
+    "/resources/hero/Hero_image4.webp",
+    "/resources/hero/Hero_image5.webp",
+    "/resources/hero/Hero_image6.webp",
+    "/resources/hero/Hero_image7.webp",
   ]
 
   const imageDescriptions = [
-    "Modern residential villa with contemporary design and luxury features",
-    "Commercial complex showcasing innovative architectural solutions",
-    "Contemporary glass house with seamless indoor-outdoor living",
-    "Luxury pool villa featuring elegant design and premium amenities",
-    "Evening view of modern home with sophisticated lighting design",
-    "Minimalist single-story residence with clean architectural lines",
-    "Urban apartment complex with modern facade and efficient design",
-    "Colorful townhouses demonstrating vibrant architectural diversity",
+    "Modern two-story house with contemporary design, stone and concrete elements, balcony with hanging chairs",
+    "Colorful modern townhouse complex with orange and beige facades, multiple units",
+    "Warm evening shot of modern house with large windows and welcoming entrance",
+    "Modern minimalist house with large glass windows, outdoor entertainment area, desert landscaping",
+    "Contemporary house with wood cladding accents, hanging egg chairs on balcony, front view",
+    "Luxury modern house with pool, multiple levels, outdoor living spaces",
+    "Modern apartment/commercial complex with geometric design, parking areas, multiple levels",
   ]
 
   useEffect(() => {
@@ -37,7 +35,11 @@ export default function Hero() {
   }, [slideImages.length])
 
   return (
-    <section id="home" className="relative h-screen overflow-hidden" aria-label="Amart Consult architectural showcase">
+    <section
+      id="home"
+      className="relative h-[60vh] sm:h-[70vh] md:h-[80vh] lg:h-screen overflow-hidden"
+      aria-label="Amart Consult architectural showcase"
+    >
       <div className="absolute inset-0 z-0">
         {slideImages.map((image, index) => (
           <div
@@ -49,14 +51,12 @@ export default function Hero() {
             <OptimizedImage
               src={image}
               alt={imageDescriptions[index]}
-              priority={index === 0} // Priority loading for first image only
+              priority={index === 0}
               aspectRatio="16:9"
               objectFit="cover"
-              className={`w-full h-full transform transition-transform duration-[6500ms] ease-out ${
-                index === currentSlide ? "scale-105" : "scale-100"
-              }`}
-              sizes="100vw" // Full viewport width for hero images
-              quality={90} // Higher quality for hero images
+              className="w-full h-full object-cover object-center"
+              sizes="(max-width: 480px) 480px, (max-width: 768px) 768px, (max-width: 1024px) 1024px, 1920px"
+              quality={75}
               placeholder="blur"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10"></div>
@@ -67,7 +67,7 @@ export default function Hero() {
       <link rel="preload" as="image" href={slideImages[(currentSlide + 1) % slideImages.length]} />
 
       <div
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex space-x-3"
+        className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex space-x-2 sm:space-x-3"
         role="tablist"
         aria-label="Hero image slideshow navigation"
       >
@@ -75,9 +75,9 @@ export default function Hero() {
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`w-4 h-4 rounded-full transition-all duration-300 focus-visible:ring-enhanced ${
+            className={`w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full transition-all duration-300 focus-visible:ring-enhanced ${
               index === currentSlide
-                ? "bg-terracotta scale-125 shadow-lg ring-2 ring-white/50"
+                ? "bg-terracotta scale-110 shadow-lg ring-2 ring-white/50"
                 : "bg-white/60 hover:bg-white/80 backdrop-blur-sm"
             }`}
             role="tab"

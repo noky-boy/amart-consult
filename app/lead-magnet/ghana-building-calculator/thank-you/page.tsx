@@ -1,4 +1,4 @@
-import { CheckCircle, ArrowRight } from "lucide-react"
+import { CheckCircle, ArrowRight } from "@/components/ui/icons"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -59,7 +59,7 @@ export default function ThankYouPage() {
             <Button
               asChild
               variant="outline"
-              className="border-terracotta-600 text-terracotta-600 hover:bg-terracotta-50 bg-transparent"
+              className="border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white bg-white"
             >
               <a href="/contact">Get Free Consultation</a>
             </Button>

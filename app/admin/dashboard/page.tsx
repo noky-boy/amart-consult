@@ -2,7 +2,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
-import { TrendingUp, Users, Mail, FileText, MessageSquare, BarChart3 } from "lucide-react"
+import { TrendingUp, Users, Mail, FileText, MessageSquare } from "lucide-react"
 
 export default function DashboardPage() {
   return (
@@ -35,7 +35,7 @@ export default function DashboardPage() {
             <span>Messages</span>
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center space-x-2">
-            <BarChart3 className="h-4 w-4" />
+            <TrendingUp className="h-4 w-4" />
             <span>Analytics</span>
           </TabsTrigger>
         </TabsList>
@@ -123,7 +123,7 @@ export default function DashboardPage() {
               </Button>
               <Button className="w-full justify-start bg-transparent" variant="outline" asChild>
                 <Link href="/admin/automation">
-                  <BarChart3 className="h-4 w-4 mr-2" />
+                  <TrendingUp className="h-4 w-4 mr-2" />
                   Automation
                 </Link>
               </Button>
@@ -174,11 +174,11 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Button className="w-full justify-start bg-transparent" variant="outline">
-                <BarChart3 className="h-4 w-4 mr-2" />
+                <TrendingUp className="h-4 w-4 mr-2" />
                 View Analytics
               </Button>
               <Button className="w-full justify-start bg-transparent" variant="outline">
-                <BarChart3 className="h-4 w-4 mr-2" />
+                <TrendingUp className="h-4 w-4 mr-2" />
                 Generate Report
               </Button>
             </CardContent>

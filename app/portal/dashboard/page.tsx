@@ -13,7 +13,6 @@ import {
   Bell,
   LogOut,
   TrendingUp,
-  BarChart3,
   Clock,
   CheckCircle,
   Users,
@@ -115,7 +114,7 @@ export default function DashboardPage() {
                     : "text-slate-700 hover:bg-slate-100 hover:scale-102 hover:shadow-sm"
                 }`}
               >
-                <BarChart3 className="mr-3 h-4 w-4" />
+                <TrendingUp className="mr-3 h-4 w-4" />
                 Overview
               </button>
               <button
@@ -303,7 +302,7 @@ export default function DashboardPage() {
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center space-x-2">
                       <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
-                        <BarChart3 className="h-4 w-4 text-white" />
+                        <TrendingUp className="h-4 w-4 text-white" />
                       </div>
                       <span>Project Phases</span>
                     </CardTitle>
@@ -431,7 +430,7 @@ export default function DashboardPage() {
                         className="group relative aspect-square bg-slate-100 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                       >
                         <Image
-                          src={`/placeholder.svg?height=200&width=200&query=construction progress ${i}`}
+                          src={`/construction-progress-.jpg?height=200&width=200&query=construction progress ${i}`}
                           alt={`Progress photo ${i}`}
                           fill
                           className="object-cover group-hover:scale-110 transition-transform duration-300"

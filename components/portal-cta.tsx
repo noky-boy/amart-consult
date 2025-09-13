@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Shield, Users, BarChart3, MessageSquare, ArrowRight } from "lucide-react"
+import { Shield, Users, TrendingUp, MessageSquare, ArrowRight } from "@/components/ui/icons"
 import Link from "next/link"
 
 export default function PortalCTA() {
@@ -35,7 +35,7 @@ export default function PortalCTA() {
 
             <div className="flex items-start space-x-4">
               <div className="flex-shrink-0 w-12 h-12 bg-terracotta/20 rounded-xl flex items-center justify-center">
-                <BarChart3 className="h-6 w-6 text-terracotta" />
+                <TrendingUp className="h-6 w-6 text-terracotta" />
               </div>
               <div>
                 <h3 className="text-xl font-semibold text-white mb-2">Real-Time Tracking</h3>

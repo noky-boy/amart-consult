@@ -40,7 +40,7 @@ export default function ConstructionManagementPage() {
             </div>
             <div className="relative">
               <img
-                src="/resources/hero/luxury-pool-villa.jpg"
+                src="/resources/hero/Hero_image6.webp"
                 alt="Construction Management"
                 className="rounded-2xl shadow-2xl w-full h-96 object-cover"
               />
@@ -147,7 +147,7 @@ export default function ConstructionManagementPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="relative">
               <img
-                src="/resources/hero/modern-residential-villa.jpg"
+                src="/resources/hero/Hero_image1.webp"
                 alt="Management Benefits"
                 className="rounded-2xl shadow-xl w-full h-80 object-cover"
               />

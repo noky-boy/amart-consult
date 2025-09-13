@@ -40,7 +40,7 @@ export default function BillOfQuantitiesPage() {
             </div>
             <div className="relative">
               <img
-                src="/resources/hero/urban-apartment-complex.jpg"
+                src="/resources/hero/Hero_image7.webp"
                 alt="Bill of Quantities"
                 className="rounded-2xl shadow-2xl w-full h-96 object-cover"
               />
@@ -139,7 +139,7 @@ export default function BillOfQuantitiesPage() {
             </div>
             <div className="relative">
               <img
-                src="/resources/hero/commercial-complex.jpg"
+                src="/resources/hero/Hero_image2.webp"
                 alt="BOQ Benefits"
                 className="rounded-2xl shadow-xl w-full h-80 object-cover"
               />

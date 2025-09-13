@@ -29,7 +29,7 @@ export default function OptimizedImage({
   priority = false,
   aspectRatio = "4:3",
   objectFit = "cover",
-  sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
+  sizes = "(max-width: 480px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
   quality = 85,
   placeholder = "empty",
   blurDataURL,
