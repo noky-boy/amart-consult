@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X } from "lucide-react"
+import { X } from "@/components/ui/icons"
 import NewsletterSignup from "./newsletter-signup"
 
 export default function ExitIntentPopup() {

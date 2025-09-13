@@ -51,10 +51,10 @@ export default function CoreServicesShowcase() {
 
   return (
     <>
-      <section className="py-20 bg-gradient-to-b from-sand-light/20 to-white">
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-indigo-deep mb-6">Our Core Services</h2>
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-6">Our Core Services</h2>
             <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
               Comprehensive architectural and construction services tailored to bring your vision to life with
               precision, quality, and innovation.
@@ -101,7 +101,7 @@ export default function CoreServicesShowcase() {
                     <Link href={service.href} className="block mt-6">
                       <Button
                         variant="outline"
-                        className="w-full group-hover:bg-indigo-deep group-hover:text-white group-hover:border-indigo-deep transition-all duration-300 flex items-center justify-center bg-transparent"
+                        className="w-full bg-indigo-deep text-white border-indigo-deep hover:bg-indigo-deep-hover hover:border-indigo-deep-hover group-hover:bg-indigo-deep-hover transition-all duration-300 flex items-center justify-center"
                       >
                         Learn More
                         <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
@@ -124,7 +124,7 @@ export default function CoreServicesShowcase() {
               <Button
                 size="lg"
                 onClick={() => setIsWhatsAppFormOpen(true)}
-                className="bg-terracotta hover:bg-terracotta-hover text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                className="bg-indigo-900 hover:bg-indigo-800 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 Get Free Consultation
               </Button>

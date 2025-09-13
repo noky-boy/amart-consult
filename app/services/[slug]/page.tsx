@@ -81,7 +81,7 @@ export default async function ServicePage({ params }: ServicePageProps) {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-indigo-deep text-indigo-deep hover:bg-indigo-deep hover:text-white px-8 py-3 bg-transparent"
+                className="border-indigo-deep text-indigo-deep hover:bg-indigo-deep hover:text-white px-8 py-3 bg-white"
               >
                 View Portfolio
               </Button>

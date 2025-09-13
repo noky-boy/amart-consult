@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Instagram, ExternalLink, Heart, MessageCircle } from "lucide-react"
+import { Instagram, ExternalLink, Heart, MessageCircle } from "@/components/ui/icons"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"

@@ -176,7 +176,7 @@ export default function Navigation() {
               </Button>
               <Button
                 onClick={openWhatsAppForm}
-                className="bg-gradient-to-r from-terracotta to-terracotta-warm hover:from-terracotta-warm hover:to-terracotta text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 focus-visible:ring-enhanced"
+                className="bg-indigo-deep hover:bg-indigo-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 focus-visible:ring-enhanced"
                 aria-label="Get free architectural consultation via WhatsApp"
               >
                 Get Free Consultation
@@ -251,7 +251,7 @@ export default function Navigation() {
                 </Button>
                 <Button
                   onClick={openWhatsAppForm}
-                  className="w-full bg-gradient-to-r from-terracotta to-terracotta-warm hover:from-terracotta-warm hover:to-terracotta text-white shadow-lg transition-all duration-300 focus-visible:ring-enhanced"
+                  className="w-full bg-indigo-deep hover:bg-indigo-800 text-white shadow-lg transition-all duration-300 focus-visible:ring-enhanced"
                   aria-label="Get free architectural consultation via WhatsApp"
                 >
                   Get Free Consultation

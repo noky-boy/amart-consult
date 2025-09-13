@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { BookOpen, ArrowRight } from "lucide-react"
+import { BookOpen, ArrowRight } from "@/components/ui/icons"
 import Link from "next/link"
 
 export default function BlogCTA() {

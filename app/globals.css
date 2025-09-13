@@ -390,6 +390,20 @@ select:focus {
   .border-gray-200 {
     border-color: #000000;
   }
+
+  /* Fix contrast issues for indigo-deep text on indigo-deep background */
+  .text-indigo-deep {
+    color: #ffffff;
+  }
+
+  .bg-indigo-deep .text-indigo-deep {
+    color: #ffffff;
+  }
+
+  /* Ensure terracotta text has sufficient contrast */
+  .text-terracotta-600 {
+    color: #8b4513;
+  }
 }
 
 /* Reduced motion support */

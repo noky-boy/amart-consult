@@ -580,7 +580,10 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                 design solutions.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="bg-white text-indigo-deep hover:bg-sand focus-visible:ring-enhanced">
+                <Button
+                  size="lg"
+                  className="bg-indigo-deep text-white hover:bg-indigo-deep-hover focus-visible:ring-enhanced"
+                >
                   Get Free Consultation
                   <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
                 </Button>

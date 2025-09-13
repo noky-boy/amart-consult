@@ -6,7 +6,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { Mail, Gift, CheckCircle } from "lucide-react"
+import { Mail, Download, Award, CheckCircle } from "@/components/ui/icons"
 
 interface NewsletterSignupProps {
   variant?: "homepage" | "sidebar" | "footer" | "popup"
@@ -69,7 +69,7 @@ export default function NewsletterSignup({ variant = "homepage", showIncentive =
             variant="outline"
             className="border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white"
           >
-            <Gift className="w-4 h-4 mr-2" />
+            <Download className="w-4 h-4 mr-2" />
             Download Free Guide
           </Button>
         </CardContent>
@@ -121,7 +121,7 @@ export default function NewsletterSignup({ variant = "homepage", showIncentive =
               variant === "footer" ? "bg-indigo-800" : "bg-gradient-to-r from-terracotta-50 to-indigo-50"
             }`}
           >
-            <Gift className={`h-4 w-4 ${variant === "footer" ? "text-terracotta-200" : "text-terracotta-600"}`} />
+            <Award className={`h-4 w-4 ${variant === "footer" ? "text-terracotta-200" : "text-terracotta-600"}`} />
             <span className={`text-sm font-medium ${variant === "footer" ? "text-indigo-100" : "text-terracotta-700"}`}>
               Free Ghana Building Cost Calculator included!
             </span>

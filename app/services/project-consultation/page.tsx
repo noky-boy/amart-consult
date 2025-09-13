@@ -40,7 +40,7 @@ export default function ProjectConsultationPage() {
             </div>
             <div className="relative">
               <img
-                src="/resources/hero/evening-modern-home.jpg"
+                src="/resources/hero/Hero_image3.webp"
                 alt="Project Consultation"
                 className="rounded-2xl shadow-2xl w-full h-96 object-cover"
               />
@@ -165,7 +165,7 @@ export default function ProjectConsultationPage() {
             </div>
             <div className="relative">
               <img
-                src="/resources/hero/minimalist-single-story.jpg"
+                src="/resources/hero/Hero_image5.webp"
                 alt="Consultation Benefits"
                 className="rounded-2xl shadow-xl w-full h-80 object-cover"
               />

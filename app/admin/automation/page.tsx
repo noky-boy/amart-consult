@@ -17,7 +17,7 @@ import {
   Plus,
   Edit,
   Trash2,
-  BarChart3,
+  TrendingUp,
   Calendar,
   Filter,
   CheckCircle,
@@ -160,7 +160,7 @@ export default function AutomationPage() {
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline" size="sm">
-                <BarChart3 className="h-4 w-4 mr-2" />
+                <TrendingUp className="h-4 w-4 mr-2" />
                 Analytics
               </Button>
               <Button size="sm">
@@ -214,7 +214,7 @@ export default function AutomationPage() {
                   <p className="text-sm text-green-600 mt-1">+2.1% vs last month</p>
                 </div>
                 <div className="p-3 rounded-full bg-purple-100">
-                  <BarChart3 className="h-6 w-6 text-purple-600" />
+                  <TrendingUp className="h-6 w-6 text-purple-600" />
                 </div>
               </div>
             </CardContent>
@@ -252,7 +252,7 @@ export default function AutomationPage() {
               <span>Triggers</span>
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center space-x-2">
-              <BarChart3 className="h-4 w-4" />
+              <TrendingUp className="h-4 w-4" />
               <span>Analytics</span>
             </TabsTrigger>
           </TabsList>

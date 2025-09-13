@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { Calendar, Clock, User } from "lucide-react"
+import { Calendar, Clock, User } from "@/components/ui/icons"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
