@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { useState } from "react"
+import Image from "next/image";
+import { useState } from "react";
 
 interface OptimizedImageProps {
-  src: string
-  alt: string
-  width?: number
-  height?: number
-  className?: string
-  priority?: boolean
-  aspectRatio?: "4:3" | "16:9" | "1:1" | "3:2"
-  objectFit?: "cover" | "contain" | "fill"
-  sizes?: string
-  quality?: number
-  placeholder?: "blur" | "empty"
-  blurDataURL?: string
-  onLoad?: () => void
-  onClick?: () => void
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  className?: string;
+  priority?: boolean;
+  aspectRatio?: "4:3" | "16:9" | "1:1" | "3:2";
+  objectFit?: "cover" | "contain" | "fill";
+  sizes?: string;
+  quality?: number;
+  placeholder?: "blur" | "empty";
+  blurDataURL?: string;
+  onLoad?: () => void;
+  onClick?: () => void;
 }
 
 export default function OptimizedImage({
@@ -29,45 +29,50 @@ export default function OptimizedImage({
   priority = false,
   aspectRatio = "4:3",
   objectFit = "cover",
-  sizes = "(max-width: 480px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
+  // In optimized-image.tsx, update the sizes prop default:
+  sizes = "(max-width: 480px) 100vw, (max-width: 768px) 100vw, (max-width: 1024px) 100vw, (max-width: 1440px) 100vw, 100vw",
   quality = 85,
   placeholder = "empty",
   blurDataURL,
   onLoad,
   onClick,
 }: OptimizedImageProps) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [hasError, setHasError] = useState(false)
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   const getAspectRatioDimensions = () => {
     switch (aspectRatio) {
       case "4:3":
-        return { width: width, height: Math.round(width * 0.75) }
+        return { width: width, height: Math.round(width * 0.75) };
       case "16:9":
-        return { width: width, height: Math.round(width * 0.5625) }
+        return { width: width, height: Math.round(width * 0.5625) };
       case "1:1":
-        return { width: width, height: width }
+        return { width: width, height: width };
       case "3:2":
-        return { width: width, height: Math.round(width * 0.667) }
+        return { width: width, height: Math.round(width * 0.667) };
       default:
-        return { width, height }
+        return { width, height };
     }
-  }
+  };
 
-  const dimensions = getAspectRatioDimensions()
+  const dimensions = getAspectRatioDimensions();
 
   const generateBlurDataURL = () => {
-    if (blurDataURL) return blurDataURL
+    if (blurDataURL) return blurDataURL;
     return `data:image/svg+xml;base64,${Buffer.from(
       `<svg width="${dimensions.width}" height="${dimensions.height}" xmlns="http://www.w3.org/2000/svg">
         <rect width="100%" height="100%" fill="#f3f4f6"/>
         <text x="50%" y="50%" textAnchor="middle" dy=".3em" fill="#9ca3af" fontFamily="Arial, sans-serif" fontSize="14">Loading...</text>
-      </svg>`,
-    ).toString("base64")}`
-  }
+      </svg>`
+    ).toString("base64")}`;
+  };
 
   return (
-    <div className={`relative overflow-hidden ${className}`} style={{ aspectRatio: aspectRatio }} onClick={onClick}>
+    <div
+      className={`relative overflow-hidden ${className}`}
+      style={{ aspectRatio: aspectRatio }}
+      onClick={onClick}
+    >
       <Image
         src={src || "/placeholder.svg"}
         alt={alt}
@@ -79,14 +84,20 @@ export default function OptimizedImage({
         blurDataURL={placeholder === "blur" ? generateBlurDataURL() : undefined}
         className={`transition-opacity duration-300 ${
           isLoading ? "opacity-0" : "opacity-100"
-        } ${objectFit === "cover" ? "object-cover" : objectFit === "contain" ? "object-contain" : "object-fill"}`}
+        } ${
+          objectFit === "cover"
+            ? "object-cover"
+            : objectFit === "contain"
+            ? "object-contain"
+            : "object-fill"
+        }`}
         onLoad={() => {
-          setIsLoading(false)
-          onLoad?.()
+          setIsLoading(false);
+          onLoad?.();
         }}
         onError={() => {
-          setHasError(true)
-          setIsLoading(false)
+          setHasError(true);
+          setIsLoading(false);
         }}
         unoptimized={false}
       />
@@ -106,5 +117,5 @@ export default function OptimizedImage({
         </div>
       )}
     </div>
-  )
+  );
 }

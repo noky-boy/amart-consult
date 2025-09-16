@@ -1,6 +1,18 @@
-import { groq } from "next-sanity"
+import { groq } from "next-sanity";
 
 // Service Queries
+
+export const servicesListQuery = groq`
+  *[_type == "service"] | order(_createdAt asc) {
+    _id,
+    title,
+    slug,
+    description,
+    features,
+    "image": image.asset->url
+  }
+`;
+
 export const servicesQuery = groq`
   *[_type == "service"] | order(_createdAt asc) {
     _id,
@@ -14,7 +26,7 @@ export const servicesQuery = groq`
     content,
     seo
   }
-`
+`;
 
 export const serviceBySlugQuery = groq`
   *[_type == "service" && slug.current == $slug][0] {
@@ -29,7 +41,7 @@ export const serviceBySlugQuery = groq`
     content,
     seo
   }
-`
+`;
 
 // Package Queries
 export const packagesQuery = groq`
@@ -44,7 +56,7 @@ export const packagesQuery = groq`
     popular,
     category
   }
-`
+`;
 
 export const packagesByCategory = groq`
   *[_type == "package" && category == $category] | order(popular desc, price asc) {
@@ -58,7 +70,7 @@ export const packagesByCategory = groq`
     popular,
     category
   }
-`
+`;
 
 export const popularPackagesQuery = groq`
   *[_type == "package" && popular == true] | order(price asc) {
@@ -72,7 +84,7 @@ export const popularPackagesQuery = groq`
     popular,
     category
   }
-`
+`;
 
 // Portfolio Queries
 export const portfolioQuery = groq`
@@ -95,7 +107,7 @@ export const portfolioQuery = groq`
     featured,
     "services": services[]->title
   }
-`
+`;
 
 export const portfolioBySlugQuery = groq`
   *[_type == "portfolio" && slug.current == $slug][0] {
@@ -123,7 +135,7 @@ export const portfolioBySlugQuery = groq`
     content,
     seo
   }
-`
+`;
 
 export const portfolioByCategoryQuery = groq`
   *[_type == "portfolio" && category == $category] | order(featured desc, completionDate desc) {
@@ -145,7 +157,7 @@ export const portfolioByCategoryQuery = groq`
     featured,
     "services": services[]->title
   }
-`
+`;
 
 export const featuredPortfolioQuery = groq`
   *[_type == "portfolio" && featured == true] | order(completionDate desc) [0...6] {
@@ -163,7 +175,7 @@ export const featuredPortfolioQuery = groq`
     },
     featured
   }
-`
+`;
 
 // Blog Queries
 export const blogPostsQuery = groq`
@@ -186,7 +198,7 @@ export const blogPostsQuery = groq`
     tags,
     featured
   }
-`
+`;
 
 export const blogPostBySlugQuery = groq`
   *[_type == "blogPost" && slug.current == $slug][0] {
@@ -210,7 +222,7 @@ export const blogPostBySlugQuery = groq`
     featured,
     seo
   }
-`
+`;
 
 export const featuredBlogPostsQuery = groq`
   *[_type == "blogPost" && featured == true && publishedAt < now()] | order(publishedAt desc) [0...3] {
@@ -231,7 +243,7 @@ export const featuredBlogPostsQuery = groq`
     category,
     tags
   }
-`
+`;
 
 export const blogPostsByCategoryQuery = groq`
   *[_type == "blogPost" && category == $category && publishedAt < now()] | order(publishedAt desc) {
@@ -253,7 +265,7 @@ export const blogPostsByCategoryQuery = groq`
     tags,
     featured
   }
-`
+`;
 
 // Testimonial Queries
 export const testimonialsQuery = groq`
@@ -273,7 +285,7 @@ export const testimonialsQuery = groq`
     featured,
     date
   }
-`
+`;
 
 export const featuredTestimonialsQuery = groq`
   *[_type == "testimonial" && featured == true] | order(date desc) [0...6] {
@@ -291,7 +303,7 @@ export const featuredTestimonialsQuery = groq`
     },
     date
   }
-`
+`;
 
 // FAQ Queries
 export const faqsQuery = groq`
@@ -303,7 +315,7 @@ export const faqsQuery = groq`
     order,
     featured
   }
-`
+`;
 
 export const faqsByCategoryQuery = groq`
   *[_type == "faq" && category == $category] | order(order asc, _createdAt asc) {
@@ -314,7 +326,7 @@ export const faqsByCategoryQuery = groq`
     order,
     featured
   }
-`
+`;
 
 export const featuredFaqsQuery = groq`
   *[_type == "faq" && featured == true] | order(order asc, _createdAt asc) [0...8] {
@@ -324,7 +336,7 @@ export const featuredFaqsQuery = groq`
     category,
     order
   }
-`
+`;
 
 // Combined Queries for Homepage
 export const homepageDataQuery = groq`
@@ -378,7 +390,7 @@ export const homepageDataQuery = groq`
     category
   }
 }
-`
+`;
 
 // Search Queries
 export const searchQuery = groq`
@@ -398,7 +410,7 @@ export const searchQuery = groq`
       _type == "service" => image.asset->url
     )
   }
-`
+`;
 
 // Sitemap Queries
 export const sitemapQuery = groq`
@@ -417,4 +429,4 @@ export const sitemapQuery = groq`
     "publishedAt": publishedAt
   }
 }
-`
+`;
