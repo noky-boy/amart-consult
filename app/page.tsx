@@ -1,15 +1,16 @@
-import Hero from "@/components/hero"
-import Services from "@/components/services"
-import Portfolio from "@/components/portfolio"
-import BlogPreview from "@/components/blog-preview"
-import PortalCTA from "@/components/portal-cta"
-import NewsletterSignup from "@/components/newsletter-signup"
-import ExitIntentPopup from "@/components/exit-intent-popup"
-import CoreServicesShowcase from "@/components/core-services-showcase"
-import { getHomepageData } from "@/sanity/lib/api"
+import Hero from "@/components/hero";
+import Services from "@/components/services";
+import Portfolio from "@/components/portfolio";
+import BlogPreview from "@/components/blog-preview";
+import PortalCTA from "@/components/portal-cta";
+import NewsletterSignup from "@/components/newsletter-signup";
+import ExitIntentPopup from "@/components/exit-intent-popup";
+import CoreServicesShowcase from "@/components/core-services-showcase";
+import Contact from "@/components/contact";
+import { getHomepageData } from "@/sanity/lib/api";
 
 export default async function HomePage() {
-  const homepageData = await getHomepageData()
+  const homepageData = await getHomepageData();
 
   return (
     <div className="min-h-screen bg-white">
@@ -23,8 +24,8 @@ export default async function HomePage() {
         </div>
       </section>
       <BlogPreview posts={homepageData.featuredBlogPosts} />
+      <Contact />
       <PortalCTA />
-      <ExitIntentPopup />
     </div>
-  )
+  );
 }

@@ -1,62 +1,91 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Menu, X, Phone, Mail, User } from "@/components/ui/icons"
-import Image from "next/image"
-import Link from "next/link"
-import WhatsAppConsultationForm from "./whatsapp-consultation-form"
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Menu, X, Phone, Mail, User } from "@/components/ui/icons";
+import Image from "next/image";
+import Link from "next/link";
+import WhatsAppConsultationForm from "./whatsapp-consultation-form";
 
 export default function Navigation() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [isWhatsAppFormOpen, setIsWhatsAppFormOpen] = useState(false)
-  const pathname = usePathname()
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isWhatsAppFormOpen, setIsWhatsAppFormOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollTop = window.scrollY
-      setIsScrolled(scrollTop > 50)
-    }
+      const scrollTop = window.scrollY;
+      setIsScrolled(scrollTop > 50);
+    };
 
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Add this new useEffect
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleNavClick = (href: string) => {
-    setIsMenuOpen(false)
-    if (href.startsWith("/")) {
+    setIsMenuOpen(false);
+
+    if (href.startsWith("#")) {
+      // Handle hash links (like #contact)
+      if (pathname === "/") {
+        // If we're on homepage, scroll to the element
+        setTimeout(() => {
+          const element = document.getElementById(href.substring(1));
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 100);
+      } else {
+        // If we're not on homepage, navigate to homepage with hash
+        window.location.href = "/" + href;
+      }
+    } else if (href.startsWith("/")) {
+      // Handle regular routes
       setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: "smooth" })
-      }, 100)
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 100);
     }
-  }
+  };
 
   const openWhatsAppForm = () => {
-    setIsWhatsAppFormOpen(true)
-    setIsMenuOpen(false)
-  }
+    setIsWhatsAppFormOpen(true);
+    setIsMenuOpen(false);
+  };
 
   const navItems = [
     { name: "Home", href: "/" },
-    { name: "Services", href: "#services" },
-    { name: "Portfolio", href: "#portfolio" },
+    { name: "Services", href: "/services" },
+    { name: "Portfolio", href: "/portfolio" },
     { name: "About", href: "/about" },
     { name: "Blog", href: "/blog" },
     { name: "Resources", href: "/resources" },
     { name: "Contact", href: "#contact" },
-  ]
+  ];
 
   const isActiveLink = (href: string) => {
+    if (!isMounted) return false; // Prevent hydration mismatch
+
     if (href === "/") {
-      return pathname === "/"
+      return pathname === "/";
     }
     if (href.startsWith("#")) {
-      return pathname === "/" && typeof window !== "undefined" && window.location.hash === href
+      return (
+        pathname === "/" &&
+        typeof window !== "undefined" &&
+        window.location.hash === href &&
+        document.getElementById(href.substring(1)) !== null
+      );
     }
-    return pathname.startsWith(href)
-  }
+    return pathname.startsWith(href);
+  };
 
   return (
     <>
@@ -79,7 +108,8 @@ export default function Navigation() {
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-sm">
-                <span className="text-terracotta">🏆</span> GIA Certified Architectural Firm
+                <span className="text-terracotta">🏆</span> GIA Certified
+                Architectural Firm
               </div>
               <a
                 href="https://linko.page/ry6zcs6o1qsu"
@@ -110,7 +140,11 @@ export default function Navigation() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
-            <Link href="/" className="flex-shrink-0 group cursor-pointer" onClick={() => handleNavClick("/")}>
+            <Link
+              href="/"
+              className="flex-shrink-0 group cursor-pointer"
+              onClick={() => handleNavClick("/")}
+            >
               <Image
                 src="/images/amart-logo.png"
                 alt="Amart Consult - Home"
@@ -134,17 +168,23 @@ export default function Navigation() {
                             ? "text-indigo-deep bg-indigo-deep/5"
                             : "text-gray-700 hover:text-indigo-deep"
                         }`}
-                        aria-current={isActiveLink(item.href) ? "page" : undefined}
+                        aria-current={
+                          isActiveLink(item.href) ? "page" : undefined
+                        }
                       >
                         <span className="relative z-10">{item.name}</span>
                         <div
                           className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-terracotta to-indigo-deep transition-all duration-300 ${
-                            isActiveLink(item.href) ? "w-full" : "w-0 group-hover:w-full"
+                            isActiveLink(item.href)
+                              ? "w-full"
+                              : "w-0 group-hover:w-full"
                           }`}
                         ></div>
                         <div
                           className={`absolute inset-0 bg-gradient-to-r from-terracotta/5 to-indigo-deep/5 rounded-lg transition-opacity duration-300 ${
-                            isActiveLink(item.href) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                            isActiveLink(item.href)
+                              ? "opacity-100"
+                              : "opacity-0 group-hover:opacity-100"
                           }`}
                         ></div>
                       </Link>
@@ -191,14 +231,24 @@ export default function Navigation() {
                 className="relative p-2 hover:bg-gray-100 transition-colors duration-300 focus-visible:ring-enhanced"
                 aria-expanded={isMenuOpen}
                 aria-controls="mobile-menu"
-                aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-label={
+                  isMenuOpen ? "Close navigation menu" : "Open navigation menu"
+                }
               >
                 <div className="relative w-6 h-6">
                   <Menu
-                    className={`h-6 w-6 absolute transition-all duration-300 ${isMenuOpen ? "opacity-0 rotate-180" : "opacity-100 rotate-0"}`}
+                    className={`h-6 w-6 absolute transition-all duration-300 ${
+                      isMenuOpen
+                        ? "opacity-0 rotate-180"
+                        : "opacity-100 rotate-0"
+                    }`}
                   />
                   <X
-                    className={`h-6 w-6 absolute transition-all duration-300 ${isMenuOpen ? "opacity-100 rotate-0" : "opacity-0 -rotate-180"}`}
+                    className={`h-6 w-6 absolute transition-all duration-300 ${
+                      isMenuOpen
+                        ? "opacity-100 rotate-0"
+                        : "opacity-0 -rotate-180"
+                    }`}
                   />
                 </div>
               </Button>
@@ -208,7 +258,9 @@ export default function Navigation() {
 
         <div
           className={`lg:hidden transition-all duration-300 ease-in-out ${
-            isMenuOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0 overflow-hidden"
+            isMenuOpen
+              ? "max-h-screen opacity-100"
+              : "max-h-0 opacity-0 overflow-hidden"
           }`}
           id="mobile-menu"
         >
@@ -265,7 +317,10 @@ export default function Navigation() {
       <div className="h-10 lg:h-10"></div>
       <div className="h-20"></div>
 
-      <WhatsAppConsultationForm isOpen={isWhatsAppFormOpen} onClose={() => setIsWhatsAppFormOpen(false)} />
+      <WhatsAppConsultationForm
+        isOpen={isWhatsAppFormOpen}
+        onClose={() => setIsWhatsAppFormOpen(false)}
+      />
     </>
-  )
+  );
 }
