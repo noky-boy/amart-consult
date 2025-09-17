@@ -1,11 +1,23 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, Calculator, Users, MessageSquare, ArrowRight } from "@/components/ui/icons"
-import WhatsAppConsultationForm from "./whatsapp-consultation-form"
-import { useState } from "react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Building2,
+  Calculator,
+  Users,
+  MessageSquare,
+  ArrowRight,
+} from "@/components/ui/icons";
+import WhatsAppConsultationForm from "./whatsapp-consultation-form";
+import { useState } from "react";
 
 const coreServices = [
   {
@@ -14,7 +26,12 @@ const coreServices = [
       "From concept to construction-ready plans, we create innovative designs that blend functionality with aesthetic appeal.",
     icon: Building2,
     href: "/services/architectural-designs",
-    features: ["3D Visualizations", "Construction Drawings", "Interior Design", "Sustainable Solutions"],
+    features: [
+      "3D Visualizations",
+      "Construction Drawings",
+      "Interior Design",
+      "Sustainable Solutions",
+    ],
     color: "from-blue-500 to-indigo-600",
   },
   {
@@ -23,7 +40,12 @@ const coreServices = [
       "Accurate cost estimation and material quantification to ensure your project stays within budget from start to finish.",
     icon: Calculator,
     href: "/services/bill-of-quantities",
-    features: ["Cost Estimation", "Material Lists", "Budget Planning", "Value Engineering"],
+    features: [
+      "Cost Estimation",
+      "Material Lists",
+      "Budget Planning",
+      "Value Engineering",
+    ],
     color: "from-emerald-500 to-teal-600",
   },
   {
@@ -32,7 +54,12 @@ const coreServices = [
       "End-to-end project oversight ensuring quality, timeline adherence, and seamless coordination of all stakeholders.",
     icon: Users,
     href: "/services/construction-management",
-    features: ["Project Oversight", "Quality Control", "Timeline Management", "Contractor Coordination"],
+    features: [
+      "Project Oversight",
+      "Quality Control",
+      "Timeline Management",
+      "Contractor Coordination",
+    ],
     color: "from-orange-500 to-red-600",
   },
   {
@@ -41,29 +68,36 @@ const coreServices = [
       "Expert guidance and strategic advice to help you make informed decisions throughout your construction journey.",
     icon: MessageSquare,
     href: "/services/project-consultation",
-    features: ["Expert Advice", "Feasibility Studies", "Risk Assessment", "Strategic Planning"],
+    features: [
+      "Expert Advice",
+      "Feasibility Studies",
+      "Risk Assessment",
+      "Strategic Planning",
+    ],
     color: "from-purple-500 to-pink-600",
   },
-]
+];
 
 export default function CoreServicesShowcase() {
-  const [isWhatsAppFormOpen, setIsWhatsAppFormOpen] = useState(false)
+  const [isWhatsAppFormOpen, setIsWhatsAppFormOpen] = useState(false);
 
   return (
     <>
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-6">Our Core Services</h2>
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-6">
+              Our Core Services
+            </h2>
             <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-              Comprehensive architectural and construction services tailored to bring your vision to life with
-              precision, quality, and innovation.
+              Comprehensive architectural and construction services tailored to
+              bring your vision to life with precision, quality, and innovation.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
             {coreServices.map((service, index) => {
-              const IconComponent = service.icon
+              const IconComponent = service.icon;
               return (
                 <Card
                   key={service.title}
@@ -83,13 +117,18 @@ export default function CoreServicesShowcase() {
                     <CardTitle className="text-xl font-serif text-indigo-deep mb-3 group-hover:text-indigo-deep-hover transition-colors duration-300">
                       {service.title}
                     </CardTitle>
-                    <CardDescription className="text-gray-600 leading-relaxed">{service.description}</CardDescription>
+                    <CardDescription className="text-gray-600 leading-relaxed">
+                      {service.description}
+                    </CardDescription>
                   </CardHeader>
 
                   <CardContent className="space-y-4 relative z-10">
                     <div className="space-y-2">
                       {service.features.map((feature, featureIndex) => (
-                        <div key={featureIndex} className="flex items-center text-sm text-gray-600">
+                        <div
+                          key={featureIndex}
+                          className="flex items-center text-sm text-gray-600"
+                        >
                           <div
                             className={`w-2 h-2 rounded-full bg-gradient-to-r ${service.color} mr-3 flex-shrink-0`}
                           />
@@ -109,16 +148,18 @@ export default function CoreServicesShowcase() {
                     </Link>
                   </CardContent>
                 </Card>
-              )
+              );
             })}
           </div>
 
           {/* Call-to-Action Section */}
           <div className="bg-gradient-to-r from-indigo-deep to-indigo-deep-hover rounded-2xl p-8 md:p-12 text-center text-white shadow-2xl">
-            <h3 className="text-3xl md:text-4xl font-serif font-bold mb-4">Ready to Start Your Project?</h3>
+            <h3 className="text-3xl md:text-4xl font-serif font-bold mb-4">
+              Ready to Start Your Project?
+            </h3>
             <p className="text-xl text-sand/90 mb-8 max-w-2xl mx-auto">
-              Let's discuss how our comprehensive services can bring your architectural vision to life with precision
-              and excellence.
+              Let's discuss how our comprehensive services can bring your
+              architectural vision to life with precision and excellence.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
@@ -131,19 +172,22 @@ export default function CoreServicesShowcase() {
               <Link href="/portfolio">
                 <Button
                   size="lg"
-                  variant="outline"
-                  className="border-white text-white hover:bg-white hover:text-indigo-deep px-8 py-4 text-lg font-semibold transition-all duration-300 bg-transparent"
+                  className="bg-transparent border-2 border-indigo-900 text-indigo-900 hover:bg-indigo-900 hover:text-white px-8 py-4 text-lg font-semibold transition-all duration-300"
                 >
                   View Our Work
                 </Button>
               </Link>
+              s
             </div>
           </div>
         </div>
       </section>
 
       {/* WhatsApp consultation form */}
-      <WhatsAppConsultationForm isOpen={isWhatsAppFormOpen} onClose={() => setIsWhatsAppFormOpen(false)} />
+      <WhatsAppConsultationForm
+        isOpen={isWhatsAppFormOpen}
+        onClose={() => setIsWhatsAppFormOpen(false)}
+      />
     </>
-  )
+  );
 }
