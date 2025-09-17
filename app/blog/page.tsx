@@ -1,129 +1,80 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import Link from "next/link"
-import { Search, Calendar, User, ArrowRight, Filter } from "@/components/ui/icons"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import NewsletterSignup from "@/components/newsletter-signup"
-import OptimizedImage from "@/components/optimized-image"
+import { useState, useMemo, use } from "react";
+import Link from "next/link";
+import {
+  Search,
+  Calendar,
+  User,
+  ArrowRight,
+  Filter,
+} from "@/components/ui/icons";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import NewsletterSignup from "@/components/newsletter-signup";
+import OptimizedImage from "@/components/optimized-image";
+import { client } from "@/sanity/lib/client";
+import { blogPostsQuery } from "@/sanity/lib/queries";
+import type { BlogPost } from "@/sanity/lib/types";
 
-// Sample blog data
-const blogPosts = [
-  {
-    id: 1,
-    title: "5 Essential Considerations for Building in Ghana's Climate",
-    excerpt:
-      "Discover the key factors that make buildings resilient and comfortable in Ghana's tropical climate, from ventilation design to material selection.",
-    content: "Building in Ghana's tropical climate requires careful consideration of environmental factors...",
-    category: "Design Tips",
-    author: "Kwame Asante",
-    date: "2024-01-15",
-    readTime: "8 min read",
-    image: "/placeholder.svg?height=400&width=600",
-    featured: true,
-    tags: ["Climate Design", "Tropical Architecture", "Ventilation"],
-  },
-  {
-    id: 2,
-    title: "Navigating Ghana's Building Permit Process: A Complete Guide",
-    excerpt:
-      "A comprehensive walkthrough of obtaining building permits in Ghana, including timelines, documentation, and common pitfalls to avoid.",
-    content: "Understanding Ghana's building permit process is crucial for any construction project...",
-    category: "Construction Guidance",
-    author: "Ama Osei",
-    date: "2024-01-10",
-    readTime: "12 min read",
-    image: "/placeholder.svg?height=400&width=600",
-    featured: false,
-    tags: ["Permits", "Legal", "Construction Process"],
-  },
-  {
-    id: 3,
-    title: "Design-to-Build vs. Traditional Approach: Why It Matters",
-    excerpt:
-      "Explore the advantages of integrated design-build services and how they can save time, money, and ensure better project outcomes.",
-    content: "The design-to-build approach represents a paradigm shift in construction...",
-    category: "Industry Insights",
-    author: "Kofi Mensah",
-    date: "2024-01-05",
-    readTime: "6 min read",
-    image: "/placeholder.svg?height=400&width=600",
-    featured: true,
-    tags: ["Design-Build", "Project Management", "Efficiency"],
-  },
-  {
-    id: 4,
-    title: "Sustainable Materials for West African Construction",
-    excerpt:
-      "Learn about eco-friendly building materials that perform well in West Africa's climate while supporting local economies.",
-    content: "Sustainability in construction goes beyond environmental impact...",
-    category: "Design Tips",
-    author: "Akosua Darko",
-    date: "2023-12-28",
-    readTime: "10 min read",
-    image: "/placeholder.svg?height=400&width=600",
-    featured: false,
-    tags: ["Sustainability", "Local Materials", "Eco-Friendly"],
-  },
-  {
-    id: 5,
-    title: "Case Study: Modern Villa in East Legon",
-    excerpt:
-      "Take a detailed look at our award-winning residential project that seamlessly blends contemporary design with traditional Ghanaian elements.",
-    content: "This stunning villa in East Legon represents the perfect marriage of modern luxury...",
-    category: "Project Spotlights",
-    author: "Kwame Asante",
-    date: "2023-12-20",
-    readTime: "15 min read",
-    image: "/placeholder.svg?height=400&width=600",
-    featured: true,
-    tags: ["Residential", "Modern Design", "Case Study"],
-  },
-  {
-    id: 6,
-    title: "Working with International Clients: Cultural Considerations",
-    excerpt:
-      "Best practices for architects working with diaspora clients and international investors in Ghana's growing construction market.",
-    content: "Ghana's growing economy has attracted significant international investment...",
-    category: "International Clients",
-    author: "Ama Osei",
-    date: "2023-12-15",
-    readTime: "9 min read",
-    image: "/placeholder.svg?height=400&width=600",
-    featured: false,
-    tags: ["International", "Cultural Sensitivity", "Client Relations"],
-  },
-]
+async function getBlogPosts(): Promise<BlogPost[]> {
+  return await client.fetch(blogPostsQuery);
+}
 
+// Categories derived from your Sanity schema
 const categories = [
   "All",
-  "Design Tips",
-  "Construction Guidance",
-  "Project Spotlights",
-  "Industry Insights",
-  "International Clients",
-]
+  "architecture",
+  "construction",
+  "design",
+  "tips",
+  "industry-news",
+];
 
 export default function BlogPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("All")
-  const [showFilters, setShowFilters] = useState(false)
+  // Fetch blog posts using React.use()
+  const blogPosts = use(getBlogPosts());
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [showFilters, setShowFilters] = useState(false);
 
   const filteredPosts = useMemo(() => {
     return blogPosts.filter((post) => {
       const matchesSearch =
         post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         post.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-      const matchesCategory = selectedCategory === "All" || post.category === selectedCategory
-      return matchesSearch && matchesCategory
-    })
-  }, [searchTerm, selectedCategory])
+        (post.tags &&
+          post.tags.some((tag) =>
+            tag.toLowerCase().includes(searchTerm.toLowerCase())
+          ));
+      const matchesCategory =
+        selectedCategory === "All" || post.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [blogPosts, searchTerm, selectedCategory]);
 
-  const featuredPosts = filteredPosts.filter((post) => post.featured)
-  const regularPosts = filteredPosts.filter((post) => !post.featured)
+  const featuredPosts = filteredPosts.filter((post) => post.featured);
+  const regularPosts = filteredPosts.filter((post) => !post.featured);
+
+  // Calculate read time helper function
+  const calculateReadTime = (content: any[]) => {
+    if (!content) return "5 min read";
+    const wordsPerMinute = 200;
+    const textContent =
+      content
+        ?.map((block) =>
+          block._type === "block"
+            ? block.children?.map((child: any) => child.text).join(" ")
+            : ""
+        )
+        .join(" ") || "";
+
+    const wordCount = textContent.split(" ").length;
+    const readTime = Math.ceil(wordCount / wordsPerMinute);
+    return `${readTime} min read`;
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -131,9 +82,12 @@ export default function BlogPage() {
       <section className="bg-gradient-to-br from-indigo-deep via-indigo-deep/95 to-indigo-deep/90 text-white py-16 pt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6">Architecture Insights</h1>
+            <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6">
+              Architecture Insights
+            </h1>
             <p className="text-xl text-indigo-100 max-w-3xl mx-auto">
-              Expert perspectives on design, construction, and architectural innovation in Ghana and beyond
+              Expert perspectives on design, construction, and architectural
+              innovation in Ghana and beyond
             </p>
           </div>
         </div>
@@ -156,7 +110,11 @@ export default function BlogPage() {
                     className="pl-10"
                   />
                 </div>
-                <Button variant="outline" onClick={() => setShowFilters(!showFilters)} className="sm:w-auto">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="sm:w-auto"
+                >
                   <Filter className="h-4 w-4 mr-2" />
                   Filters
                 </Button>
@@ -168,12 +126,21 @@ export default function BlogPage() {
                   {categories.map((category) => (
                     <Button
                       key={category}
-                      variant={selectedCategory === category ? "default" : "outline"}
+                      variant={
+                        selectedCategory === category ? "default" : "outline"
+                      }
                       size="sm"
                       onClick={() => setSelectedCategory(category)}
-                      className={selectedCategory === category ? "bg-indigo-deep hover:bg-indigo-deep/90" : ""}
+                      className={
+                        selectedCategory === category
+                          ? "bg-indigo-deep hover:bg-indigo-deep/90"
+                          : ""
+                      }
                     >
-                      {category}
+                      {category === "All"
+                        ? "All"
+                        : category.charAt(0).toUpperCase() +
+                          category.slice(1).replace("-", " ")}
                     </Button>
                   ))}
                 </div>
@@ -183,14 +150,19 @@ export default function BlogPage() {
             {/* Featured Posts */}
             {featuredPosts.length > 0 && (
               <div className="mb-12">
-                <h2 className="text-2xl font-serif font-bold text-gray-900 mb-6">Featured Articles</h2>
+                <h2 className="text-2xl font-serif font-bold text-gray-900 mb-6">
+                  Featured Articles
+                </h2>
                 <div className="grid md:grid-cols-2 gap-6">
                   {featuredPosts.map((post) => (
-                    <Card key={post.id} className="group hover:shadow-lg transition-shadow duration-300">
+                    <Card
+                      key={post._id}
+                      className="group hover:shadow-lg transition-shadow duration-300"
+                    >
                       <div className="relative overflow-hidden rounded-t-lg">
                         <OptimizedImage
-                          src={post.image || "/placeholder.svg"}
-                          alt={post.title}
+                          src={post.featuredImage?.url || "/placeholder.svg"}
+                          alt={post.featuredImage?.alt || post.title}
                           aspectRatio="4:3"
                           objectFit="cover"
                           className="w-full group-hover:scale-105 transition-transform duration-300"
@@ -200,24 +172,33 @@ export default function BlogPage() {
                         />
                         <div className="absolute top-4 left-4">
                           <span className="bg-terracotta text-white px-3 py-1 rounded-full text-sm font-medium">
-                            {post.category}
+                            {post.category
+                              ? post.category.charAt(0).toUpperCase() +
+                                post.category.slice(1).replace("-", " ")
+                              : "Article"}
                           </span>
                         </div>
                       </div>
                       <CardContent className="p-6">
                         <div className="flex items-center text-sm text-gray-500 mb-3">
                           <Calendar className="h-4 w-4 mr-1" />
-                          <span className="mr-4">{new Date(post.date).toLocaleDateString()}</span>
+                          <span className="mr-4">
+                            {new Date(post.publishedAt).toLocaleDateString()}
+                          </span>
                           <User className="h-4 w-4 mr-1" />
-                          <span className="mr-4">{post.author}</span>
-                          <span>{post.readTime}</span>
+                          <span className="mr-4">
+                            {post.author?.name || "Amart Team"}
+                          </span>
+                          <span>{calculateReadTime(post.content)}</span>
                         </div>
                         <h3 className="text-xl font-serif font-bold text-gray-900 mb-3 group-hover:text-indigo-deep transition-colors">
                           {post.title}
                         </h3>
-                        <p className="text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
+                        <p className="text-gray-600 mb-4 line-clamp-3">
+                          {post.excerpt}
+                        </p>
                         <Link
-                          href={`/blog/${post.id}`}
+                          href={`/blog/${post.slug.current}`}
                           className="inline-flex items-center text-indigo-deep hover:text-terracotta font-medium transition-colors"
                         >
                           Read More
@@ -233,16 +214,23 @@ export default function BlogPage() {
             {/* Regular Posts */}
             {regularPosts.length > 0 && (
               <div>
-                <h2 className="text-2xl font-serif font-bold text-gray-900 mb-6">Latest Articles</h2>
+                <h2 className="text-2xl font-serif font-bold text-gray-900 mb-6">
+                  Latest Articles
+                </h2>
                 <div className="space-y-6">
                   {regularPosts.map((post) => (
-                    <Card key={post.id} className="group hover:shadow-lg transition-shadow duration-300">
+                    <Card
+                      key={post._id}
+                      className="group hover:shadow-lg transition-shadow duration-300"
+                    >
                       <div className="flex flex-col sm:flex-row">
                         <div className="sm:w-1/3">
                           <div className="relative overflow-hidden rounded-l-lg">
                             <OptimizedImage
-                              src={post.image || "/placeholder.svg"}
-                              alt={post.title}
+                              src={
+                                post.featuredImage?.url || "/placeholder.svg"
+                              }
+                              alt={post.featuredImage?.alt || post.title}
                               aspectRatio="4:3"
                               objectFit="cover"
                               className="w-full group-hover:scale-105 transition-transform duration-300"
@@ -252,7 +240,10 @@ export default function BlogPage() {
                             />
                             <div className="absolute top-4 left-4">
                               <span className="bg-terracotta text-white px-3 py-1 rounded-full text-sm font-medium">
-                                {post.category}
+                                {post.category
+                                  ? post.category.charAt(0).toUpperCase() +
+                                    post.category.slice(1).replace("-", " ")
+                                  : "Article"}
                               </span>
                             </div>
                           </div>
@@ -260,24 +251,33 @@ export default function BlogPage() {
                         <CardContent className="sm:w-2/3 p-6">
                           <div className="flex items-center text-sm text-gray-500 mb-3">
                             <Calendar className="h-4 w-4 mr-1" />
-                            <span className="mr-4">{new Date(post.date).toLocaleDateString()}</span>
+                            <span className="mr-4">
+                              {new Date(post.publishedAt).toLocaleDateString()}
+                            </span>
                             <User className="h-4 w-4 mr-1" />
-                            <span className="mr-4">{post.author}</span>
-                            <span>{post.readTime}</span>
+                            <span className="mr-4">
+                              {post.author?.name || "Amart Team"}
+                            </span>
+                            <span>{calculateReadTime(post.content)}</span>
                           </div>
                           <h3 className="text-xl font-serif font-bold text-gray-900 mb-3 group-hover:text-indigo-deep transition-colors">
                             {post.title}
                           </h3>
                           <p className="text-gray-600 mb-4">{post.excerpt}</p>
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {post.tags.map((tag) => (
-                              <span key={tag} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm">
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
+                          {post.tags && post.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-4">
+                              {post.tags.map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                           <Link
-                            href={`/blog/${post.id}`}
+                            href={`/blog/${post.slug.current}`}
                             className="inline-flex items-center text-indigo-deep hover:text-terracotta font-medium transition-colors"
                           >
                             Read More
@@ -293,11 +293,13 @@ export default function BlogPage() {
 
             {filteredPosts.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No articles found matching your criteria.</p>
+                <p className="text-gray-500 text-lg">
+                  No articles found matching your criteria.
+                </p>
                 <Button
                   onClick={() => {
-                    setSearchTerm("")
-                    setSelectedCategory("All")
+                    setSearchTerm("");
+                    setSelectedCategory("All");
                   }}
                   className="mt-4"
                 >
@@ -316,20 +318,29 @@ export default function BlogPage() {
               {/* Popular Categories */}
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="text-xl font-serif font-bold text-gray-900 mb-4">Popular Categories</h3>
+                  <h3 className="text-xl font-serif font-bold text-gray-900 mb-4">
+                    Popular Categories
+                  </h3>
                   <div className="space-y-2">
                     {categories.slice(1).map((category) => {
-                      const count = blogPosts.filter((post) => post.category === category).length
+                      const count = blogPosts.filter(
+                        (post) => post.category === category
+                      ).length;
                       return (
                         <button
                           key={category}
                           onClick={() => setSelectedCategory(category)}
                           className="flex justify-between items-center w-full text-left p-2 rounded hover:bg-gray-50 transition-colors"
                         >
-                          <span className="text-gray-700">{category}</span>
-                          <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">{count}</span>
+                          <span className="text-gray-700">
+                            {category.charAt(0).toUpperCase() +
+                              category.slice(1).replace("-", " ")}
+                          </span>
+                          <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                            {count}
+                          </span>
                         </button>
-                      )
+                      );
                     })}
                   </div>
                 </CardContent>
@@ -338,14 +349,20 @@ export default function BlogPage() {
               {/* Recent Posts */}
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="text-xl font-serif font-bold text-gray-900 mb-4">Recent Posts</h3>
+                  <h3 className="text-xl font-serif font-bold text-gray-900 mb-4">
+                    Recent Posts
+                  </h3>
                   <div className="space-y-4">
                     {blogPosts.slice(0, 3).map((post) => (
-                      <Link key={post.id} href={`/blog/${post.id}`} className="block group">
+                      <Link
+                        key={post._id}
+                        href={`/blog/${post.slug.current}`}
+                        className="block group"
+                      >
                         <div className="flex gap-3">
                           <OptimizedImage
-                            src={post.image || "/placeholder.svg"}
-                            alt={post.title}
+                            src={post.featuredImage?.url || "/placeholder.svg"}
+                            alt={post.featuredImage?.alt || post.title}
                             width={80}
                             height={60}
                             aspectRatio="4:3"
@@ -358,7 +375,9 @@ export default function BlogPage() {
                             <h4 className="font-medium text-gray-900 group-hover:text-indigo-deep transition-colors line-clamp-2 text-sm">
                               {post.title}
                             </h4>
-                            <p className="text-xs text-gray-500 mt-1">{new Date(post.date).toLocaleDateString()}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {new Date(post.publishedAt).toLocaleDateString()}
+                            </p>
                           </div>
                         </div>
                       </Link>
@@ -371,5 +390,5 @@ export default function BlogPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

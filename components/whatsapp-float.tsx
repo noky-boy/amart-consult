@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { MessageCircle, X } from "@/components/ui/icons"
+import { useState } from "react";
+import { MessageCircle, X } from "@/components/ui/icons";
 
 interface WhatsAppMessage {
-  text: string
-  context: string
+  text: string;
+  context: string;
 }
 
 export default function WhatsAppFloat() {
-  const [showOptions, setShowOptions] = useState(false)
+  const [showOptions, setShowOptions] = useState(false);
 
   const whatsappMessages: WhatsAppMessage[] = [
     {
@@ -28,25 +28,28 @@ export default function WhatsAppFloat() {
       text: "Hi! I need help with commercial building design. Can we discuss?",
       context: "Commercial Project",
     },
-  ]
+  ];
 
   const handleWhatsAppClick = (message?: string) => {
-    const phoneNumber = "233543543356" // +233 54 354 3356
-    const defaultMessage = "Hello! I'm interested in Amart Consult's architectural services."
-    const finalMessage = message || defaultMessage
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(finalMessage)}`
+    const phoneNumber = "233543543356"; // +233 54 354 3356
+    const defaultMessage =
+      "Hello! I'm interested in Amart Consult's architectural services.";
+    const finalMessage = message || defaultMessage;
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
+      finalMessage
+    )}`;
 
     // Track click for analytics
     if (typeof window !== "undefined" && window.gtag) {
       window.gtag("event", "whatsapp_click", {
         event_category: "engagement",
         event_label: message ? "contextual_message" : "default_message",
-      })
+      });
     }
 
-    window.open(whatsappUrl, "_blank")
-    setShowOptions(false)
-  }
+    window.open(whatsappUrl, "_blank");
+    setShowOptions(false);
+  };
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
@@ -54,7 +57,9 @@ export default function WhatsAppFloat() {
       {showOptions && (
         <div className="absolute bottom-16 right-0 bg-white rounded-lg shadow-xl border border-gray-200 p-4 w-80 mb-2">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-indigo-deep text-sm">Quick Messages</h3>
+            <h3 className="font-semibold text-indigo-deep text-sm">
+              Quick Messages
+            </h3>
             <button
               onClick={() => setShowOptions(false)}
               className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -70,8 +75,12 @@ export default function WhatsAppFloat() {
                 onClick={() => handleWhatsAppClick(msg.text)}
                 className="w-full text-left p-3 rounded-lg border border-gray-100 hover:border-green-200 hover:bg-green-50 transition-all duration-200 group"
               >
-                <div className="font-medium text-sm text-indigo-deep group-hover:text-green-700">{msg.context}</div>
-                <div className="text-xs text-gray-600 mt-1 line-clamp-2">{msg.text}</div>
+                <div className="font-medium text-sm text-indigo-deep group-hover:text-green-700">
+                  {msg.context}
+                </div>
+                <div className="text-xs text-gray-600 mt-1 line-clamp-2">
+                  {msg.text}
+                </div>
               </button>
             ))}
           </div>
@@ -87,9 +96,10 @@ export default function WhatsAppFloat() {
         </div>
       )}
 
-      {/* Main WhatsApp Button */}
+      {/* Main WhatsApp Button  */}
       <div className="relative">
         <button
+          suppressHydrationWarning={true} // Add this line
           onClick={() => setShowOptions(!showOptions)}
           className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-110 group"
           aria-label="Contact us on WhatsApp"
@@ -99,7 +109,6 @@ export default function WhatsAppFloat() {
 
         {/* Pulse animation */}
         <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-20"></div>
-
         {/* Tooltip */}
         <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
           Chat with us on WhatsApp
@@ -107,5 +116,5 @@ export default function WhatsAppFloat() {
         </div>
       </div>
     </div>
-  )
+  );
 }

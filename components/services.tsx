@@ -1,21 +1,37 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Check, Clock, FileText, Users, Building2, Star } from "@/components/ui/icons"
-import WhatsAppConsultationForm from "./whatsapp-consultation-form"
-import type { ServicePackage } from "@/sanity/lib/types"
-import { formatPrice } from "@/lib/sanity-utils"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Check,
+  Clock,
+  FileText,
+  Users,
+  Building2,
+  Star,
+} from "@/components/ui/icons";
+import WhatsAppConsultationForm from "./whatsapp-consultation-form";
+import type { ServicePackage } from "@/sanity/lib/types";
+import { formatPrice } from "@/lib/sanity-utils";
 
 interface ServicesProps {
-  packages?: ServicePackage[]
+  packages?: ServicePackage[];
 }
 
 export default function Services({ packages = [] }: ServicesProps) {
-  const [selectedType, setSelectedType] = useState<"residential" | "commercial">("residential")
-  const [isWhatsAppFormOpen, setIsWhatsAppFormOpen] = useState(false)
+  const [selectedType, setSelectedType] = useState<
+    "residential" | "commercial"
+  >("residential");
+  const [isWhatsAppFormOpen, setIsWhatsAppFormOpen] = useState(false);
 
   const services =
     packages.length > 0
@@ -24,8 +40,12 @@ export default function Services({ packages = [] }: ServicesProps) {
           title: pkg.name,
           subtitle: pkg.description.substring(0, 50) + "...",
           duration: "2-4 weeks", // This could be added to CMS schema
-          priceResidential: pkg.price ? formatPrice(pkg.price, pkg.currency) : "Contact for quote",
-          priceCommercial: pkg.price ? formatPrice(pkg.price * 2, pkg.currency) : "Contact for quote",
+          priceResidential: pkg.price
+            ? formatPrice(pkg.price, pkg.currency)
+            : "Contact for quote",
+          priceCommercial: pkg.price
+            ? formatPrice(pkg.price * 2, pkg.currency)
+            : "Contact for quote",
           icon: index === 0 ? FileText : index === 1 ? Building2 : Users,
           popular: pkg.popular,
           deliverables: pkg.features || [],
@@ -97,20 +117,24 @@ export default function Services({ packages = [] }: ServicesProps) {
             description:
               "End-to-end project management from initial design through final construction handover, ensuring seamless execution.",
           },
-        ]
+        ];
 
   return (
     <section className="py-20 bg-gradient-to-b from-white via-sand-light/30 to-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-indigo-deep mb-6">Our Services</h2>
+          <h2 className="text-4xl md:text-5xl font-serif font-bold text-indigo-deep mb-6">
+            Our Services
+          </h2>
           <p className="text-xl text-gray-600 max-w-4xl mx-auto mb-10 leading-relaxed">
-            Choose from our comprehensive service packages designed to meet your architectural needs, from initial
-            concept development to complete project delivery.
+            Choose from our comprehensive service packages designed to meet your
+            architectural needs, from initial concept development to complete
+            project delivery.
           </p>
 
           <div className="inline-flex bg-sand-light rounded-xl p-1.5 mb-12 shadow-sm">
             <button
+              suppressHydrationWarning={true}
               onClick={() => setSelectedType("residential")}
               className={`px-8 py-3 rounded-lg font-semibold transition-all duration-300 ${
                 selectedType === "residential"
@@ -121,6 +145,7 @@ export default function Services({ packages = [] }: ServicesProps) {
               Residential
             </button>
             <button
+              suppressHydrationWarning={true}
               onClick={() => setSelectedType("commercial")}
               className={`px-8 py-3 rounded-lg font-semibold transition-all duration-300 ${
                 selectedType === "commercial"
@@ -135,8 +160,11 @@ export default function Services({ packages = [] }: ServicesProps) {
 
         <div className="grid md:grid-cols-3 gap-8 mb-16">
           {services.map((service) => {
-            const IconComponent = service.icon
-            const price = selectedType === "residential" ? service.priceResidential : service.priceCommercial
+            const IconComponent = service.icon;
+            const price =
+              selectedType === "residential"
+                ? service.priceResidential
+                : service.priceCommercial;
 
             return (
               <Card
@@ -161,7 +189,9 @@ export default function Services({ packages = [] }: ServicesProps) {
                     }`}
                   >
                     <IconComponent
-                      className={`h-10 w-10 ${service.popular ? "text-terracotta" : "text-indigo-deep"}`}
+                      className={`h-10 w-10 ${
+                        service.popular ? "text-terracotta" : "text-indigo-deep"
+                      }`}
                     />
                   </div>
                   <CardTitle className="text-2xl font-serif text-indigo-deep mb-3 text-center">
@@ -178,7 +208,9 @@ export default function Services({ packages = [] }: ServicesProps) {
                       service.popular ? "bg-terracotta/5" : "bg-sand-light/50"
                     }`}
                   >
-                    <div className="text-3xl font-bold text-indigo-deep mb-2 text-center break-words">{price}</div>
+                    <div className="text-3xl font-bold text-indigo-deep mb-2 text-center break-words">
+                      {price}
+                    </div>
                     <div className="flex items-center justify-center text-sm text-gray-600">
                       <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
                       <span className="text-center">{service.duration}</span>
@@ -186,18 +218,29 @@ export default function Services({ packages = [] }: ServicesProps) {
                   </div>
 
                   {/* Description */}
-                  <p className="text-gray-600 leading-relaxed text-center">{service.description}</p>
+                  <p className="text-gray-600 leading-relaxed text-center">
+                    {service.description}
+                  </p>
 
                   <div className="bg-sand-light/60 p-4 rounded-xl text-center">
-                    <p className="font-semibold text-indigo-deep mb-2 text-center">Best for:</p>
-                    <p className="text-gray-700 text-center">{service.bestFor}</p>
+                    <p className="font-semibold text-indigo-deep mb-2 text-center">
+                      Best for:
+                    </p>
+                    <p className="text-gray-700 text-center">
+                      {service.bestFor}
+                    </p>
                   </div>
 
                   <div>
-                    <p className="font-semibold text-indigo-deep mb-3 text-center">What's included:</p>
+                    <p className="font-semibold text-indigo-deep mb-3 text-center">
+                      What's included:
+                    </p>
                     <ul className="space-y-2">
                       {service.deliverables.slice(0, 4).map((item, index) => (
-                        <li key={index} className="flex items-start text-gray-600">
+                        <li
+                          key={index}
+                          className="flex items-start text-gray-600"
+                        >
                           <Check className="h-5 w-5 text-terracotta mr-3 mt-0.5 flex-shrink-0" />
                           <span className="break-words">{item}</span>
                         </li>
@@ -223,23 +266,32 @@ export default function Services({ packages = [] }: ServicesProps) {
                   </Button>
                 </CardFooter>
               </Card>
-            )
+            );
           })}
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-sand/20">
           <div className="bg-gradient-to-r from-indigo-deep to-indigo-deep-hover text-white p-8">
-            <h3 className="text-2xl font-serif font-bold text-center">Service Comparison</h3>
-            <p className="text-center text-sand/90 mt-2">Compare what's included in each package</p>
+            <h3 className="text-2xl font-serif font-bold text-center">
+              Service Comparison
+            </h3>
+            <p className="text-center text-sand/90 mt-2">
+              Compare what's included in each package
+            </p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-sand-light/50">
                 <tr>
-                  <th className="text-left p-6 font-semibold text-indigo-deep">Features</th>
+                  <th className="text-left p-6 font-semibold text-indigo-deep">
+                    Features
+                  </th>
                   {services.map((service) => (
-                    <th key={service.id} className="text-center p-6 font-semibold text-indigo-deep min-w-[200px]">
+                    <th
+                      key={service.id}
+                      className="text-center p-6 font-semibold text-indigo-deep min-w-[200px]"
+                    >
                       {service.title}
                     </th>
                   ))}
@@ -255,10 +307,16 @@ export default function Services({ packages = [] }: ServicesProps) {
                   "Quality Control",
                   "Final Handover",
                 ].map((feature, index) => (
-                  <tr key={feature} className={index % 2 === 0 ? "bg-sand-light/20" : "bg-white"}>
+                  <tr
+                    key={feature}
+                    className={
+                      index % 2 === 0 ? "bg-sand-light/20" : "bg-white"
+                    }
+                  >
                     <td className="p-6 font-medium text-gray-700">{feature}</td>
                     <td className="text-center p-6">
-                      {feature === "Site Analysis" || feature === "2D Floor Plans" ? (
+                      {feature === "Site Analysis" ||
+                      feature === "2D Floor Plans" ? (
                         <Check className="h-6 w-6 text-terracotta mx-auto" />
                       ) : (
                         <span className="text-gray-300 text-xl">—</span>
@@ -285,7 +343,8 @@ export default function Services({ packages = [] }: ServicesProps) {
 
         <div className="text-center mt-16">
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Not sure which package is right for you? Let's discuss your project needs and find the perfect solution.
+            Not sure which package is right for you? Let's discuss your project
+            needs and find the perfect solution.
           </p>
           <Button
             onClick={() => setIsWhatsAppFormOpen(true)}
@@ -297,7 +356,10 @@ export default function Services({ packages = [] }: ServicesProps) {
         </div>
       </div>
 
-      <WhatsAppConsultationForm isOpen={isWhatsAppFormOpen} onClose={() => setIsWhatsAppFormOpen(false)} />
+      <WhatsAppConsultationForm
+        isOpen={isWhatsAppFormOpen}
+        onClose={() => setIsWhatsAppFormOpen(false)}
+      />
     </section>
-  )
+  );
 }

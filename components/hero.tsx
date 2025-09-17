@@ -81,6 +81,7 @@ export default function Hero() {
         {slideImages.map((_, index) => (
           <button
             key={index}
+            suppressHydrationWarning={true}
             onClick={() => setCurrentSlide(index)}
             className={`w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 lg:w-5 lg:h-5 rounded-full transition-all duration-300 focus-visible:ring-enhanced ${
               index === currentSlide
