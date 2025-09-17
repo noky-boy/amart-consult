@@ -205,15 +205,18 @@ export default function Navigation() {
                   Sign In
                 </Button>
               </Link>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-indigo-deep text-indigo-deep hover:bg-indigo-deep hover:text-white transition-all duration-300 bg-transparent focus-visible:ring-enhanced"
-                aria-label="Call Amart Consult now"
-              >
-                <Phone className="h-4 w-4 mr-2" aria-hidden="true" />
-                Call Now
-              </Button>
+
+              {/* For Mobile version (in the mobile menu): */}
+              <a href="tel:+233543543356">
+                <Button
+                  variant="outline"
+                  className="w-full border-indigo-deep text-indigo-deep hover:bg-indigo-deep hover:text-white transition-all duration-300 bg-transparent focus-visible:ring-enhanced"
+                  aria-label="Call Amart Consult now"
+                >
+                  <Phone className="h-4 w-4 mr-2" aria-hidden="true" />
+                  Call Now
+                </Button>
+              </a>
               <Button
                 onClick={openWhatsAppForm}
                 className="bg-indigo-deep hover:bg-indigo-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 focus-visible:ring-enhanced"
