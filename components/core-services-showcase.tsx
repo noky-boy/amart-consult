@@ -177,7 +177,6 @@ export default function CoreServicesShowcase() {
                   View Our Work
                 </Button>
               </Link>
-              s
             </div>
           </div>
         </div>
