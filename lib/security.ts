@@ -86,10 +86,129 @@ export const getClientIP = (request: NextRequest): string => {
   return "unknown";
 };
 
-// Validate reCAPTCHA token
-export const validateRecaptcha = async (token: string): Promise<boolean> => {
+// Validate reCAPTCHA Enterprise token
+export const validateRecaptcha = async (
+  token: string,
+  request?: NextRequest
+): Promise<boolean> => {
   if (!token) return false;
 
+  // Check if we're using Enterprise reCAPTCHA
+  const projectId = process.env.RECAPTCHA_PROJECT_ID;
+  const apiKey = process.env.RECAPTCHA_API_KEY;
+
+  if (projectId && apiKey) {
+    // Enterprise reCAPTCHA validation
+    return await validateEnterpriseRecaptcha(token, projectId, apiKey, request);
+  } else {
+    // Fallback to regular reCAPTCHA validation
+    return await validateRegularRecaptcha(token);
+  }
+};
+
+// Enterprise reCAPTCHA validation
+const validateEnterpriseRecaptcha = async (
+  token: string,
+  projectId: string,
+  apiKey: string,
+  request?: NextRequest
+): Promise<boolean> => {
+  try {
+    const url = `https://recaptchaenterprise.googleapis.com/v1/projects/${projectId}/assessments?key=${apiKey}`;
+
+    const requestBody = {
+      event: {
+        token: token,
+        siteKey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
+        expectedAction: "CONTACT_FORM",
+      },
+    };
+
+    // Add user IP if available
+    if (request) {
+      const userIpAddress = getClientIP(request);
+      if (userIpAddress && userIpAddress !== "unknown") {
+        requestBody.event.userIpAddress = userIpAddress;
+      }
+    }
+
+    console.log("=== DEBUG: Enterprise reCAPTCHA validation ===");
+    console.log("Making request to:", url);
+    console.log("Project ID:", projectId);
+    console.log("Site Key:", process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY);
+    console.log("Request body:", JSON.stringify(requestBody, null, 2));
+
+    // Check what headers the request object has
+    if (request) {
+      console.log("Request referer:", request.headers.get("referer"));
+      console.log("Request origin:", request.headers.get("origin"));
+      console.log("Request host:", request.headers.get("host"));
+      console.log(
+        "All request headers:",
+        Object.fromEntries(request.headers.entries())
+      );
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    console.log("Response status:", response.status);
+    console.log(
+      "Response headers:",
+      Object.fromEntries(response.headers.entries())
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Full error response:", errorText);
+      console.log("=== END DEBUG ===");
+      return false;
+    }
+
+    const data = await response.json();
+    console.log("Enterprise reCAPTCHA response:", data);
+
+    // Check if the assessment was successful
+    if (!data.tokenProperties?.valid) {
+      console.warn("Invalid token:", data.tokenProperties?.invalidReason);
+      console.log("=== END DEBUG ===");
+      return false;
+    }
+
+    // Check if the action matches
+    if (data.tokenProperties?.action !== "CONTACT_FORM") {
+      console.warn("Action mismatch:", data.tokenProperties?.action);
+      console.log("=== END DEBUG ===");
+      return false;
+    }
+
+    // Check the risk score (0.0 = likely bot, 1.0 = likely human)
+    const riskScore = data.riskAnalysis?.score ?? 0;
+    const threshold = 0.5; // Adjust this threshold as needed
+
+    console.log("Risk score:", riskScore, "Threshold:", threshold);
+    console.log("=== END DEBUG ===");
+
+    if (riskScore < threshold) {
+      console.warn("Low risk score, possible bot:", riskScore);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Enterprise reCAPTCHA validation error:", error);
+    console.log("=== END DEBUG ===");
+    return false;
+  }
+};
+
+// Regular reCAPTCHA validation (fallback)
+const validateRegularRecaptcha = async (token: string): Promise<boolean> => {
   const secretKey = process.env.RECAPTCHA_SECRET_KEY;
   if (!secretKey) {
     console.warn("reCAPTCHA secret key not configured");
@@ -150,12 +269,12 @@ export const securityHeaders = {
   "Referrer-Policy": "origin-when-cross-origin",
   "Content-Security-Policy": [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://assets.calendly.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://assets.calendly.com https://www.google.com https://www.gstatic.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://api.github.com https://9mnu7l2c.api.sanity.io",
-    "frame-src 'self' https://calendly.com",
+    "connect-src 'self' https://api.github.com https://9mnu7l2c.api.sanity.io https://recaptchaenterprise.googleapis.com https://www.google.com", // Added https://www.google.com
+    "frame-src 'self' https://calendly.com https://www.google.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
