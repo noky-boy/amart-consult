@@ -14,6 +14,16 @@ export async function POST(request: NextRequest) {
 
     // Validate reCAPTCHA Enterprise - pass request for IP address
     const recaptchaToken = body.recaptchaToken;
+    // Add this right before: const isRecaptchaValid = await validateRecaptcha(recaptchaToken, request);
+    console.log("=== DEBUG: Environment variables ===");
+    console.log("RECAPTCHA_PROJECT_ID:", process.env.RECAPTCHA_PROJECT_ID);
+    console.log("RECAPTCHA_API_KEY:", process.env.RECAPTCHA_API_KEY);
+    console.log(
+      "NEXT_PUBLIC_RECAPTCHA_SITE_KEY:",
+      process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+    );
+    console.log("Received token:", recaptchaToken);
+    console.log("=== END DEBUG ===");
     const isRecaptchaValid = await validateRecaptcha(recaptchaToken, request);
 
     if (!isRecaptchaValid) {

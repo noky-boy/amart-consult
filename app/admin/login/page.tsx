@@ -1,41 +1,82 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, Shield, Building2 } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, Shield, Building2 } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminLogin() {
-  const [showPassword, setShowPassword] = useState(false)
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-  })
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  });
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { signIn } = useAuth();
+  const router = useRouter();
+
+  // Test Supabase connection on component mount
+  useEffect(() => {
+    const testSupabaseConnection = async () => {
+      try {
+        console.log("Testing Supabase connection...");
+        console.log("URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+        console.log("Key exists:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+        const { data, error } = await supabase
+          .from("clients")
+          .select("count", { count: "exact", head: true });
+        console.log("Connection test result:", { data, error });
+
+        if (error) {
+          console.error("Supabase connection failed:", error);
+        } else {
+          console.log("Supabase connection successful");
+        }
+      } catch (err) {
+        console.error("Connection test failed:", err);
+      }
+    };
+
+    testSupabaseConnection();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-    // Simulate authentication
-    setTimeout(() => {
-      if (formData.email === "admin@amartconsult.com" && formData.password === "admin123") {
-        window.location.href = "/admin/dashboard"
-      } else {
-        setError("Invalid credentials. Please check your email and password.")
-      }
-      setIsLoading(false)
-    }, 1000)
-  }
+    try {
+      console.log("Attempting to sign in...");
+      await signIn(formData.email, formData.password);
+      console.log("Sign in successful, redirecting...");
+      router.push("/admin/dashboard");
+    } catch (error: any) {
+      console.error("Sign in error:", error);
+      setError(
+        error.message ||
+          "Invalid credentials. Please check your email and password."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
@@ -43,7 +84,13 @@ export default function AdminLogin() {
         {/* Logo and Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <Image src="/images/amart-logo.png" alt="Amart Consult" width={120} height={40} className="h-10 w-auto" />
+            <Image
+              src="/images/amart-logo.png"
+              alt="Amart Consult"
+              width={120}
+              height={40}
+              className="h-10 w-auto"
+            />
           </div>
           <div className="flex items-center justify-center gap-2 mb-2">
             <Shield className="h-6 w-6 text-indigo-600" />
@@ -54,7 +101,9 @@ export default function AdminLogin() {
 
         <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-xl text-center text-slate-900">Sign In</CardTitle>
+            <CardTitle className="text-xl text-center text-slate-900">
+              Sign In
+            </CardTitle>
             <CardDescription className="text-center text-slate-600">
               Enter your credentials to access the admin dashboard
             </CardDescription>
@@ -63,7 +112,9 @@ export default function AdminLogin() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
                 <Alert className="border-red-200 bg-red-50">
-                  <AlertDescription className="text-red-700">{error}</AlertDescription>
+                  <AlertDescription className="text-red-700">
+                    {error}
+                  </AlertDescription>
                 </Alert>
               )}
 
@@ -76,14 +127,19 @@ export default function AdminLogin() {
                   type="email"
                   placeholder="admin@amartconsult.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   className="h-11 border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-700 font-medium">
+                <Label
+                  htmlFor="password"
+                  className="text-slate-700 font-medium"
+                >
                   Password
                 </Label>
                 <div className="relative">
@@ -92,7 +148,9 @@ export default function AdminLogin() {
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
                     className="h-11 pr-10 border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
                     required
                   />
@@ -101,7 +159,11 @@ export default function AdminLogin() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -116,28 +178,38 @@ export default function AdminLogin() {
             </form>
 
             <div className="mt-6 text-center">
-              <Link href="/admin/forgot-password" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+              <Link
+                href="/admin/forgot-password"
+                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+              >
                 Forgot your password?
               </Link>
             </div>
           </CardContent>
         </Card>
 
-        {/* Demo Credentials */}
+        {/* Debug Info */}
         <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-sm text-blue-800 font-medium mb-2">Demo Credentials:</p>
-          <p className="text-xs text-blue-700">Email: admin@amartconsult.com</p>
-          <p className="text-xs text-blue-700">Password: admin123</p>
+          <p className="text-sm text-blue-800 font-medium mb-2">Debug Info:</p>
+          <p className="text-xs text-blue-700">
+            URL: {process.env.NEXT_PUBLIC_SUPABASE_URL || "Not set"}
+          </p>
+          <p className="text-xs text-blue-700">
+            Key: {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Set" : "Not set"}
+          </p>
         </div>
 
         {/* Footer */}
         <div className="mt-8 text-center">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
+          >
             <Building2 className="h-4 w-4" />
             Back to Main Website
           </Link>
         </div>
       </div>
     </div>
-  )
+  );
 }

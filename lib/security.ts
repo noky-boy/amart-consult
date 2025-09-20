@@ -93,6 +93,11 @@ export const validateRecaptcha = async (
 ): Promise<boolean> => {
   if (!token) return false;
 
+  // Skip validation in development localhost
+  // if (process.env.NODE_ENV === "development") {
+  //   console.log("Development mode: Skipping reCAPTCHA validation");
+  //   return true;
+  // }
   // Check if we're using Enterprise reCAPTCHA
   const projectId = process.env.RECAPTCHA_PROJECT_ID;
   const apiKey = process.env.RECAPTCHA_API_KEY;
@@ -107,6 +112,7 @@ export const validateRecaptcha = async (
 };
 
 // Enterprise reCAPTCHA validation
+// Enterprise reCAPTCHA validation with proper authentication
 const validateEnterpriseRecaptcha = async (
   token: string,
   projectId: string,
@@ -114,6 +120,15 @@ const validateEnterpriseRecaptcha = async (
   request?: NextRequest
 ): Promise<boolean> => {
   try {
+    // Option 1: Use Google Auth Library (install: npm install google-auth-library)
+    // const { GoogleAuth } = require('google-auth-library');
+    // const auth = new GoogleAuth({
+    //   scopes: 'https://www.googleapis.com/auth/cloud-platform'
+    // });
+    // const authClient = await auth.getClient();
+    // const accessToken = await authClient.getAccessToken();
+
+    // Option 2: Use API Key (your current approach)
     const url = `https://recaptchaenterprise.googleapis.com/v1/projects/${projectId}/assessments?key=${apiKey}`;
 
     const requestBody = {
@@ -121,16 +136,15 @@ const validateEnterpriseRecaptcha = async (
         token: token,
         siteKey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
         expectedAction: "CONTACT_FORM",
+        // Add userIpAddress if available
+        ...(request && {
+          userIpAddress:
+            getClientIP(request) !== "unknown"
+              ? getClientIP(request)
+              : undefined,
+        }),
       },
     };
-
-    // Add user IP if available
-    if (request) {
-      const userIpAddress = getClientIP(request);
-      if (userIpAddress && userIpAddress !== "unknown") {
-        requestBody.event.userIpAddress = userIpAddress;
-      }
-    }
 
     console.log("=== DEBUG: Enterprise reCAPTCHA validation ===");
     console.log("Making request to:", url);
@@ -138,34 +152,32 @@ const validateEnterpriseRecaptcha = async (
     console.log("Site Key:", process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY);
     console.log("Request body:", JSON.stringify(requestBody, null, 2));
 
-    // Check what headers the request object has
-    if (request) {
-      console.log("Request referer:", request.headers.get("referer"));
-      console.log("Request origin:", request.headers.get("origin"));
-      console.log("Request host:", request.headers.get("host"));
-      console.log(
-        "All request headers:",
-        Object.fromEntries(request.headers.entries())
-      );
-    }
-
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        // Option 1: If using OAuth token
+        // "Authorization": `Bearer ${accessToken.token}`,
+
+        // Option 2: API key is in URL, so no additional auth headers needed
       },
       body: JSON.stringify(requestBody),
     });
 
     console.log("Response status:", response.status);
-    console.log(
-      "Response headers:",
-      Object.fromEntries(response.headers.entries())
-    );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Full error response:", errorText);
+      const errorResponse = await response.json();
+      console.error("reCAPTCHA API Error:", errorResponse);
+
+      // Specific error handling
+      if (response.status === 403) {
+        console.error("403 Error - Check:");
+        console.error("1. API key has reCAPTCHA Enterprise API enabled");
+        console.error("2. Project ID is correct");
+        console.error("3. Domain is properly configured in reCAPTCHA key");
+      }
+
       console.log("=== END DEBUG ===");
       return false;
     }
@@ -173,33 +185,28 @@ const validateEnterpriseRecaptcha = async (
     const data = await response.json();
     console.log("Enterprise reCAPTCHA response:", data);
 
-    // Check if the assessment was successful
+    // Validate the response
     if (!data.tokenProperties?.valid) {
       console.warn("Invalid token:", data.tokenProperties?.invalidReason);
-      console.log("=== END DEBUG ===");
       return false;
     }
 
-    // Check if the action matches
     if (data.tokenProperties?.action !== "CONTACT_FORM") {
-      console.warn("Action mismatch:", data.tokenProperties?.action);
-      console.log("=== END DEBUG ===");
+      console.warn(
+        "Action mismatch. Expected: CONTACT_FORM, Got:",
+        data.tokenProperties?.action
+      );
       return false;
     }
 
-    // Check the risk score (0.0 = likely bot, 1.0 = likely human)
+    // Check risk score (0.0 = bot, 1.0 = human)
     const riskScore = data.riskAnalysis?.score ?? 0;
-    const threshold = 0.5; // Adjust this threshold as needed
+    const threshold = 0.5;
 
-    console.log("Risk score:", riskScore, "Threshold:", threshold);
+    console.log(`Risk Analysis - Score: ${riskScore}, Threshold: ${threshold}`);
     console.log("=== END DEBUG ===");
 
-    if (riskScore < threshold) {
-      console.warn("Low risk score, possible bot:", riskScore);
-      return false;
-    }
-
-    return true;
+    return riskScore >= threshold;
   } catch (error) {
     console.error("Enterprise reCAPTCHA validation error:", error);
     console.log("=== END DEBUG ===");
@@ -273,7 +280,7 @@ export const securityHeaders = {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://api.github.com https://9mnu7l2c.api.sanity.io https://recaptchaenterprise.googleapis.com https://www.google.com", // Added https://www.google.com
+    "connect-src 'self' https://api.github.com https://9mnu7l2c.api.sanity.io https://recaptchaenterprise.googleapis.com https://www.google.com https://iwimbcemuaocizmkjqpx.supabase.co ", // Added https://www.google.com
     "frame-src 'self' https://calendly.com https://www.google.com",
     "object-src 'none'",
     "base-uri 'self'",

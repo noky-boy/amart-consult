@@ -5,6 +5,7 @@ import "./globals.css";
 import Navigation from "@/components/navigation";
 import WhatsAppFloat from "@/components/whatsapp-float";
 import Footer from "@/components/footer";
+import { AuthProvider } from "@/hooks/useAuth";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -60,22 +61,24 @@ export default function RootLayout({
     >
       <head></head>
       <body suppressHydrationWarning={true}>
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-indigo-deep focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
-        >
-          Skip to main content
-        </a>
-        <header role="banner">
-          <Navigation />
-        </header>
-        <main id="main-content" role="main">
-          {children}
-        </main>
-        <WhatsAppFloat />
-        <footer role="contentinfo">
-          <Footer />
-        </footer>
+        <AuthProvider>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-indigo-deep focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+          >
+            Skip to main content
+          </a>
+          <header role="banner">
+            <Navigation />
+          </header>
+          <main id="main-content" role="main">
+            {children}
+          </main>
+          <WhatsAppFloat />
+          <footer role="contentinfo">
+            <Footer />
+          </footer>
+        </AuthProvider>
       </body>
     </html>
   );
