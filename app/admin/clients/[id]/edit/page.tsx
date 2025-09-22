@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,7 +37,14 @@ import { useRouter } from "next/navigation";
 import { clientService } from "@/lib/supabase";
 import type { Client } from "@/lib/supabase";
 
-export default function EditClient({ params }: { params: { id: string } }) {
+export default function EditClient({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  // Unwrap params using React.use()
+  const { id } = use(params);
+
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -83,10 +90,12 @@ export default function EditClient({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchClient = async () => {
       try {
+        console.log("Fetching client for edit with ID:", id);
         setIsLoadingClient(true);
         setError("");
 
-        const client = await clientService.getById(params.id);
+        const client = await clientService.getById(id);
+        console.log("Loaded client data for edit:", client);
         setOriginalClient(client);
 
         // Map client data to form data
@@ -108,7 +117,7 @@ export default function EditClient({ params }: { params: { id: string } }) {
           notes: client.notes || "",
         });
       } catch (err: any) {
-        console.error("Failed to fetch client:", err);
+        console.error("Failed to fetch client for edit:", err);
         setError(
           "Failed to load client data: " + (err.message || "Unknown error")
         );
@@ -117,8 +126,10 @@ export default function EditClient({ params }: { params: { id: string } }) {
       }
     };
 
-    fetchClient();
-  }, [params.id]);
+    if (id) {
+      fetchClient();
+    }
+  }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,13 +174,14 @@ export default function EditClient({ params }: { params: { id: string } }) {
         updated_at: new Date().toISOString(),
       };
 
-      await clientService.update(params.id, updateData);
+      console.log("Updating client with data:", updateData);
+      await clientService.update(id, updateData);
 
       setShowSuccess(true);
 
       // Redirect after showing success message
       setTimeout(() => {
-        router.push(`/admin/clients/${params.id}`);
+        router.push(`/admin/clients/${id}`);
       }, 2000);
     } catch (error: any) {
       console.error("Error updating client:", error);
@@ -288,7 +300,7 @@ export default function EditClient({ params }: { params: { id: string } }) {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="px-6 py-4">
           <div className="flex items-center gap-4">
-            <Link href={`/admin/clients/${params.id}`}>
+            <Link href={`/admin/clients/${id}`}>
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Client Details
@@ -617,7 +629,7 @@ export default function EditClient({ params }: { params: { id: string } }) {
 
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-4 pt-6">
-            <Link href={`/admin/clients/${params.id}`}>
+            <Link href={`/admin/clients/${id}`}>
               <Button variant="outline" disabled={isLoading}>
                 Cancel
               </Button>

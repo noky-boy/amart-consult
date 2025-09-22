@@ -174,7 +174,7 @@ export default function FileUploadSystem() {
 
     try {
       // Note: You'll need to add a delete method to documentService
-      // await documentService.delete(docId)
+      await documentService.delete(docId);
       setDocuments((docs) => docs.filter((doc) => doc.id !== docId));
     } catch (error) {
       console.error("Failed to delete document:", error);
