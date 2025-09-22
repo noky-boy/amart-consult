@@ -453,7 +453,7 @@ export default function DashboardPage() {
                   Manage Documents
                 </Link>
               </Button>
-              <Button
+              {/* <Button
                 className="w-full justify-start bg-transparent"
                 variant="outline"
                 asChild
@@ -462,7 +462,7 @@ export default function DashboardPage() {
                   <FileText className="h-4 w-4 mr-2" />
                   Simple Upload
                 </Link>
-              </Button>
+              </Button> */}
             </CardContent>
           </Card>
         </TabsContent>
@@ -476,16 +476,12 @@ export default function DashboardPage() {
               <Button
                 className="w-full justify-start bg-transparent"
                 variant="outline"
+                asChild
               >
-                <MessageSquare className="h-4 w-4 mr-2" />
-                View Messages
-              </Button>
-              <Button
-                className="w-full justify-start bg-transparent"
-                variant="outline"
-              >
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Send Message
+                <Link href="/admin/messages">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Message Center
+                </Link>
               </Button>
             </CardContent>
           </Card>

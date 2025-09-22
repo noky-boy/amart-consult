@@ -1,72 +1,285 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Save, User, Building2, Mail, Phone, MapPin, Calendar } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ArrowLeft,
+  Save,
+  User,
+  Building2,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  CheckCircle,
+} from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { clientService } from "@/lib/supabase";
+import type { Client } from "@/lib/supabase";
 
 export default function EditClient({ params }: { params: { id: string } }) {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    first_name: "",
+    last_name: "",
     email: "",
     phone: "",
     company: "",
-    projectType: "",
-    projectTitle: "",
-    projectDescription: "",
-    budget: "",
+    project_type: "" as
+      | "residential"
+      | "commercial"
+      | "renovation"
+      | "interior"
+      | "",
+    project_title: "",
+    project_description: "",
+    budget_range: "" as
+      | "50000-100000"
+      | "100000-250000"
+      | "250000-500000"
+      | "500000+"
+      | "",
     timeline: "",
     address: "",
-    tier: "Tier 3",
-    status: "Planning",
-  })
+    tier: "Tier 3" as "Tier 1" | "Tier 2" | "Tier 3",
+    status: "Planning" as
+      | "Planning"
+      | "In Progress"
+      | "Review"
+      | "Completed"
+      | "On Hold"
+      | "Cancelled",
+    client_status: "Active" as "Active" | "Inactive" | "Archived",
+    notes: "",
+  });
 
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingClient, setIsLoadingClient] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState("");
+  const [originalClient, setOriginalClient] = useState<Client | null>(null);
+  const router = useRouter();
 
   // Load existing client data
   useEffect(() => {
-    // Mock data loading - in real app, fetch from API
-    const mockClientData = {
-      firstName: "John",
-      lastName: "Smith",
-      email: "john.smith@email.com",
-      phone: "+233 XX XXX XXXX",
-      company: "Smith Enterprises",
-      projectType: "residential",
-      projectTitle: "Modern Villa Design",
-      projectDescription: "A contemporary 4-bedroom villa with modern amenities and sustainable design features.",
-      budget: "250000-500000",
-      timeline: "8 months",
-      address: "123 Main Street, Accra, Ghana",
-      tier: "Tier 3",
-      status: "In Progress",
-    }
-    setFormData(mockClientData)
-  }, [params.id])
+    const fetchClient = async () => {
+      try {
+        setIsLoadingClient(true);
+        setError("");
+
+        const client = await clientService.getById(params.id);
+        setOriginalClient(client);
+
+        // Map client data to form data
+        setFormData({
+          first_name: client.first_name,
+          last_name: client.last_name,
+          email: client.email,
+          phone: client.phone || "",
+          company: client.company || "",
+          project_type: client.project_type,
+          project_title: client.project_title,
+          project_description: client.project_description || "",
+          budget_range: client.budget_range || "",
+          timeline: client.timeline || "",
+          address: client.address || "",
+          tier: client.tier,
+          status: client.status,
+          client_status: client.client_status,
+          notes: client.notes || "",
+        });
+      } catch (err: any) {
+        console.error("Failed to fetch client:", err);
+        setError(
+          "Failed to load client data: " + (err.message || "Unknown error")
+        );
+      } finally {
+        setIsLoadingClient(false);
+      }
+    };
+
+    fetchClient();
+  }, [params.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-    // Simulate form submission
-    setTimeout(() => {
-      alert("Client updated successfully!")
-      setIsLoading(false)
-      // Redirect to client details
-      window.location.href = `/admin/clients/${params.id}`
-    }, 1000)
+    // Validation
+    if (
+      !formData.first_name ||
+      !formData.last_name ||
+      !formData.email ||
+      !formData.project_title ||
+      !formData.project_type
+    ) {
+      setError("Please fill in all required fields");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Prepare update data - only include fields that can be updated
+      const updateData: Partial<Client> = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        phone: formData.phone || undefined,
+        company: formData.company || undefined,
+        address: formData.address || undefined,
+        project_title: formData.project_title,
+        project_type: formData.project_type as
+          | "residential"
+          | "commercial"
+          | "renovation"
+          | "interior",
+        project_description: formData.project_description || undefined,
+        budget_range: formData.budget_range || undefined,
+        timeline: formData.timeline || undefined,
+        tier: formData.tier,
+        status: formData.status,
+        client_status: formData.client_status,
+        notes: formData.notes || undefined,
+        updated_at: new Date().toISOString(),
+      };
+
+      await clientService.update(params.id, updateData);
+
+      setShowSuccess(true);
+
+      // Redirect after showing success message
+      setTimeout(() => {
+        router.push(`/admin/clients/${params.id}`);
+      }, 2000);
+    } catch (error: any) {
+      console.error("Error updating client:", error);
+      setError(error.message || "Failed to update client. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Loading state while fetching client data
+  if (isLoadingClient) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+          <div className="px-6 py-4">
+            <div className="flex items-center gap-4">
+              <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </header>
+        <div className="max-w-4xl mx-auto p-6">
+          <div className="space-y-6">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="border-0 shadow-sm">
+                <CardHeader>
+                  <div className="h-6 w-48 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-4 w-64 bg-gray-200 rounded animate-pulse"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[...Array(4)].map((_, j) => (
+                      <div
+                        key={j}
+                        className="h-10 bg-gray-200 rounded animate-pulse"
+                      ></div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+  // Success state
+  if (showSuccess) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+              <h2 className="text-xl font-semibold text-slate-900">
+                Client Updated Successfully!
+              </h2>
+              <p className="text-slate-600">
+                {formData.first_name} {formData.last_name}'s information has
+                been updated.
+              </p>
+              <p className="text-sm text-slate-500">
+                Redirecting to client details...
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error state (if client not found)
+  if (error && !originalClient) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+          <div className="px-6 py-4">
+            <div className="flex items-center gap-4">
+              <Link href="/admin/dashboard">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Dashboard
+                </Button>
+              </Link>
+              <div className="h-6 w-px bg-slate-300" />
+              <Image
+                src="/images/amart-logo.png"
+                alt="Amart Consult"
+                width={120}
+                height={40}
+                className="h-8 w-auto"
+              />
+              <h1 className="text-xl font-semibold text-slate-900">
+                Edit Client
+              </h1>
+            </div>
+          </div>
+        </header>
+        <div className="max-w-4xl mx-auto p-6">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+            {error}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -82,14 +295,29 @@ export default function EditClient({ params }: { params: { id: string } }) {
               </Button>
             </Link>
             <div className="h-6 w-px bg-slate-300" />
-            <Image src="/images/amart-logo.png" alt="Amart Consult" width={120} height={40} className="h-8 w-auto" />
-            <h1 className="text-xl font-semibold text-slate-900">Edit Client</h1>
+            <Image
+              src="/images/amart-logo.png"
+              alt="Amart Consult"
+              width={120}
+              height={40}
+              className="h-8 w-auto"
+            />
+            <h1 className="text-xl font-semibold text-slate-900">
+              Edit Client: {originalClient?.first_name}{" "}
+              {originalClient?.last_name}
+            </h1>
           </div>
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+              {error}
+            </div>
+          )}
+
           {/* Client Information */}
           <Card className="border-0 shadow-sm">
             <CardHeader>
@@ -97,26 +325,32 @@ export default function EditClient({ params }: { params: { id: string } }) {
                 <User className="h-5 w-5 text-indigo-600" />
                 Client Information
               </CardTitle>
-              <CardDescription>Update client's basic information</CardDescription>
+              <CardDescription>
+                Update client's basic information
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name *</Label>
+                  <Label htmlFor="first_name">First Name *</Label>
                   <Input
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange("firstName", e.target.value)}
+                    id="first_name"
+                    value={formData.first_name}
+                    onChange={(e) =>
+                      handleInputChange("first_name", e.target.value)
+                    }
                     placeholder="John"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Label htmlFor="last_name">Last Name *</Label>
                   <Input
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange("lastName", e.target.value)}
+                    id="last_name"
+                    value={formData.last_name}
+                    onChange={(e) =>
+                      handleInputChange("last_name", e.target.value)
+                    }
                     placeholder="Smith"
                     required
                   />
@@ -132,7 +366,9 @@ export default function EditClient({ params }: { params: { id: string } }) {
                       id="email"
                       type="email"
                       value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("email", e.target.value)
+                      }
                       placeholder="john.smith@email.com"
                       className="pl-10"
                       required
@@ -146,7 +382,9 @@ export default function EditClient({ params }: { params: { id: string } }) {
                     <Input
                       id="phone"
                       value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("phone", e.target.value)
+                      }
                       placeholder="+233 XX XXX XXXX"
                       className="pl-10"
                     />
@@ -171,7 +409,9 @@ export default function EditClient({ params }: { params: { id: string } }) {
                   <Textarea
                     id="address"
                     value={formData.address}
-                    onChange={(e) => handleInputChange("address", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("address", e.target.value)
+                    }
                     placeholder="Full address including city and region"
                     className="pl-10 min-h-[80px]"
                   />
@@ -187,15 +427,19 @@ export default function EditClient({ params }: { params: { id: string } }) {
                 <Building2 className="h-5 w-5 text-indigo-600" />
                 Project Information
               </CardTitle>
-              <CardDescription>Update project details and specifications</CardDescription>
+              <CardDescription>
+                Update project details and specifications
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="projectType">Project Type *</Label>
+                  <Label htmlFor="project_type">Project Type *</Label>
                   <Select
-                    value={formData.projectType}
-                    onValueChange={(value) => handleInputChange("projectType", value)}
+                    value={formData.project_type}
+                    onValueChange={(value) =>
+                      handleInputChange("project_type", value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select project type" />
@@ -210,7 +454,12 @@ export default function EditClient({ params }: { params: { id: string } }) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">Project Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) =>
+                      handleInputChange("status", value)
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -219,28 +468,34 @@ export default function EditClient({ params }: { params: { id: string } }) {
                       <SelectItem value="In Progress">In Progress</SelectItem>
                       <SelectItem value="Review">Review</SelectItem>
                       <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="On Hold">On Hold</SelectItem>
+                      <SelectItem value="Cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="projectTitle">Project Title *</Label>
+                <Label htmlFor="project_title">Project Title *</Label>
                 <Input
-                  id="projectTitle"
-                  value={formData.projectTitle}
-                  onChange={(e) => handleInputChange("projectTitle", e.target.value)}
+                  id="project_title"
+                  value={formData.project_title}
+                  onChange={(e) =>
+                    handleInputChange("project_title", e.target.value)
+                  }
                   placeholder="Modern Villa Design"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="projectDescription">Project Description</Label>
+                <Label htmlFor="project_description">Project Description</Label>
                 <Textarea
-                  id="projectDescription"
-                  value={formData.projectDescription}
-                  onChange={(e) => handleInputChange("projectDescription", e.target.value)}
+                  id="project_description"
+                  value={formData.project_description}
+                  onChange={(e) =>
+                    handleInputChange("project_description", e.target.value)
+                  }
                   placeholder="Detailed description of the project requirements and scope"
                   className="min-h-[100px]"
                 />
@@ -248,15 +503,26 @@ export default function EditClient({ params }: { params: { id: string } }) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="budget">Budget Range</Label>
-                  <Select value={formData.budget} onValueChange={(value) => handleInputChange("budget", value)}>
+                  <Label htmlFor="budget_range">Budget Range</Label>
+                  <Select
+                    value={formData.budget_range}
+                    onValueChange={(value) =>
+                      handleInputChange("budget_range", value)
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select budget range" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="50000-100000">GHS 50,000 - 100,000</SelectItem>
-                      <SelectItem value="100000-250000">GHS 100,000 - 250,000</SelectItem>
-                      <SelectItem value="250000-500000">GHS 250,000 - 500,000</SelectItem>
+                      <SelectItem value="50000-100000">
+                        GHS 50,000 - 100,000
+                      </SelectItem>
+                      <SelectItem value="100000-250000">
+                        GHS 100,000 - 250,000
+                      </SelectItem>
+                      <SelectItem value="250000-500000">
+                        GHS 250,000 - 500,000
+                      </SelectItem>
                       <SelectItem value="500000+">GHS 500,000+</SelectItem>
                     </SelectContent>
                   </Select>
@@ -268,7 +534,9 @@ export default function EditClient({ params }: { params: { id: string } }) {
                     <Input
                       id="timeline"
                       value={formData.timeline}
-                      onChange={(e) => handleInputChange("timeline", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("timeline", e.target.value)
+                      }
                       placeholder="6-8 months"
                       className="pl-10"
                     />
@@ -278,28 +546,71 @@ export default function EditClient({ params }: { params: { id: string } }) {
             </CardContent>
           </Card>
 
-          {/* Service Tier */}
+          {/* Service Tier & Client Status */}
           <Card className="border-0 shadow-sm">
             <CardHeader>
-              <CardTitle>Service Tier</CardTitle>
-              <CardDescription>Update the service tier assignment for this client</CardDescription>
+              <CardTitle>Service Tier & Status</CardTitle>
+              <CardDescription>
+                Update the service tier and client status
+              </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tier">Tier Assignment</Label>
+                  <Select
+                    value={formData.tier}
+                    onValueChange={(value) => handleInputChange("tier", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Tier 1">
+                        Tier 1 - Basic Consultation
+                      </SelectItem>
+                      <SelectItem value="Tier 2">
+                        Tier 2 - Design Development
+                      </SelectItem>
+                      <SelectItem value="Tier 3">
+                        Tier 3 - Full Service (Portal Access)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="client_status">Client Status</Label>
+                  <Select
+                    value={formData.client_status}
+                    onValueChange={(value) =>
+                      handleInputChange("client_status", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Inactive">Inactive</SelectItem>
+                      <SelectItem value="Archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600">
+                Only Tier 3 clients will have access to the client portal
+                dashboard
+              </p>
+
               <div className="space-y-2">
-                <Label htmlFor="tier">Tier Assignment</Label>
-                <Select value={formData.tier} onValueChange={(value) => handleInputChange("tier", value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Tier 1">Tier 1 - Basic Consultation</SelectItem>
-                    <SelectItem value="Tier 2">Tier 2 - Design Development</SelectItem>
-                    <SelectItem value="Tier 3">Tier 3 - Full Service (Portal Access)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-slate-600">
-                  Only Tier 3 clients will have access to the client portal dashboard
-                </p>
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => handleInputChange("notes", e.target.value)}
+                  placeholder="Additional notes about this client"
+                  className="min-h-[80px]"
+                />
               </div>
             </CardContent>
           </Card>
@@ -307,9 +618,15 @@ export default function EditClient({ params }: { params: { id: string } }) {
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-4 pt-6">
             <Link href={`/admin/clients/${params.id}`}>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" disabled={isLoading}>
+                Cancel
+              </Button>
             </Link>
-            <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="bg-indigo-600 hover:bg-indigo-700"
+              disabled={isLoading}
+            >
               <Save className="h-4 w-4 mr-2" />
               {isLoading ? "Updating Client..." : "Update Client"}
             </Button>
@@ -317,5 +634,5 @@ export default function EditClient({ params }: { params: { id: string } }) {
         </form>
       </div>
     </div>
-  )
+  );
 }
