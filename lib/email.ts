@@ -19,6 +19,17 @@ interface EmailData {
   replyTo?: string;
 }
 
+// Add this interface to your existing interfaces in email.ts
+interface ClientWelcomeData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  projectTitle: string;
+  temporaryPassword: string;
+  portalUrl: string;
+  customMessage?: string;
+}
+
 interface ContactFormData {
   name: string;
   email: string;
@@ -386,6 +397,130 @@ export const sendQuoteFormEmail = async (
     return true;
   } catch (error) {
     console.error("Failed to send quote form emails:", error);
+    return false;
+  }
+};
+
+// Send Cleient Welcome Email
+export const sendClientWelcomeEmail = async (
+  data: ClientWelcomeData
+): Promise<boolean> => {
+  const welcomeEmailHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: linear-gradient(135deg, #0A2463 0%, #CC7357 100%); padding: 30px; text-align: center;">
+        <div style="background-color: white; display: inline-block; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+          <div style="font-size: 24px; font-weight: bold; color: #0A2463;">AC</div>
+        </div>
+        <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Your Project Portal</h1>
+        <p style="color: #E0E7FF; margin: 8px 0 0 0;">Track your ${
+          data.projectTitle
+        } project in real-time</p>
+      </div>
+      
+      <div style="padding: 40px;">
+        <p style="font-size: 16px; color: #333; margin-bottom: 20px;">
+          Dear ${data.firstName} ${data.lastName},
+        </p>
+        
+        <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+          Welcome to the Amart Consult Client Portal! We're excited to work with you on your ${
+            data.projectTitle
+          } project.
+        </p>
+
+        <div style="background: #f0f4ff; border: 2px solid #0A2463; border-radius: 8px; padding: 24px; margin: 30px 0;">
+          <h3 style="color: #0A2463; margin-top: 0;">Your Portal Access Details</h3>
+          
+          <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; color: #0A2463;">Email:</td>
+              <td style="padding: 8px 0; font-family: monospace; background: white; padding: 8px; border-radius: 4px;">${
+                data.email
+              }</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; color: #0A2463;">Temporary Password:</td>
+              <td style="padding: 8px 0; font-family: monospace; background: white; padding: 8px; border-radius: 4px; font-weight: bold;">${
+                data.temporaryPassword
+              }</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; color: #0A2463;">Portal URL:</td>
+              <td style="padding: 8px 0;"><a href="${
+                data.portalUrl
+              }" style="color: #CC7357; text-decoration: none;">${
+    data.portalUrl
+  }</a></td>
+            </tr>
+          </table>
+
+          <div style="background: #fef2e7; border-left: 4px solid #CC7357; padding: 15px; margin-top: 20px;">
+            <p style="margin: 0; color: #CC7357; font-size: 14px; font-weight: bold;">
+              🔒 Security Notice: Please log in and update your password on first access.
+            </p>
+          </div>
+        </div>
+
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #0A2463; margin-top: 0;">Through the portal, you can:</h3>
+          <ul style="color: #666; line-height: 1.8; padding-left: 20px;">
+            <li>Track your project progress in real-time</li>
+            <li>View project milestones and timeline</li>
+            <li>Access project documents and photos</li>
+            <li>Communicate directly with your project team</li>
+            <li>Receive updates and notifications</li>
+          </ul>
+        </div>
+
+        ${
+          data.customMessage
+            ? `
+        <div style="background: #fff3e0; border-left: 4px solid #CC7357; padding: 20px; margin: 20px 0;">
+          <h4 style="color: #CC7357; margin-top: 0;">Personal Message:</h4>
+          <p style="color: #666; line-height: 1.6; margin: 0;">${data.customMessage.replace(
+            /\n/g,
+            "<br>"
+          )}</p>
+        </div>
+        `
+            : ""
+        }
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${data.portalUrl}" 
+             style="display: inline-block; background: #0A2463; color: white; padding: 16px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
+            Access Your Portal
+          </a>
+        </div>
+
+        <div style="background: #0A2463; color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 30px 0;">
+          <h3 style="margin-top: 0; color: white;">Need Help?</h3>
+          <p style="margin: 10px 0;">Call us directly at <strong>+233 54 354 3356</strong></p>
+          <p style="margin: 10px 0;">Or email us at <strong>amartconsult1@gmail.com</strong></p>
+        </div>
+
+        <p style="color: #666; line-height: 1.6;">
+          We're here to make your architectural journey smooth and transparent.
+        </p>
+
+        <p style="color: #666; margin-top: 30px;">
+          Best regards,<br>
+          <strong style="color: #0A2463;">The Amart Consult Team</strong>
+        </p>
+      </div>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      to: data.email,
+      subject: `Welcome to Amart Consult Client Portal - ${data.projectTitle}`,
+      html: welcomeEmailHtml,
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Failed to send client welcome email:", error);
     return false;
   }
 };

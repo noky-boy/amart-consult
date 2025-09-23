@@ -15,8 +15,10 @@ import {
   Eye,
   Edit,
   LogOut,
+  Key,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+
 import { clientService } from "@/lib/supabase";
 import type { Client } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,6 +43,7 @@ export default function DashboardPage() {
 
   const { user, signOut } = useAuth();
   const router = useRouter();
+  const [enablingPortal, setEnablingPortal] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -65,6 +68,54 @@ export default function DashboardPage() {
       router.push("/admin/login");
     } catch (err) {
       console.error("Sign out error:", err);
+    }
+  };
+
+  const handleEnablePortalAccess = async (client: Client) => {
+    if (client.has_portal_access) {
+      alert("This client already has portal access");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Enable portal access for ${client.first_name} ${client.last_name}?\n\nThis will:\n- Create login credentials\n- Send a welcome email with temporary password`
+    );
+
+    if (!confirmed) return;
+
+    setEnablingPortal(client.id);
+
+    try {
+      const response = await fetch("/api/enable-portal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ clientId: client.id }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to enable portal access");
+      }
+
+      alert(
+        `${result.message}\n${
+          result.emailSent
+            ? "Welcome email sent successfully!"
+            : "Note: Welcome email failed to send."
+        }`
+      );
+
+      // Refresh the dashboard data to show updated status
+      const dashboardStats = await clientService.getDashboardStats();
+      setStats(dashboardStats);
+    } catch (error: any) {
+      console.error("Failed to enable portal access:", error);
+      alert(`Failed to enable portal access: ${error.message}`);
+    } finally {
+      setEnablingPortal(null);
     }
   };
 
@@ -239,7 +290,7 @@ export default function DashboardPage() {
 
         <TabsContent value="overview" className="mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent Clients */}
+            {/* Recent Clients - Updated section */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
@@ -275,6 +326,14 @@ export default function DashboardPage() {
                               {client.status}
                             </Badge>
                             <Badge variant="outline">{client.tier}</Badge>
+                            {client.has_portal_access && (
+                              <Badge
+                                variant="outline"
+                                className="bg-green-50 text-green-700 border-green-200"
+                              >
+                                Portal Access
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         <div className="flex space-x-2">
@@ -288,6 +347,32 @@ export default function DashboardPage() {
                               <Edit className="h-4 w-4" />
                             </Link>
                           </Button>
+                          {!client.has_portal_access ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEnablePortalAccess(client)}
+                              disabled={enablingPortal === client.id}
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              title="Enable portal access"
+                            >
+                              {enablingPortal === client.id ? (
+                                <div className="h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <Key className="h-4 w-4" />
+                              )}
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-green-600 cursor-default"
+                              title="Portal access already enabled"
+                              disabled
+                            >
+                              <Key className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}

@@ -1,3 +1,4 @@
+// Update to your existing Add Client component
 "use client";
 
 import type React from "react";
@@ -20,6 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   ArrowLeft,
   Save,
@@ -30,13 +33,17 @@ import {
   MapPin,
   Calendar,
   CheckCircle,
+  Eye,
+  Copy,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { clientService } from "@/lib/supabase";
+import { sendClientWelcomeEmail } from "@/lib/email";
 
-export default function AddClient() {
+export default function EnhancedAddClient() {
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -71,9 +78,20 @@ export default function AddClient() {
     notes: "",
   });
 
+  const [portalSettings, setPortalSettings] = useState({
+    enablePortalAccess: true,
+    sendWelcomeEmail: true,
+    customWelcomeMessage: "",
+  });
+
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [clientResult, setClientResult] = useState<{
+    client: any;
+    temporaryPassword?: string;
+  } | null>(null);
+
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,35 +113,39 @@ export default function AddClient() {
     }
 
     try {
-      await clientService.create({
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        email: formData.email,
-        phone: formData.phone || undefined,
-        company: formData.company || undefined,
-        address: formData.address || undefined,
-        project_title: formData.project_title,
-        project_type: formData.project_type as
-          | "residential"
-          | "commercial"
-          | "renovation"
-          | "interior",
-        project_description: formData.project_description || undefined,
-        budget_range: formData.budget_range || undefined,
-        timeline: formData.timeline || undefined,
-        tier: formData.tier,
-        status: formData.status,
-        client_status: formData.client_status,
-        notes: formData.notes || undefined,
-        project_start_date: new Date().toISOString().split("T")[0], // Today's date
-      });
+      const result = await clientService.create(
+        {
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          email: formData.email,
+          phone: formData.phone || undefined,
+          company: formData.company || undefined,
+          address: formData.address || undefined,
+          project_title: formData.project_title,
+          project_type: formData.project_type as
+            | "residential"
+            | "commercial"
+            | "renovation"
+            | "interior",
+          project_description: formData.project_description || undefined,
+          budget_range: formData.budget_range || undefined,
+          timeline: formData.timeline || undefined,
+          tier: formData.tier,
+          status: formData.status,
+          client_status: formData.client_status,
+          notes: formData.notes || undefined,
+          project_start_date: new Date().toISOString().split("T")[0],
+        },
+        portalSettings.enablePortalAccess
+      );
 
+      setClientResult(result);
       setShowSuccess(true);
 
-      // Redirect after showing success message
-      setTimeout(() => {
-        router.push("/admin/dashboard");
-      }, 2000);
+      // Send welcome email if requested
+      if (portalSettings.sendWelcomeEmail && result.temporaryPassword) {
+        await sendWelcomeEmail(result.client, result.temporaryPassword);
+      }
     } catch (error: any) {
       console.error("Error adding client:", error);
       setError(error.message || "Failed to add client. Please try again.");
@@ -132,30 +154,180 @@ export default function AddClient() {
     }
   };
 
+  const sendWelcomeEmail = async (client: any, password: string) => {
+    try {
+      const success = await sendClientWelcomeEmail({
+        email: client.email,
+        firstName: client.first_name,
+        lastName: client.last_name,
+        projectTitle: client.project_title,
+        temporaryPassword: password,
+        portalUrl: `${window.location.origin}/portal/login`,
+        customMessage: portalSettings.customWelcomeMessage || undefined,
+      });
+
+      if (!success) {
+        console.error("Failed to send welcome email to:", client.email);
+        // You could show a warning to the admin here
+      } else {
+        console.log("Welcome email sent successfully to:", client.email);
+      }
+    } catch (error) {
+      console.error("Error sending welcome email:", error);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    // You could add a toast notification here
+  };
+
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  if (showSuccess) {
+  if (showSuccess && clientResult) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
-              <h2 className="text-xl font-semibold text-slate-900">
-                Client Added Successfully!
-              </h2>
-              <p className="text-slate-600">
-                {formData.first_name} {formData.last_name} has been added to the
-                system.
-              </p>
-              <p className="text-sm text-slate-500">
-                Redirecting to dashboard...
-              </p>
+      <div className="min-h-screen bg-slate-50">
+        <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+          <div className="px-6 py-4">
+            <div className="flex items-center gap-4">
+              <Link href="/admin/dashboard">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Dashboard
+                </Button>
+              </Link>
+              <div className="h-6 w-px bg-slate-300" />
+              <Image
+                src="/images/amart-logo.png"
+                alt="Amart Consult"
+                width={120}
+                height={40}
+                className="h-8 w-auto"
+              />
+              <h1 className="text-xl font-semibold text-slate-900">
+                Client Added Successfully
+              </h1>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </header>
+
+        <div className="max-w-2xl mx-auto p-6">
+          <Card className="border-0 shadow-lg">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-6">
+                <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+
+                <div>
+                  <h2 className="text-2xl font-semibold text-slate-900 mb-2">
+                    Client Added Successfully!
+                  </h2>
+                  <p className="text-slate-600">
+                    {clientResult.client.first_name}{" "}
+                    {clientResult.client.last_name} has been added to the
+                    system.
+                  </p>
+                </div>
+
+                {clientResult.temporaryPassword && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-left">
+                    <h3 className="text-lg font-semibold text-blue-900 mb-4">
+                      Portal Access Credentials
+                    </h3>
+
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-sm text-blue-700">Email</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <code className="flex-1 bg-white px-3 py-2 rounded border text-sm">
+                            {clientResult.client.email}
+                          </code>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              copyToClipboard(clientResult.client.email)
+                            }
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm text-blue-700">
+                          Temporary Password
+                        </Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <code className="flex-1 bg-white px-3 py-2 rounded border text-sm font-mono">
+                            {clientResult.temporaryPassword}
+                          </code>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              copyToClipboard(clientResult.temporaryPassword!)
+                            }
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm text-blue-700">
+                          Portal URL
+                        </Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <code className="flex-1 bg-white px-3 py-2 rounded border text-sm">
+                            {window.location.origin}/portal/login
+                          </code>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              copyToClipboard(
+                                `${window.location.origin}/portal/login`
+                              )
+                            }
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Alert className="mt-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-sm">
+                        {portalSettings.sendWelcomeEmail
+                          ? "A welcome email with these credentials has been sent to the client."
+                          : "Make sure to securely share these credentials with your client."}
+                        The client should update their password on first login.
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                )}
+
+                <div className="flex gap-4 justify-center">
+                  <Link href="/admin/dashboard">
+                    <Button variant="outline">Back to Dashboard</Button>
+                  </Link>
+                  <Link href={`/admin/clients/${clientResult.client.id}`}>
+                    <Button>
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Client
+                    </Button>
+                  </Link>
+                  <Link href="/admin/clients/add">
+                    <Button variant="outline">Add Another Client</Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -190,9 +362,12 @@ export default function AddClient() {
       <div className="max-w-4xl mx-auto p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-              {error}
-            </div>
+            <Alert className="border-red-200 bg-red-50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-red-700">
+                {error}
+              </AlertDescription>
+            </Alert>
           )}
 
           {/* Client Information */}
@@ -423,40 +598,139 @@ export default function AddClient() {
             </CardContent>
           </Card>
 
+          {/* Portal Access Settings */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle>Client Portal Access</CardTitle>
+              <CardDescription>
+                Configure portal access and welcome email settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="enablePortalAccess"
+                  checked={portalSettings.enablePortalAccess}
+                  onCheckedChange={(checked: any) =>
+                    setPortalSettings((prev) => ({
+                      ...prev,
+                      enablePortalAccess: !!checked,
+                    }))
+                  }
+                />
+                <Label
+                  htmlFor="enablePortalAccess"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Enable client portal access
+                </Label>
+              </div>
+              <p className="text-sm text-slate-600 ml-6">
+                Creates login credentials and allows client to access their
+                project dashboard
+              </p>
+
+              {portalSettings.enablePortalAccess && (
+                <div className="ml-6 space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="sendWelcomeEmail"
+                      checked={portalSettings.sendWelcomeEmail}
+                      onCheckedChange={(checked: any) =>
+                        setPortalSettings((prev) => ({
+                          ...prev,
+                          sendWelcomeEmail: !!checked,
+                        }))
+                      }
+                    />
+                    <Label
+                      htmlFor="sendWelcomeEmail"
+                      className="text-sm font-medium cursor-pointer"
+                    >
+                      Send welcome email with login credentials
+                    </Label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="customWelcomeMessage">
+                      Custom Welcome Message (Optional)
+                    </Label>
+                    <Textarea
+                      id="customWelcomeMessage"
+                      value={portalSettings.customWelcomeMessage}
+                      onChange={(e) =>
+                        setPortalSettings((prev) => ({
+                          ...prev,
+                          customWelcomeMessage: e.target.value,
+                        }))
+                      }
+                      placeholder="Add a personal message to the welcome email..."
+                      className="min-h-[80px]"
+                    />
+                  </div>
+
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-sm">
+                      A temporary password will be generated. The client will be
+                      prompted to change it on first login.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Service Tier */}
           <Card className="border-0 shadow-sm">
             <CardHeader>
-              <CardTitle>Service Tier</CardTitle>
+              <CardTitle>Service Tier & Status</CardTitle>
               <CardDescription>
                 Assign the appropriate service tier for this client
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="tier">Tier Assignment</Label>
-                <Select
-                  value={formData.tier}
-                  onValueChange={(value) => handleInputChange("tier", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Tier 1">
-                      Tier 1 - Basic Consultation
-                    </SelectItem>
-                    <SelectItem value="Tier 2">
-                      Tier 2 - Design Development
-                    </SelectItem>
-                    <SelectItem value="Tier 3">
-                      Tier 3 - Full Service (Portal Access)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-slate-600">
-                  Only Tier 3 clients will have access to the client portal
-                  dashboard
-                </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tier">Tier Assignment</Label>
+                  <Select
+                    value={formData.tier}
+                    onValueChange={(value) => handleInputChange("tier", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Tier 1">
+                        Tier 1 - Basic Consultation
+                      </SelectItem>
+                      <SelectItem value="Tier 2">
+                        Tier 2 - Design Development
+                      </SelectItem>
+                      <SelectItem value="Tier 3">
+                        Tier 3 - Full Service (Portal Access)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="client_status">Client Status</Label>
+                  <Select
+                    value={formData.client_status}
+                    onValueChange={(value) =>
+                      handleInputChange("client_status", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Inactive">Inactive</SelectItem>
+                      <SelectItem value="Archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">
