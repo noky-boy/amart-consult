@@ -24,7 +24,6 @@ export async function POST(request: NextRequest) {
       sender_name: messageData.sender_name,
       message: messageData.message,
       is_read: false,
-      timestamp: new Date().toISOString(),
     });
 
     return NextResponse.json({

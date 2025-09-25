@@ -33,6 +33,8 @@ import {
   milestoneService,
   documentService,
   messageService,
+  auth,
+  supabase,
 } from "@/lib/supabase";
 import type {
   ProjectMilestone,
@@ -40,8 +42,81 @@ import type {
   ClientMessage,
 } from "@/lib/supabase";
 
+const PhotoThumbnail = ({
+  photo,
+  onClick,
+}: {
+  photo: ClientDocument;
+  onClick: (url: string) => void;
+}) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadImage = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session) return;
+
+        const response = await fetch(`/api/documents/${photo.id}/download`, {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          setImageUrl(result.downloadUrl);
+        }
+      } catch (error) {
+        console.error("Failed to load thumbnail:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadImage();
+  }, [photo.id]);
+
+  return (
+    <div
+      className="group relative aspect-square bg-slate-100 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+      onClick={() => imageUrl && onClick(imageUrl)}
+    >
+      {loading ? (
+        <div className="absolute inset-0 bg-slate-200 flex items-center justify-center">
+          <Camera className="h-8 w-8 text-slate-400 animate-pulse" />
+        </div>
+      ) : imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={photo.title}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-slate-200 flex items-center justify-center">
+          <Camera className="h-8 w-8 text-slate-400" />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute bottom-2 left-2 text-white text-xs">
+          {new Date(photo.created_at).toLocaleDateString()}
+        </div>
+        <div className="absolute top-2 right-2">
+          <Eye className="h-4 w-4 text-white" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function ClientDashboard() {
   const { user, client, loading: authLoading } = useRequireAuth();
+  // const { session } = useClientAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -57,12 +132,51 @@ export default function ClientDashboard() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // Add this line with your other state declarations
+  const [isSessionReady, setIsSessionReady] = useState(false);
+
+  useEffect(() => {
+    console.log("Dashboard component mounted. Checking auth state...");
+
+    // Check the session once on load
+    const checkSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      console.log("SESSION CHECK ON DASHBOARD:", data.session);
+      if (error) {
+        console.error("Error getting session:", error);
+      }
+    };
+    checkSession();
+
+    // Also listen for real-time auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log(`AUTH STATE CHANGE EVENT: ${event}`, session);
+      }
+    );
+
+    return () => {
+      // Cleanup the listener when the component unmounts
+      authListener.subscription.unsubscribe();
+    };
+  }, []); // The empty array ensures this runs only once on mount
 
   useEffect(() => {
     if (client?.id) {
       fetchClientData();
     }
   }, [client?.id]);
+
+  // Add this new useEffect hook below your existing ones
+  useEffect(() => {
+    if (!authLoading && client) {
+      setIsSessionReady(true);
+    } else {
+      setIsSessionReady(false);
+    }
+  }, [authLoading, client]);
 
   const fetchClientData = async () => {
     if (!client?.id) return;
@@ -112,24 +226,58 @@ export default function ClientDashboard() {
 
     setUpdatingPassword(true);
     try {
-      const result = await updatePassword(newPassword);
-      if (result.success) {
+      console.log("Starting password update...");
+
+      // Call Supabase directly instead of through the auth context
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        console.error("Password update error:", error);
+        alert(`Failed to update password: ${error.message}`);
+      } else {
+        console.log("Password updated successfully");
         alert("Password updated successfully");
         setNewPassword("");
         setConfirmPassword("");
         setShowSettings(false);
-      } else {
-        alert(`Failed to update password: ${result.error}`);
+        // Don't wait for auth state changes - just continue
       }
     } catch (error: any) {
+      console.error("Password update catch error:", error);
       alert(`Failed to update password: ${error.message}`);
     } finally {
       setUpdatingPassword(false);
     }
   };
 
-  // Update the handleSendMessage function in your dashboard page.tsx:
+  // Marking messages when read
+  const markAdminMessagesAsRead = async () => {
+    if (!client?.id) return;
 
+    const unreadAdminMessages = messages.filter(
+      (msg) => msg.sender_type === "admin" && !msg.is_read
+    );
+
+    if (unreadAdminMessages.length > 0) {
+      const messageIds = unreadAdminMessages.map((msg) => msg.id);
+      try {
+        await messageService.markAsRead(messageIds);
+
+        // Update local state
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            messageIds.includes(msg.id) ? { ...msg, is_read: true } : msg
+          )
+        );
+      } catch (error) {
+        console.error("Failed to mark messages as read:", error);
+      }
+    }
+  };
+
+  // Update the handleSendMessage function in your dashboard page.tsx:
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !client?.id || !user?.email) return;
 
@@ -362,27 +510,135 @@ export default function ClientDashboard() {
                   Change Password
                 </h3>
                 <div className="space-y-3">
-                  <Input
-                    type="password"
-                    placeholder="New password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    minLength={8}
-                  />
-                  <Input
-                    type="password"
-                    placeholder="Confirm new password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    minLength={8}
-                  />
+                  <div className="relative">
+                    <Input
+                      type={showNewPassword ? "text" : "password"}
+                      placeholder="New password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      minLength={8}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      {showNewPassword ? (
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L12 12m0 0l3.12-3.12m-3.12 3.12l3.13-3.13"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Confirm new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      minLength={8}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      {showConfirmPassword ? (
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L12 12m0 0l3.12-3.12m-3.12 3.12l3.13-3.13"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                  {newPassword && newPassword.length < 8 && (
+                    <p className="text-xs text-red-500">
+                      Password must be at least 8 characters long
+                    </p>
+                  )}
+                  {newPassword &&
+                    confirmPassword &&
+                    newPassword !== confirmPassword && (
+                      <p className="text-xs text-red-500">
+                        Passwords don't match
+                      </p>
+                    )}
                 </div>
               </div>
 
               <div className="flex gap-3">
                 <Button
                   variant="outline"
-                  onClick={() => setShowSettings(false)}
+                  onClick={() => {
+                    setShowSettings(false);
+                    setNewPassword("");
+                    setConfirmPassword("");
+                    setShowNewPassword(false);
+                    setShowConfirmPassword(false);
+                  }}
                   className="flex-1"
                 >
                   Cancel
@@ -390,7 +646,12 @@ export default function ClientDashboard() {
                 <Button
                   onClick={handlePasswordUpdate}
                   disabled={
-                    updatingPassword || !newPassword || !confirmPassword
+                    !isSessionReady ||
+                    updatingPassword ||
+                    !newPassword ||
+                    !confirmPassword ||
+                    newPassword !== confirmPassword ||
+                    newPassword.length < 8
                   }
                   className="flex-1"
                 >
@@ -432,7 +693,12 @@ export default function ClientDashboard() {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={async () => {
+                    setActiveTab(tab.id);
+                    if (tab.id === "messages") {
+                      await markAdminMessagesAsRead();
+                    }
+                  }}
                   className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
                     activeTab === tab.id
                       ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-200 transform scale-105"
@@ -823,28 +1089,11 @@ export default function ClientDashboard() {
                   {photos.length > 0 ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {photos.map((photo) => (
-                        <div
+                        <PhotoThumbnail
                           key={photo.id}
-                          className="group relative aspect-square bg-slate-100 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                          onClick={async () => {
-                            const url = await documentService.getDownloadUrl(
-                              photo.file_path
-                            );
-                            if (url) setSelectedImage(url);
-                          }}
-                        >
-                          <div className="absolute inset-0 bg-slate-200 flex items-center justify-center">
-                            <Camera className="h-8 w-8 text-slate-400" />
-                          </div>
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <div className="absolute bottom-2 left-2 text-white text-xs">
-                              {new Date(photo.created_at).toLocaleDateString()}
-                            </div>
-                            <div className="absolute top-2 right-2">
-                              <Eye className="h-4 w-4 text-white" />
-                            </div>
-                          </div>
-                        </div>
+                          photo={photo}
+                          onClick={setSelectedImage}
+                        />
                       ))}
                     </div>
                   ) : (
@@ -942,15 +1191,54 @@ export default function ClientDashboard() {
                             </div>
                           </div>
                           <div className="flex space-x-2">
+                            {/* // In your client dashboard, update the button
+                            handlers */}
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={async () => {
-                                const url =
-                                  await documentService.getDownloadUrl(
-                                    doc.file_path
+                                try {
+                                  // Get the current session
+                                  const {
+                                    data: { session },
+                                  } = await supabase.auth.getSession();
+
+                                  if (!session) {
+                                    throw new Error("Not authenticated");
+                                  }
+
+                                  const response = await fetch(
+                                    `/api/documents/${doc.id}/download`,
+                                    {
+                                      headers: {
+                                        Authorization: `Bearer ${session.access_token}`,
+                                      },
+                                    }
                                   );
-                                if (url) window.open(url, "_blank");
+
+                                  const result = await response.json();
+
+                                  if (!response.ok) {
+                                    throw new Error(
+                                      result.error ||
+                                        "Failed to get download URL"
+                                    );
+                                  }
+
+                                  // For view (open in new tab)
+                                  window.open(result.downloadUrl, "_blank");
+                                } catch (error) {
+                                  console.error(
+                                    "Failed to view document:",
+                                    error
+                                  );
+                                  alert(
+                                    "Failed to view document: " +
+                                      (error instanceof Error
+                                        ? error.message
+                                        : "Unknown error")
+                                  );
+                                }
                               }}
                             >
                               <Eye className="h-4 w-4" />
@@ -959,15 +1247,50 @@ export default function ClientDashboard() {
                               variant="ghost"
                               size="sm"
                               onClick={async () => {
-                                const url =
-                                  await documentService.getDownloadUrl(
-                                    doc.file_path
+                                try {
+                                  // Get the current session
+                                  const {
+                                    data: { session },
+                                  } = await supabase.auth.getSession();
+
+                                  if (!session) {
+                                    throw new Error("Not authenticated");
+                                  }
+
+                                  const response = await fetch(
+                                    `/api/documents/${doc.id}/download`,
+                                    {
+                                      headers: {
+                                        Authorization: `Bearer ${session.access_token}`,
+                                      },
+                                    }
                                   );
-                                if (url) {
+
+                                  const result = await response.json();
+
+                                  if (!response.ok) {
+                                    throw new Error(
+                                      result.error ||
+                                        "Failed to get download URL"
+                                    );
+                                  }
+
+                                  // For download
                                   const a = document.createElement("a");
-                                  a.href = url;
-                                  a.download = doc.file_name;
+                                  a.href = result.downloadUrl;
+                                  a.download = result.filename;
                                   a.click();
+                                } catch (error) {
+                                  console.error(
+                                    "Failed to download document:",
+                                    error
+                                  );
+                                  alert(
+                                    "Failed to download document: " +
+                                      (error instanceof Error
+                                        ? error.message
+                                        : "Unknown error")
+                                  );
                                 }
                               }}
                             >
@@ -1052,7 +1375,7 @@ export default function ClientDashboard() {
                                   : "text-slate-400"
                               }`}
                             >
-                              {formatTimestamp(message.timestamp)}
+                              {formatTimestamp(message.created_at)}
                             </p>
                           </div>
                         </div>

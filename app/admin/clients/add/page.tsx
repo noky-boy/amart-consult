@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import CopyToClipboard from "@/components/CopyToClipboard";
 import {
   Card,
   CardContent,
@@ -41,7 +42,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { clientService } from "@/lib/supabase";
-import { sendClientWelcomeEmail } from "@/lib/email";
 
 export default function EnhancedAddClient() {
   const [formData, setFormData] = useState({
@@ -154,32 +154,39 @@ export default function EnhancedAddClient() {
     }
   };
 
+  // Update your sendWelcomeEmail function in add/page.tsx:
+
   const sendWelcomeEmail = async (client: any, password: string) => {
     try {
-      const success = await sendClientWelcomeEmail({
-        email: client.email,
-        firstName: client.first_name,
-        lastName: client.last_name,
-        projectTitle: client.project_title,
-        temporaryPassword: password,
-        portalUrl: `${window.location.origin}/portal/login`,
-        customMessage: portalSettings.customWelcomeMessage || undefined,
+      const response = await fetch("/api/send-welcome-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: client.email,
+          firstName: client.first_name,
+          lastName: client.last_name,
+          projectTitle: client.project_title,
+          temporaryPassword: password,
+          customMessage: portalSettings.customWelcomeMessage || undefined,
+        }),
       });
 
-      if (!success) {
-        console.error("Failed to send welcome email to:", client.email);
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error("Failed to send welcome email:", result.error);
         // You could show a warning to the admin here
+        return false;
       } else {
         console.log("Welcome email sent successfully to:", client.email);
+        return true;
       }
     } catch (error) {
       console.error("Error sending welcome email:", error);
+      return false;
     }
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    // You could add a toast notification here
   };
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
@@ -243,15 +250,7 @@ export default function EnhancedAddClient() {
                           <code className="flex-1 bg-white px-3 py-2 rounded border text-sm">
                             {clientResult.client.email}
                           </code>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              copyToClipboard(clientResult.client.email)
-                            }
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
+                          <CopyToClipboard text={clientResult.client.email} />
                         </div>
                       </div>
 
@@ -263,15 +262,9 @@ export default function EnhancedAddClient() {
                           <code className="flex-1 bg-white px-3 py-2 rounded border text-sm font-mono">
                             {clientResult.temporaryPassword}
                           </code>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              copyToClipboard(clientResult.temporaryPassword!)
-                            }
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
+                          <CopyToClipboard
+                            text={clientResult.temporaryPassword!}
+                          />
                         </div>
                       </div>
 
@@ -283,17 +276,9 @@ export default function EnhancedAddClient() {
                           <code className="flex-1 bg-white px-3 py-2 rounded border text-sm">
                             {window.location.origin}/portal/login
                           </code>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              copyToClipboard(
-                                `${window.location.origin}/portal/login`
-                              )
-                            }
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
+                          <CopyToClipboard
+                            text={`${window.location.origin}/portal/login`}
+                          />
                         </div>
                       </div>
                     </div>

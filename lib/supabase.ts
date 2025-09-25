@@ -22,12 +22,21 @@ export const auth = {
   },
 
   // Sign in client
+  // Sign in client
   signIn: async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    return { data, error };
+
+    // Return the user from the session for consistency with your hook
+    return {
+      data: {
+        user: data.session?.user || null,
+        session: data.session,
+      },
+      error,
+    };
   },
 
   // Sign out
@@ -190,7 +199,7 @@ export interface ClientDocument {
 }
 
 export interface ClientMessage {
-  timestamp: string;
+  // timestamp: string;
   id: string;
   client_id: string;
   created_at: string;
@@ -213,6 +222,10 @@ export const clientService = {
     // Create auth account if portal access requested
     if (createPortalAccess) {
       temporaryPassword = generateRandomPassword();
+      console.log("Creating auth user with:", {
+        email: clientData.email,
+        temporaryPassword,
+      });
 
       const { data: authData, error: authError } = await auth.signUp(
         clientData.email,
@@ -223,6 +236,8 @@ export const clientService = {
           client_type: "portal_user",
         }
       );
+
+      console.log("Auth creation result:", { authData, authError });
 
       if (authError) {
         console.error("Failed to create auth user:", authError);
@@ -255,18 +270,37 @@ export const clientService = {
   },
 
   // Get client by auth user ID (for portal access)
+  // In your clientService object, update the getByAuthUserId method:
   async getByAuthUserId(authUserId: string): Promise<Client | null> {
-    const { data, error } = await supabase
-      .from("clients")
-      .select("*")
-      .eq("auth_user_id", authUserId)
-      .single();
+    console.log("=== INSIDE getByAuthUserId ===");
+    console.log("Looking for auth_user_id:", authUserId);
 
-    if (error) {
-      if (error.code === "PGRST116") return null; // No rows found
-      throw error;
+    try {
+      console.log("About to execute Supabase query...");
+
+      const { data, error } = await supabase
+        .from("clients")
+        .select("*")
+        .eq("auth_user_id", authUserId)
+        .single();
+
+      console.log("Supabase query completed. Data:", data, "Error:", error);
+
+      if (error) {
+        if (error.code === "PGRST116") {
+          console.log("No rows found - returning null");
+          return null; // No rows found
+        }
+        console.error("Database error in getByAuthUserId:", error);
+        throw error;
+      }
+
+      console.log("Returning client data:", data);
+      return data;
+    } catch (err) {
+      console.error("Exception in getByAuthUserId:", err);
+      throw err;
     }
-    return data;
   },
 
   // Get client by email (for linking auth users)

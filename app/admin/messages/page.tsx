@@ -117,6 +117,28 @@ export default function MessagesSystem() {
     try {
       const clientMessages = await messageService.getByClientId(clientId);
       setMessages(clientMessages);
+      // Filter for unread messages sent by the client
+      const unreadClientMessages = clientMessages.filter(
+        (msg) => !msg.is_read && msg.sender_type === "client"
+      );
+
+      // Get the IDs of the unread messages
+      const unreadClientMessageIds = unreadClientMessages.map((msg) => msg.id);
+
+      // If there are unread messages, mark them as read
+      if (unreadClientMessageIds.length > 0) {
+        await messageService.markAsRead(unreadClientMessageIds);
+      }
+
+      // A better way is to update the state directly to avoid re-fetching
+      // Update the local state to immediately reflect the change
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          unreadClientMessageIds.includes(msg.id)
+            ? { ...msg, is_read: true }
+            : msg
+        )
+      );
     } catch (error) {
       console.error("Failed to fetch messages:", error);
     }
@@ -559,6 +581,36 @@ export default function MessagesSystem() {
                           </p>
                         </div>
                       ))}
+
+                      <div className="pt-4">
+                        <Card>
+                          <CardContent className="pt-6 flex items-end gap-2">
+                            <Textarea
+                              placeholder="Type your reply here..."
+                              value={messageData.message}
+                              onChange={(e) =>
+                                setMessageData((prev) => ({
+                                  ...prev,
+                                  message: e.target.value,
+                                }))
+                              }
+                              className="flex-grow min-h-[50px]"
+                            />
+                            <Button
+                              onClick={handleSendMessage}
+                              disabled={!messageData.message.trim() || sending}
+                              size="icon"
+                              className="flex-shrink-0"
+                            >
+                              {sending ? (
+                                <Clock className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Send className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-12">

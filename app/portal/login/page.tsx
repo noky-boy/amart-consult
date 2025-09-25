@@ -33,24 +33,35 @@ export default function ClientLoginPage() {
     confirmPassword: "",
   });
 
-  const { signIn, signOut, user, client, updatePassword } = useClientAuth();
+  const { signIn, signOut, user, client, updatePassword, loading } =
+    useClientAuth();
   const router = useRouter();
 
   // Redirect if already authenticated
   useEffect(() => {
+    // Don't do anything while auth is still loading
+    if (loading) return;
+
     if (user && client) {
       // Only redirect if we have both user AND client data
       router.push("/portal/dashboard");
     } else if (user && !client) {
-      // User authenticated but no client record found
-      setError(
-        "Access denied. This portal is for clients only. Use the admin portal for administrative access."
-      );
-      // Sign out the user since they shouldn't be here
-      signOut();
-    }
-  }, [user, client, router, signOut]);
+      // Give it a bit more time in case client data is still loading
+      const timeoutId = setTimeout(() => {
+        if (user && !client) {
+          // User authenticated but no client record found after timeout
+          setError(
+            "Access denied. This portal is for clients only. Use the admin portal for administrative access."
+          );
+          signOut();
+        }
+      }, 2000); // Wait 2 seconds for client data to load
 
+      return () => clearTimeout(timeoutId);
+    }
+  }, [user, client, loading, router, signOut]);
+
+  // In your handleLogin function in portal/login/page.tsx, add logging:
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -63,19 +74,26 @@ export default function ClientLoginPage() {
     }
 
     try {
+      // Add debugging logs
+      console.log("Attempting login with:", {
+        email: formData.email,
+        passwordLength: formData.password.length,
+      });
+
       const result = await signIn(formData.email, formData.password);
+      console.log("Login result:", result);
 
       if (result.success) {
-        // The useEffect above will handle the redirect logic
-        // Don't do anything here, let the context handle it
+        setIsFirstLogin(true);
+        setShowPasswordUpdate(true);
       } else {
         setError(
           result.error || "Login failed. Please check your credentials."
         );
       }
     } catch (error: any) {
-      setError("An unexpected error occurred. Please try again.");
       console.error("Login error:", error);
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -191,6 +209,7 @@ export default function ClientLoginPage() {
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                      suppressHydrationWarning
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
