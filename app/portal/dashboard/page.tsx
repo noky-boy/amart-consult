@@ -136,6 +136,7 @@ export default function ClientDashboard() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   // Add this line with your other state declarations
   const [isSessionReady, setIsSessionReady] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
     console.log("Dashboard component mounted. Checking auth state...");
@@ -177,6 +178,20 @@ export default function ClientDashboard() {
       setIsSessionReady(false);
     }
   }, [authLoading, client]);
+
+  // close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showUserMenu && !(event.target as Element).closest(".relative")) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showUserMenu]);
 
   const fetchClientData = async () => {
     if (!client?.id) return;
@@ -452,46 +467,75 @@ export default function ClientDashboard() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="relative hover:bg-slate-100 transition-colors"
-              >
-                <Bell className="h-4 w-4" />
+              {/* Notification indicator (if you want to keep it separate) */}
+              <div className="relative">
+                <Bell className="h-4 w-4 text-slate-400" />
                 {unreadMessages > 0 && (
-                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse"></span>
+                  <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full animate-pulse"></span>
                 )}
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowSettings(true)}
-                className="hover:bg-slate-100 transition-colors"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-
-              <div className="flex items-center space-x-3 bg-slate-50 rounded-full px-3 py-2">
-                <Avatar className="h-8 w-8 ring-2 ring-indigo-100">
-                  <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs font-semibold">
-                    {client?.first_name[0]}
-                    {client?.last_name[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-medium text-slate-700">
-                  {client?.first_name} {client?.last_name}
-                </span>
               </div>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="hover:bg-red-50 hover:text-red-600 transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
+              {/* User Profile Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-3 bg-slate-50 rounded-full px-3 py-2 hover:bg-slate-100 transition-colors"
+                >
+                  <Avatar className="h-8 w-8 ring-2 ring-indigo-100">
+                    <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs font-semibold">
+                      {client?.first_name[0]}
+                      {client?.last_name[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium text-slate-700">
+                    {client?.first_name} {client?.last_name}
+                  </span>
+                  <svg
+                    className={`h-4 w-4 text-slate-400 transition-transform ${
+                      showUserMenu ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-50">
+                    <button
+                      onClick={() => {
+                        setShowSettings(true);
+                        setShowUserMenu(false);
+                      }}
+                      className="flex items-center w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      <Settings className="h-4 w-4 mr-3 text-slate-500" />
+                      Change Password
+                    </button>
+
+                    <div className="border-t border-slate-100 my-1"></div>
+
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setShowUserMenu(false);
+                      }}
+                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4 mr-3" />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
