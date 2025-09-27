@@ -1,626 +1,333 @@
+// lib/email.ts
 import nodemailer from "nodemailer";
-
-interface EmailConfig {
-  host: string;
-  port: number;
-  secure: boolean;
-  auth: {
-    user: string;
-    pass: string;
-  };
-}
-
-interface EmailData {
-  to: string | string[];
-  subject: string;
-  html: string;
-  text?: string;
-  from?: string;
-  replyTo?: string;
-}
-
-// Add this interface to your existing interfaces in email.ts
-interface ClientWelcomeData {
-  email: string;
-  firstName: string;
-  lastName: string;
-  projectTitle: string;
-  temporaryPassword: string;
-  portalUrl: string;
-  customMessage?: string;
-}
-
-interface ContactFormData {
-  name: string;
-  email: string;
-  phone: string;
-  projectType: string;
-  location: string;
-  budgetRange?: string;
-  serviceInterest: string[];
-  message: string;
-}
-
-interface QuoteFormData {
-  name: string;
-  email: string;
-  phone: string;
-  projectType: string;
-  location: string;
-  timeline: string;
-  serviceTier: string;
-  budgetRange: string;
-  requirements: string;
-  additionalDetails?: string;
-}
-
-interface NewsletterData {
-  email: string;
-  name?: string;
-  source?: string;
-}
+import { generateWelcomeEmailHTML } from "@/components/email-templates/WelcomeEmail";
+import { generateNewsletterEmailHTML } from "@/components/email-templates/NewsletterEmail";
+import { generateProjectUpdateEmailHTML } from "@/components/email-templates/ProjectUpdateEmail";
 
 // Email configuration
-const emailConfig: EmailConfig = {
+const emailConfig = {
   host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: Number.parseInt(process.env.SMTP_PORT || "587"),
+  port: parseInt(process.env.SMTP_PORT || "465"),
   secure: process.env.SMTP_SECURE === "true",
   auth: {
-    user: process.env.SMTP_USER || "amartconsult1@gmail.com",
-    pass: process.env.SMTP_PASS || "",
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 };
 
 // Create transporter
-const createTransporter = () => {
-  return nodemailer.createTransport(emailConfig);
+const transporter = nodemailer.createTransport(emailConfig);
+
+// Verify connection configuration
+export const verifyEmailConnection = async () => {
+  try {
+    await transporter.verify();
+    console.log("Email server is ready to take our messages");
+    return true;
+  } catch (error) {
+    console.error("Email server connection failed:", error);
+    return false;
+  }
 };
 
-// Generic email sender
-export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
-  try {
-    const transporter = createTransporter();
+// Base email interface
+interface BaseEmailOptions {
+  to: string | string[];
+  subject: string;
+  html: string;
+  text?: string;
+}
 
+// Send email function
+export const sendEmail = async (options: BaseEmailOptions) => {
+  try {
     const mailOptions = {
-      from: emailData.from || `"Amart Consult" <${emailConfig.auth.user}>`,
-      to: emailData.to,
-      subject: emailData.subject,
-      html: emailData.html,
-      text: emailData.text,
-      replyTo: emailData.replyTo,
+      from: {
+        name: "Amart Consult",
+        address: process.env.SMTP_USER || "amartconsult1@gmail.com",
+      },
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text || options.html.replace(/<[^>]*>/g, ""), // Strip HTML for text version
     };
 
-    await transporter.sendMail(mailOptions);
-    return true;
+    const result = await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully:", result.messageId);
+    return { success: true, messageId: result.messageId };
   } catch (error) {
-    console.error("Email sending failed:", error);
-    return false;
+    console.error("Failed to send email:", error);
+    return { success: false, error: error.message };
   }
 };
 
-// Contact form email templates
-export const sendContactFormEmail = async (
-  data: ContactFormData
-): Promise<boolean> => {
-  const adminEmailHtml = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: linear-gradient(135deg, #0A2463 0%, #CC7357 100%); padding: 30px; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">New Contact Form Submission</h1>
-      </div>
-      
-      <div style="padding: 30px; background: #f9f9f9;">
-        <h2 style="color: #0A2463; margin-bottom: 20px;">Contact Details</h2>
-        
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-          <tr style="background: white;">
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0A2463;">Name:</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${data.name}</td>
-          </tr>
-          <tr style="background: #f8f8f8;">
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0A2463;">Email:</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${
-              data.email
-            }</td>
-          </tr>
-          <tr style="background: white;">
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0A2463;">Phone:</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${
-              data.phone
-            }</td>
-          </tr>
-          <tr style="background: #f8f8f8;">
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0A2463;">Project Type:</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${
-              data.projectType
-            }</td>
-          </tr>
-          <tr style="background: white;">
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0A2463;">Location:</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${
-              data.location
-            }</td>
-          </tr>
-          ${
-            data.budgetRange
-              ? `
-          <tr style="background: #f8f8f8;">
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0A2463;">Budget Range:</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${data.budgetRange}</td>
-          </tr>
-          `
-              : ""
-          }
-          ${
-            data.serviceInterest.length > 0
-              ? `
-          <tr style="background: white;">
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0A2463;">Service Interest:</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${data.serviceInterest.join(
-              ", "
-            )}</td>
-          </tr>
-          `
-              : ""
-          }
-        </table>
+// Welcome email types and function
+interface WelcomeEmailData {
+  to: string;
+  firstName: string;
+  websiteUrl?: string;
+  logoUrl?: string;
+}
 
-        <h3 style="color: #0A2463; margin-bottom: 10px;">Message:</h3>
-        <div style="background: white; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
-          ${data.message.replace(/\n/g, "<br>")}
-        </div>
+export const sendWelcomeEmail = async (data: WelcomeEmailData) => {
+  const htmlContent = generateWelcomeEmailHTML({
+    firstName: data.firstName,
+    websiteUrl:
+      data.websiteUrl ||
+      process.env.NEXT_PUBLIC_WEBSITE_URL ||
+      "https://amartconsult.com",
+    logoUrl:
+      data.logoUrl ||
+      `${
+        process.env.NEXT_PUBLIC_WEBSITE_URL || "https://amartconsult.com"
+      }/images/amart-logo.png`,
+  });
 
-        <div style="margin-top: 30px; padding: 20px; background: #0A2463; color: white; border-radius: 5px; text-align: center;">
-          <p style="margin: 0; font-size: 14px;">
-            <strong>Next Steps:</strong> Please respond to this inquiry within 24 hours to maintain our service standards.
-          </p>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const clientEmailHtml = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: linear-gradient(135deg, #0A2463 0%, #CC7357 100%); padding: 30px; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">Thank You for Contacting Amart Consult</h1>
-      </div>
-      
-      <div style="padding: 30px;">
-        <p style="font-size: 16px; color: #333; margin-bottom: 20px;">Dear ${
-          data.name
-        },</p>
-        
-        <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
-          Thank you for reaching out to Amart Consult. We have received your inquiry about your ${data.projectType.toLowerCase()} project in ${
-    data.location
-  }.
-        </p>
-
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="color: #0A2463; margin-top: 0;">What happens next?</h3>
-          <ul style="color: #666; line-height: 1.8; padding-left: 20px;">
-            <li>Our team will review your project details within 24 hours</li>
-            <li>We'll contact you to discuss your vision and requirements</li>
-            <li>Schedule a consultation to explore your project in detail</li>
-            <li>Provide you with a customized proposal and timeline</li>
-          </ul>
-        </div>
-
-        <div style="background: #0A2463; color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 30px 0;">
-          <h3 style="margin-top: 0; color: white;">Need immediate assistance?</h3>
-          <p style="margin: 10px 0;">Call us directly at <strong>+233 54 354 3356</strong></p>
-          <p style="margin: 10px 0;">Or email us at <strong>amartconsult1@gmail.com</strong></p>
-        </div>
-
-        <p style="color: #666; line-height: 1.6;">
-          We're excited to help bring your architectural vision to life!
-        </p>
-
-        <p style="color: #666; margin-top: 30px;">
-          Best regards,<br>
-          <strong style="color: #0A2463;">Nathan Amarkwei</strong><br>
-          Project Manager<br>
-          Amart Consult
-        </p>
-      </div>
-    </div>
-  `;
-
-  try {
-    // Send email to admin
-    await sendEmail({
-      to: "amartconsult1@gmail.com",
-      subject: `New Contact Form Submission - ${data.projectType} Project`,
-      html: adminEmailHtml,
-      replyTo: data.email,
-    });
-
-    // Send confirmation email to client
-    await sendEmail({
-      to: data.email,
-      subject:
-        "Thank you for contacting Amart Consult - We'll be in touch soon!",
-      html: clientEmailHtml,
-    });
-
-    return true;
-  } catch (error) {
-    console.error("Failed to send contact form emails:", error);
-    return false;
-  }
+  return await sendEmail({
+    to: data.to,
+    subject: "Welcome to Amart Consult!",
+    html: htmlContent,
+  });
 };
 
-// Quote form email templates
-export const sendQuoteFormEmail = async (
-  data: QuoteFormData
-): Promise<boolean> => {
-  const adminEmailHtml = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: linear-gradient(135deg, #0A2463 0%, #CC7357 100%); padding: 30px; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">New Quote Request</h1>
-      </div>
-      
-      <div style="padding: 30px; background: #f9f9f9;">
-        <h2 style="color: #0A2463; margin-bottom: 20px;">Quote Request Details</h2>
-        
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-          <h3 style="color: #0A2463; margin-top: 0;">Project Information</h3>
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr><td style="padding: 8px 0; font-weight: bold; color: #0A2463;">Project Type:</td><td>${
-              data.projectType
-            }</td></tr>
-            <tr><td style="padding: 8px 0; font-weight: bold; color: #0A2463;">Location:</td><td>${
-              data.location
-            }</td></tr>
-            <tr><td style="padding: 8px 0; font-weight: bold; color: #0A2463;">Timeline:</td><td>${
-              data.timeline
-            }</td></tr>
-            <tr><td style="padding: 8px 0; font-weight: bold; color: #0A2463;">Service Tier:</td><td>${
-              data.serviceTier
-            }</td></tr>
-            <tr><td style="padding: 8px 0; font-weight: bold; color: #0A2463;">Budget Range:</td><td>${
-              data.budgetRange
-            }</td></tr>
-          </table>
-        </div>
+// Newsletter email types and function
+interface NewsletterEmailData {
+  to: string | string[];
+  month: string;
+  year: string;
+  featuredProject?: {
+    title: string;
+    description: string;
+    imageUrl?: string;
+    projectUrl?: string;
+  };
+  articles?: Array<{
+    title: string;
+    excerpt: string;
+    url?: string;
+  }>;
+  tip?: {
+    title: string;
+    content: string;
+  };
+  websiteUrl?: string;
+  logoUrl?: string;
+}
 
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-          <h3 style="color: #0A2463; margin-top: 0;">Contact Information</h3>
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr><td style="padding: 8px 0; font-weight: bold; color: #0A2463;">Name:</td><td>${
-              data.name
-            }</td></tr>
-            <tr><td style="padding: 8px 0; font-weight: bold; color: #0A2463;">Email:</td><td>${
-              data.email
-            }</td></tr>
-            <tr><td style="padding: 8px 0; font-weight: bold; color: #0A2463;">Phone:</td><td>${
-              data.phone
-            }</td></tr>
-          </table>
-        </div>
+export const sendNewsletterEmail = async (data: NewsletterEmailData) => {
+  const htmlContent = generateNewsletterEmailHTML({
+    month: data.month,
+    year: data.year,
+    featuredProject: data.featuredProject,
+    articles: data.articles,
+    tip: data.tip,
+    websiteUrl:
+      data.websiteUrl ||
+      process.env.NEXT_PUBLIC_WEBSITE_URL ||
+      "https://amartconsult.com",
+    logoUrl:
+      data.logoUrl ||
+      `${
+        process.env.NEXT_PUBLIC_WEBSITE_URL || "https://amartconsult.com"
+      }/images/amart-logo.png`,
+  });
 
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-          <h3 style="color: #0A2463; margin-top: 0;">Project Requirements</h3>
-          <p style="line-height: 1.6; color: #333;">${data.requirements.replace(
-            /\n/g,
-            "<br>"
-          )}</p>
-          
-          ${
-            data.additionalDetails
-              ? `
-          <h4 style="color: #0A2463; margin-top: 20px;">Additional Details</h4>
-          <p style="line-height: 1.6; color: #333;">${data.additionalDetails.replace(
-            /\n/g,
-            "<br>"
-          )}</p>
-          `
-              : ""
-          }
-        </div>
-
-        <div style="background: #CC7357; color: white; padding: 20px; border-radius: 8px; text-align: center;">
-          <p style="margin: 0; font-weight: bold;">High Priority Quote Request</p>
-          <p style="margin: 5px 0 0 0; font-size: 14px;">Please prepare detailed quote within 48 hours</p>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const clientEmailHtml = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: linear-gradient(135deg, #0A2463 0%, #CC7357 100%); padding: 30px; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">Quote Request Received</h1>
-      </div>
-      
-      <div style="padding: 30px;">
-        <p style="font-size: 16px; color: #333; margin-bottom: 20px;">Dear ${
-          data.name
-        },</p>
-        
-        <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
-          Thank you for requesting a quote for your ${data.projectType.toLowerCase()} project. We have received all your project details and our team is already reviewing your requirements.
-        </p>
-
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="color: #0A2463; margin-top: 0;">Your Quote Request Summary</h3>
-          <ul style="color: #666; line-height: 1.8; padding-left: 20px; list-style: none;">
-            <li><strong>Project:</strong> ${data.projectType}</li>
-            <li><strong>Location:</strong> ${data.location}</li>
-            <li><strong>Timeline:</strong> ${data.timeline}</li>
-            <li><strong>Service Package:</strong> ${data.serviceTier}</li>
-            <li><strong>Budget Range:</strong> ${data.budgetRange}</li>
-          </ul>
-        </div>
-
-        <div style="background: #0A2463; color: white; padding: 20px; border-radius: 8px; margin: 30px 0;">
-          <h3 style="margin-top: 0; color: white;">What's Next?</h3>
-          <div style="text-align: left;">
-            <p style="margin: 10px 0;">✓ Our team reviews your project requirements (24 hours)</p>
-            <p style="margin: 10px 0;">✓ We prepare a detailed, customized quote (48 hours)</p>
-            <p style="margin: 10px 0;">✓ Schedule a consultation to discuss the proposal</p>
-            <p style="margin: 10px 0;">✓ Finalize project scope and timeline</p>
-          </div>
-        </div>
-
-        <div style="text-align: center; margin: 30px 0;">
-          <p style="color: #666; margin-bottom: 15px;">Questions about your quote?</p>
-          <p style="margin: 5px 0;"><strong>Call:</strong> +233 54 354 3356</p>
-          <p style="margin: 5px 0;"><strong>Email:</strong> amartconsult1@gmail.com</p>
-        </div>
-
-        <p style="color: #666; margin-top: 30px;">
-          Best regards,<br>
-          <strong style="color: #0A2463;">Nathan Amarkwei</strong><br>
-          Project Manager<br>
-          Amart Consult
-        </p>
-      </div>
-    </div>
-  `;
-
-  try {
-    // Send email to admin
-    await sendEmail({
-      to: "amartconsult1@gmail.com",
-      subject: `Quote Request - ${data.projectType} Project (${data.serviceTier})`,
-      html: adminEmailHtml,
-      replyTo: data.email,
-    });
-
-    // Send confirmation email to client
-    await sendEmail({
-      to: data.email,
-      subject: "Your Quote Request is Being Processed - Amart Consult",
-      html: clientEmailHtml,
-    });
-
-    return true;
-  } catch (error) {
-    console.error("Failed to send quote form emails:", error);
-    return false;
-  }
+  return await sendEmail({
+    to: data.to,
+    subject: `Amart Consult Monthly Update - ${data.month} ${data.year}`,
+    html: htmlContent,
+  });
 };
 
-// Send Cleient Welcome Email
-export const sendClientWelcomeEmail = async (
-  data: ClientWelcomeData
-): Promise<boolean> => {
-  const welcomeEmailHtml = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: linear-gradient(135deg, #0A2463 0%, #CC7357 100%); padding: 30px; text-align: center;">
-        <div style="background-color: white; display: inline-block; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
-          <div style="font-size: 24px; font-weight: bold; color: #0A2463;">AC</div>
+// Project update email types and function
+interface ProjectUpdateEmailData {
+  to: string;
+  clientName: string;
+  projectName: string;
+  weekNumber: number;
+  status: "on-track" | "delayed" | "ahead" | "completed";
+  progress: number;
+  timeRemaining: string;
+  updates?: Array<{
+    title: string;
+    description: string;
+    date?: string;
+  }>;
+  photos?: Array<{
+    url: string;
+    caption: string;
+  }>;
+  nextPhase?: {
+    title: string;
+    description: string;
+    startDate?: string;
+    duration?: string;
+  };
+  projectManagerEmail?: string;
+  websiteUrl?: string;
+  logoUrl?: string;
+}
+
+export const sendProjectUpdateEmail = async (data: ProjectUpdateEmailData) => {
+  const htmlContent = generateProjectUpdateEmailHTML({
+    clientName: data.clientName,
+    projectName: data.projectName,
+    weekNumber: data.weekNumber,
+    status: data.status,
+    progress: data.progress,
+    timeRemaining: data.timeRemaining,
+    updates: data.updates,
+    photos: data.photos,
+    nextPhase: data.nextPhase,
+    projectManagerEmail: data.projectManagerEmail || process.env.SMTP_USER,
+    websiteUrl:
+      data.websiteUrl ||
+      process.env.NEXT_PUBLIC_WEBSITE_URL ||
+      "https://amartconsult.com",
+    logoUrl:
+      data.logoUrl ||
+      `${
+        process.env.NEXT_PUBLIC_WEBSITE_URL || "https://amartconsult.com"
+      }/images/amart-logo.png`,
+  });
+
+  return await sendEmail({
+    to: data.to,
+    subject: `Project Update: ${data.projectName} - Week ${data.weekNumber}`,
+    html: htmlContent,
+  });
+};
+
+// Password reset email
+interface PasswordResetEmailData {
+  to: string;
+  firstName?: string;
+  resetUrl: string;
+  websiteUrl?: string;
+  logoUrl?: string;
+}
+
+export const sendPasswordResetEmail = async (data: PasswordResetEmailData) => {
+  const websiteUrl =
+    data.websiteUrl ||
+    process.env.NEXT_PUBLIC_WEBSITE_URL ||
+    "https://amartconsult.com";
+  const logoUrl = data.logoUrl || `${websiteUrl}/images/amart-logo.png`;
+
+  const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Your Password - Amart Consult</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #f8fafc; font-family: Arial, sans-serif; }
+        .email-container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #4F46E5 0%, #DC2626 100%); padding: 40px; text-align: center; }
+        .logo-container { background-color: white; display: inline-block; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+        .body { padding: 40px; }
+        .footer { background-color: #f9fafb; padding: 24px; text-align: center; font-size: 14px; color: #6b7280; }
+        .reset-button { background-color: #DC2626; color: white; padding: 16px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin: 24px 0; }
+        .security-note { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo-container">
+                <img src="${logoUrl}" alt="Amart Consult" width="120" height="40">
+            </div>
+            <h1 style="color: white; margin: 0;">Reset Your Password</h1>
         </div>
-        <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Your Project Portal</h1>
-        <p style="color: #E0E7FF; margin: 8px 0 0 0;">Track your ${
-          data.projectTitle
-        } project in real-time</p>
-      </div>
-      
-      <div style="padding: 40px;">
-        <p style="font-size: 16px; color: #333; margin-bottom: 20px;">
-          Dear ${data.firstName} ${data.lastName},
-        </p>
         
-        <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
-          Welcome to the Amart Consult Client Portal! We're excited to work with you on your ${
-            data.projectTitle
-          } project.
-        </p>
-
-        <div style="background: #f0f4ff; border: 2px solid #0A2463; border-radius: 8px; padding: 24px; margin: 30px 0;">
-          <h3 style="color: #0A2463; margin-top: 0;">Your Portal Access Details</h3>
-          
-          <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; color: #0A2463;">Email:</td>
-              <td style="padding: 8px 0; font-family: monospace; background: white; padding: 8px; border-radius: 4px;">${
-                data.email
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; color: #0A2463;">Temporary Password:</td>
-              <td style="padding: 8px 0; font-family: monospace; background: white; padding: 8px; border-radius: 4px; font-weight: bold;">${
-                data.temporaryPassword
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; color: #0A2463;">Portal URL:</td>
-              <td style="padding: 8px 0;"><a href="${
-                data.portalUrl
-              }" style="color: #CC7357; text-decoration: none;">${
-    data.portalUrl
-  }</a></td>
-            </tr>
-          </table>
-
-          <div style="background: #fef2e7; border-left: 4px solid #CC7357; padding: 15px; margin-top: 20px;">
-            <p style="margin: 0; color: #CC7357; font-size: 14px; font-weight: bold;">
-              🔒 Security Notice: Please log in and update your password on first access.
+        <div class="body">
+            <p style="color: #374151;">Hi${
+              data.firstName ? ` ${data.firstName}` : ""
+            },</p>
+            <p style="color: #374151; margin-bottom: 24px;">We received a request to reset your password for your Amart Consult client portal account.</p>
+            <p style="color: #374151; margin-bottom: 24px;">Click the button below to create a new password:</p>
+            
+            <div style="text-align: center;">
+                <a href="${
+                  data.resetUrl
+                }" class="reset-button">Reset Password</a>
+            </div>
+            
+            <div class="security-note">
+                <p style="margin: 0; color: #92400e; font-size: 14px;"><strong>Security Note:</strong> This link will expire in 24 hours for your security. If you didn't request this password reset, please ignore this email.</p>
+            </div>
+            
+            <p style="color: #374151; font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
+            <p style="color: #4f46e5; font-size: 14px; word-break: break-all;">${
+              data.resetUrl
+            }</p>
+            
+            <p style="color: #374151; margin-top: 32px;">
+                Best regards,<br>
+                <strong>The Amart Consult Team</strong>
             </p>
-          </div>
         </div>
-
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="color: #0A2463; margin-top: 0;">Through the portal, you can:</h3>
-          <ul style="color: #666; line-height: 1.8; padding-left: 20px;">
-            <li>Track your project progress in real-time</li>
-            <li>View project milestones and timeline</li>
-            <li>Access project documents and photos</li>
-            <li>Communicate directly with your project team</li>
-            <li>Receive updates and notifications</li>
-          </ul>
-        </div>
-
-        ${
-          data.customMessage
-            ? `
-        <div style="background: #fff3e0; border-left: 4px solid #CC7357; padding: 20px; margin: 20px 0;">
-          <h4 style="color: #CC7357; margin-top: 0;">Personal Message:</h4>
-          <p style="color: #666; line-height: 1.6; margin: 0;">${data.customMessage.replace(
-            /\n/g,
-            "<br>"
-          )}</p>
-        </div>
-        `
-            : ""
-        }
-
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${data.portalUrl}" 
-             style="display: inline-block; background: #0A2463; color: white; padding: 16px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
-            Access Your Portal
-          </a>
-        </div>
-
-        <div style="background: #0A2463; color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 30px 0;">
-          <h3 style="margin-top: 0; color: white;">Need Help?</h3>
-          <p style="margin: 10px 0;">Call us directly at <strong>+233 54 354 3356</strong></p>
-          <p style="margin: 10px 0;">Or email us at <strong>amartconsult1@gmail.com</strong></p>
-        </div>
-
-        <p style="color: #666; line-height: 1.6;">
-          We're here to make your architectural journey smooth and transparent.
-        </p>
-
-        <p style="color: #666; margin-top: 30px;">
-          Best regards,<br>
-          <strong style="color: #0A2463;">The Amart Consult Team</strong>
-        </p>
-      </div>
-    </div>
-  `;
-
-  try {
-    await sendEmail({
-      to: data.email,
-      subject: `Welcome to Amart Consult Client Portal - ${data.projectTitle}`,
-      html: welcomeEmailHtml,
-    });
-
-    return true;
-  } catch (error) {
-    console.error("Failed to send client welcome email:", error);
-    return false;
-  }
-};
-
-// Newsletter signup email
-export const sendNewsletterWelcomeEmail = async (
-  data: NewsletterData
-): Promise<boolean> => {
-  const welcomeEmailHtml = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: linear-gradient(135deg, #0A2463 0%, #CC7357 100%); padding: 30px; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">Welcome to Amart Consult Newsletter!</h1>
-      </div>
-      
-      <div style="padding: 30px;">
-        <p style="font-size: 16px; color: #333; margin-bottom: 20px;">
-          ${data.name ? `Dear ${data.name},` : "Hello!"}
-        </p>
         
-        <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
-          Thank you for subscribing to the Amart Consult newsletter! You're now part of our community of architecture enthusiasts and potential clients.
-        </p>
-
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="color: #0A2463; margin-top: 0;">What to expect:</h3>
-          <ul style="color: #666; line-height: 1.8; padding-left: 20px;">
-            <li>Monthly project showcases and case studies</li>
-            <li>Architecture trends and design insights</li>
-            <li>Building tips and cost-saving strategies</li>
-            <li>Exclusive offers and early access to services</li>
-            <li>Behind-the-scenes content from our projects</li>
-          </ul>
+        <div class="footer">
+            <img src="${logoUrl}" alt="Amart Consult" width="80" height="26" style="opacity: 0.6; margin-bottom: 16px;">
+            <p>+233 54 354 3356 | amartconsult1@gmail.com</p>
+            <p style="margin-top: 16px; font-size: 12px; color: #9ca3af;">If you have any questions, please contact our support team.</p>
         </div>
+    </div>
+</body>
+</html>`;
 
-        <div style="background: #0A2463; color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 30px 0;">
-          <h3 style="margin-top: 0; color: white;">Free Resource</h3>
-          <p style="margin: 10px 0;">Download our Ghana Building Cost Calculator & Guide</p>
-          <a href="${
-            process.env.NEXT_PUBLIC_SITE_URL
-          }/lead-magnet/ghana-building-calculator" 
-             style="display: inline-block; background: #CC7357; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px;">
-            Download Free Guide
-          </a>
-        </div>
+  return await sendEmail({
+    to: data.to,
+    subject: "Reset Your Password - Amart Consult",
+    html: htmlContent,
+  });
+};
 
-        <p style="color: #666; line-height: 1.6;">
-          Ready to start your architectural project? We're here to help bring your vision to life.
-        </p>
+// Bulk email function for newsletters
+export const sendBulkEmails = async (emails: BaseEmailOptions[]) => {
+  const results = [];
 
-        <p style="color: #666; margin-top: 30px;">
-          Best regards,<br>
-          <strong style="color: #0A2463;">The Amart Consult Team</strong>
-        </p>
+  for (const emailOptions of emails) {
+    try {
+      const result = await sendEmail(emailOptions);
+      results.push({ ...result, recipient: emailOptions.to });
 
-        <div style="border-top: 1px solid #ddd; padding-top: 20px; margin-top: 30px; text-align: center;">
-          <p style="color: #999; font-size: 12px;">
-            You received this email because you subscribed to our newsletter.
-            <a href="#" style="color: #CC7357;">Unsubscribe</a> | 
-            <a href="#" style="color: #CC7357;">Update preferences</a>
-          </p>
-        </div>
-      </div>
+      // Add delay between emails to avoid rate limiting
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } catch (error) {
+      results.push({
+        success: false,
+        error: error.message,
+        recipient: emailOptions.to,
+      });
+    }
+  }
+
+  return results;
+};
+
+// Email template validation
+export const validateEmailTemplate = (html: string): boolean => {
+  // Basic validation for email HTML
+  const requiredElements = ["<html", "<body", "<head"];
+  return requiredElements.every((element) => html.includes(element));
+};
+
+// Test email function for development
+export const sendTestEmail = async (to: string) => {
+  const testHTML = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #4F46E5;">Email Service Test</h1>
+      <p>This is a test email from Amart Consult email service.</p>
+      <p>If you receive this email, the SMTP configuration is working correctly.</p>
+      <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
     </div>
   `;
 
-  try {
-    await sendEmail({
-      to: data.email,
-      subject: "Welcome to Amart Consult Newsletter + Free Building Guide",
-      html: welcomeEmailHtml,
-    });
-
-    return true;
-  } catch (error) {
-    console.error("Failed to send newsletter welcome email:", error);
-    return false;
-  }
-};
-
-// Add subscriber to newsletter list (this would integrate with your email service provider)
-export const addToNewsletterList = async (
-  data: NewsletterData
-): Promise<boolean> => {
-  try {
-    // This would typically integrate with services like Mailchimp, ConvertKit, etc.
-    // For now, we'll just send a welcome email and log the subscription
-
-    console.log("New newsletter subscriber:", data);
-
-    // Send welcome email
-    await sendNewsletterWelcomeEmail(data);
-
-    // In production, you would also:
-    // - Add to your email service provider's list
-    // - Store in database
-    // - Set up automation sequences
-
-    return true;
-  } catch (error) {
-    console.error("Failed to add subscriber to newsletter:", error);
-    return false;
-  }
+  return await sendEmail({
+    to,
+    subject: "Email Service Test - Amart Consult",
+    html: testHTML,
+  });
 };

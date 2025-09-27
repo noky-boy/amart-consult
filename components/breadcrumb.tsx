@@ -1,20 +1,23 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { ChevronRight, Home } from "@/components/ui/icons"
+import Link from "next/link";
+import { ChevronRight, Home } from "@/components/ui/icons";
 
 interface BreadcrumbItem {
-  label: string
-  href?: string
+  label: string;
+  href?: string;
 }
 
 interface BreadcrumbProps {
-  items: BreadcrumbItem[]
+  items: BreadcrumbItem[];
 }
 
 export default function Breadcrumb({ items }: BreadcrumbProps) {
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-sm text-gray-600">
+    <nav
+      aria-label="Breadcrumb"
+      className="flex items-center space-x-2 text-sm text-gray-600"
+    >
       <Link
         href="/"
         className="flex items-center hover:text-indigo-deep transition-colors focus-visible:ring-enhanced rounded-md px-1 py-1"
@@ -45,5 +48,5 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
         </div>
       ))}
     </nav>
-  )
+  );
 }

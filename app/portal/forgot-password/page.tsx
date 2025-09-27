@@ -1,31 +1,54 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Mail, ArrowLeft, CheckCircle } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { supabase } from "@/lib/supabase";
 
 export default function ForgotPasswordPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
-  const [email, setEmail] = useState("")
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [email, setEmail] = useState("");
+
+  // In your forgot-password/page.tsx, replace the handleSubmit function:
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
-    // Simulate password reset request
-    setTimeout(() => {
-      setIsSuccess(true)
-      setIsLoading(false)
-    }, 1500)
-  }
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/portal/reset-password`,
+      });
+
+      if (error) {
+        console.error("Password reset error:", error);
+        alert(`Error: ${error.message}`);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsSuccess(true);
+    } catch (error: any) {
+      console.error("Password reset catch error:", error);
+      alert(`Failed to send reset email: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isSuccess) {
     return (
@@ -35,19 +58,24 @@ export default function ForgotPasswordPage() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                <h2 className="text-xl font-serif font-bold text-indigo-deep mb-2">Check Your Email</h2>
+                <h2 className="text-xl font-serif font-bold text-indigo-deep mb-2">
+                  Check Your Email
+                </h2>
                 <p className="text-gray-600 mb-6">
-                  We've sent password reset instructions to <strong>{email}</strong>
+                  We've sent password reset instructions to{" "}
+                  <strong>{email}</strong>
                 </p>
                 <Link href="/portal/login">
-                  <Button className="w-full bg-indigo-deep hover:bg-indigo-deep/90">Back to Login</Button>
+                  <Button className="w-full bg-indigo-deep hover:bg-indigo-deep/90">
+                    Back to Login
+                  </Button>
                 </Link>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -56,15 +84,27 @@ export default function ForgotPasswordPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <Image src="/images/amart-logo.png" alt="Amart Consult" width={150} height={50} className="mx-auto mb-4" />
+            <Image
+              src="/images/amart-logo.png"
+              alt="Amart Consult"
+              width={150}
+              height={50}
+              className="mx-auto mb-4"
+            />
           </Link>
-          <h1 className="text-2xl font-serif font-bold text-white mb-2">Reset Password</h1>
-          <p className="text-indigo-100">Enter your email to receive reset instructions</p>
+          <h1 className="text-2xl font-serif font-bold text-white mb-2">
+            Reset Password
+          </h1>
+          <p className="text-indigo-100">
+            Enter your email to receive reset instructions
+          </p>
         </div>
 
         <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
           <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-2xl font-serif text-center text-indigo-deep">Forgot Password?</CardTitle>
+            <CardTitle className="text-2xl font-serif text-center text-indigo-deep">
+              Forgot Password?
+            </CardTitle>
             <CardDescription className="text-center text-gray-600">
               No worries, we'll send you reset instructions
             </CardDescription>
@@ -72,7 +112,10 @@ export default function ForgotPasswordPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                <Label
+                  htmlFor="email"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Email Address
                 </Label>
                 <div className="relative">
@@ -118,5 +161,5 @@ export default function ForgotPasswordPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
