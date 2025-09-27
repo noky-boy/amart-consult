@@ -1,4 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type User } from "@supabase/supabase-js";
+export type { User };
 
 console.log("Supabase URL Loaded:", process.env.NEXT_PUBLIC_SUPABASE_URL);
 

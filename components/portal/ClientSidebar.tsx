@@ -6,13 +6,23 @@ import {
   Camera,
   FileText,
   MessageSquare,
+  LucideProps,
 } from "lucide-react";
+import { ForwardRefExoticComponent, RefAttributes } from "react";
 
-type Tab = "overview" | "timeline" | "photos" | "documents" | "messages";
+// Define a type for our tab objects to solve the TypeScript error
+type TabItem = {
+  id: "overview" | "timeline" | "photos" | "documents" | "messages";
+  label: string;
+  icon: ForwardRefExoticComponent<
+    Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>
+  >;
+  badge?: number; // Make badge optional
+};
 
 type ClientSidebarProps = {
-  activeTab: Tab;
-  onTabChange: (tab: Tab) => void;
+  activeTab: TabItem["id"];
+  onTabChange: (tab: TabItem["id"]) => void;
   photoCount: number;
   documentCount: number;
   unreadMessagesCount: number;
@@ -25,7 +35,8 @@ export default function ClientSidebar({
   documentCount,
   unreadMessagesCount,
 }: ClientSidebarProps) {
-  const tabs = [
+  // Apply the TabItem type to the array
+  const tabs: TabItem[] = [
     { id: "overview", label: "Overview", icon: TrendingUp },
     { id: "timeline", label: "Timeline", icon: Clock },
     { id: "photos", label: `Photos (${photoCount})`, icon: Camera },
@@ -36,7 +47,7 @@ export default function ClientSidebar({
       icon: MessageSquare,
       badge: unreadMessagesCount,
     },
-  ] as const; // Use "as const" for type safety
+  ];
 
   return (
     <aside className="w-64 bg-white/70 backdrop-blur-sm border-r border-slate-200/60">
@@ -54,6 +65,7 @@ export default function ClientSidebar({
             >
               <tab.icon className="mr-3 h-4 w-4" />
               <span className="flex-1 text-left">{tab.label}</span>
+              {/* This runtime check is still good practice */}
               {tab.badge && tab.badge > 0 && (
                 <span className="ml-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                   {tab.badge}
