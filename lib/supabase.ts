@@ -1,8 +1,6 @@
 import { createClient, type User } from "@supabase/supabase-js";
 export type { User };
 
-console.log("Supabase URL Loaded:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
@@ -178,19 +176,30 @@ export interface Project {
   project_start_date?: string;
   project_end_date?: string;
   notes?: string; // Project-specific notes
+  // New financial fields
+  contract_sum?: number;
+  cash_received?: number;
+  balance?: number;
 }
 
-export interface ProjectMilestone {
+export interface ProjectPhase {
   id: string;
-  client_id: string;
-  project_id?: string; // Optional for backward compatibility
+  project_id: string;
   created_at: string;
-  title: string;
-  description?: string;
-  status: "pending" | "in-progress" | "completed" | "cancelled";
-  due_date?: string;
+  updated_at: string;
+  phase_name: string;
+  phase_description?: string;
+  phase_order: number;
+  is_completed: boolean;
   completed_date?: string;
-  order_index: number;
+  estimated_duration?: string;
+}
+
+// Project with progress calculation
+export interface ProjectWithProgress extends Project {
+  progress_percentage?: number;
+  total_phases?: number;
+  completed_phases?: number;
 }
 
 export interface ClientDocument {
@@ -289,6 +298,49 @@ export const projectService = {
     return data;
   },
 
+  // Get project with progress calculation
+  async getWithProgress(id: string): Promise<ProjectWithProgress> {
+    const [project, progressResult] = await Promise.all([
+      this.getById(id),
+      supabase.rpc("get_project_progress", { project_uuid: id }),
+    ]);
+
+    const phases = await phaseService.getByProjectId(id);
+
+    return {
+      ...project,
+      progress_percentage: progressResult.data || 0,
+      total_phases: phases.length,
+      completed_phases: phases.filter((p) => p.is_completed).length,
+    };
+  },
+
+  // Get project with client and progress
+  async getWithClientAndProgress(
+    id: string
+  ): Promise<ProjectWithProgress & { client: Client }> {
+    const [projectWithClient, progressResult] = await Promise.all([
+      this.getWithClient(id),
+      supabase.rpc("get_project_progress", { project_uuid: id }),
+    ]);
+
+    const phases = await phaseService.getByProjectId(id);
+
+    return {
+      ...projectWithClient,
+      progress_percentage: progressResult.data || 0,
+      total_phases: phases.length,
+      completed_phases: phases.filter((p) => p.is_completed).length,
+    };
+  },
+
+  // A new getAll method is needed for getAllWithProgress
+  async getAll(): Promise<Project[]> {
+    const { data, error } = await supabase.from("projects").select("*");
+    if (error) throw error;
+    return data;
+  },
+
   // Delete project
   async delete(id: string): Promise<void> {
     const { error } = await supabase.from("projects").delete().eq("id", id);
@@ -301,8 +353,8 @@ export const projectService = {
       .from("projects")
       .select(
         `
-        *,
-        client:clients(*)
+      *,
+      client:clients(*)
       `
       )
       .order("created_at", { ascending: false });
@@ -329,8 +381,8 @@ export const projectService = {
           .from("projects")
           .select(
             `
-          *,
-          client:clients(*)
+        *,
+        client:clients(*)
         `
           )
           .order("created_at", { ascending: false })
@@ -353,6 +405,29 @@ export const projectService = {
       recentProjects: recentProjectsResult.data,
     };
   },
+
+  // Get all projects with progress for dashboard
+  async getAllWithProgress(): Promise<ProjectWithProgress[]> {
+    const projects = await this.getAll();
+
+    const projectsWithProgress = await Promise.all(
+      projects.map(async (project: { id: string }) => {
+        const [progressResult, phases] = await Promise.all([
+          supabase.rpc("get_project_progress", { project_uuid: project.id }),
+          phaseService.getByProjectId(project.id),
+        ]);
+
+        return {
+          ...project,
+          progress_percentage: progressResult.data || 0,
+          total_phases: phases.length,
+          completed_phases: phases.filter((p) => p.is_completed).length,
+        };
+      })
+    );
+
+    return projectsWithProgress;
+  },
 };
 
 // Updated Client Service (no more embedded project data)
@@ -368,10 +443,6 @@ export const clientService = {
     // Create auth account if portal access requested
     if (createPortalAccess) {
       temporaryPassword = generateRandomPassword();
-      console.log("Creating auth user with:", {
-        email: clientData.email,
-        temporaryPassword,
-      });
 
       const { data: authData, error: authError } = await auth.signUp(
         clientData.email,
@@ -382,8 +453,6 @@ export const clientService = {
           client_type: "portal_user",
         }
       );
-
-      console.log("Auth creation result:", { authData, authError });
 
       if (authError) {
         console.error("Failed to create auth user:", authError);
@@ -421,8 +490,8 @@ export const clientService = {
       .from("clients")
       .select(
         `
-        *,
-        projects(*)
+      *,
+      projects(*)
       `
       )
       .eq("id", id)
@@ -432,32 +501,46 @@ export const clientService = {
     return data;
   },
 
+  // Update project with financial data
+  async updateFinancials(
+    id: string,
+    financials: {
+      contract_sum?: number;
+      cash_received?: number;
+    }
+  ): Promise<Project> {
+    const { data, error } = await supabase
+      .from("projects")
+      .update({
+        contract_sum: financials.contract_sum,
+        cash_received: financials.cash_received,
+        // balance will be calculated automatically by the database trigger
+      })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
   // Get client by auth user ID (for portal access)
   async getByAuthUserId(authUserId: string): Promise<Client | null> {
-    console.log("=== INSIDE getByAuthUserId ===");
-    console.log("Looking for auth_user_id:", authUserId);
-
     try {
-      console.log("About to execute Supabase query...");
-
       const { data, error } = await supabase
         .from("clients")
         .select("*")
         .eq("auth_user_id", authUserId)
         .single();
 
-      console.log("Supabase query completed. Data:", data, "Error:", error);
-
       if (error) {
         if (error.code === "PGRST116") {
-          console.log("No rows found - returning null");
           return null; // No rows found
         }
         console.error("Database error in getByAuthUserId:", error);
         throw error;
       }
 
-      console.log("Returning client data:", data);
       return data;
     } catch (err) {
       console.error("Exception in getByAuthUserId:", err);
@@ -586,38 +669,26 @@ export const clientService = {
   },
 };
 
-// Updated services with project_id support (backward compatible)
-export const milestoneService = {
-  // Get milestones by project ID (new preferred method)
-  async getByProjectId(projectId: string): Promise<ProjectMilestone[]> {
+export const phaseService = {
+  // Get all phases for a project
+  async getByProjectId(projectId: string): Promise<ProjectPhase[]> {
     const { data, error } = await supabase
-      .from("project_milestones")
+      .from("project_phases")
       .select("*")
       .eq("project_id", projectId)
-      .order("order_index");
+      .order("phase_order");
 
     if (error) throw error;
     return data;
   },
 
-  // Get milestones by client ID (for backward compatibility)
-  async getByClientId(clientId: string): Promise<ProjectMilestone[]> {
-    const { data, error } = await supabase
-      .from("project_milestones")
-      .select("*")
-      .eq("client_id", clientId)
-      .order("order_index");
-
-    if (error) throw error;
-    return data;
-  },
-
+  // Create a new phase
   async create(
-    milestoneData: Omit<ProjectMilestone, "id" | "created_at">
-  ): Promise<ProjectMilestone> {
+    phaseData: Omit<ProjectPhase, "id" | "created_at" | "updated_at">
+  ): Promise<ProjectPhase> {
     const { data, error } = await supabase
-      .from("project_milestones")
-      .insert([milestoneData])
+      .from("project_phases")
+      .insert([phaseData])
       .select()
       .single();
 
@@ -625,12 +696,27 @@ export const milestoneService = {
     return data;
   },
 
+  // Create multiple phases at once
+  async createMultiple(
+    phases: Omit<ProjectPhase, "id" | "created_at" | "updated_at">[]
+  ): Promise<ProjectPhase[]> {
+    const { data, error } = await supabase
+      .from("project_phases")
+      .insert(phases)
+      .select()
+      .order("phase_order");
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Update phase
   async update(
     id: string,
-    updates: Partial<ProjectMilestone>
-  ): Promise<ProjectMilestone> {
+    updates: Partial<ProjectPhase>
+  ): Promise<ProjectPhase> {
     const { data, error } = await supabase
-      .from("project_milestones")
+      .from("project_phases")
       .update(updates)
       .eq("id", id)
       .select()
@@ -639,6 +725,109 @@ export const milestoneService = {
     if (error) throw error;
     return data;
   },
+
+  // Mark phase as completed
+  async markCompleted(id: string): Promise<ProjectPhase> {
+    return this.update(id, {
+      is_completed: true,
+      completed_date: new Date().toISOString(),
+    });
+  },
+
+  // Mark phase as not completed
+  async markIncomplete(id: string): Promise<ProjectPhase> {
+    return this.update(id, {
+      is_completed: false,
+      completed_date: undefined,
+    });
+  },
+
+  // Delete phase
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from("project_phases")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+  },
+
+  // Reorder phases
+  async reorder(
+    projectId: string,
+    phaseIds: string[]
+  ): Promise<ProjectPhase[]> {
+    const updates = phaseIds.map((id, index) => ({
+      id,
+      phase_order: index + 1,
+    }));
+
+    const updatePromises = updates.map(({ id, phase_order }) =>
+      this.update(id, { phase_order })
+    );
+
+    return Promise.all(updatePromises);
+  },
+
+  // Get project progress summary
+  async getProgressSummary(projectId: string): Promise<{
+    total_phases: number;
+    completed_phases: number;
+    progress_percentage: number;
+    current_phase?: ProjectPhase;
+    next_phase?: ProjectPhase;
+  }> {
+    const phases = await this.getByProjectId(projectId);
+    const completed_phases = phases.filter((p) => p.is_completed).length;
+    const total_phases = phases.length;
+    const progress_percentage =
+      total_phases > 0
+        ? Math.round((completed_phases / total_phases) * 100)
+        : 0;
+
+    // Find current phase (first incomplete phase)
+    const current_phase = phases.find((p) => !p.is_completed);
+
+    // Find next phase (phase after current)
+    const current_index = current_phase
+      ? phases.findIndex((p) => p.id === current_phase.id)
+      : -1;
+    const next_phase =
+      current_index >= 0 && current_index < phases.length - 1
+        ? phases[current_index + 1]
+        : undefined;
+
+    return {
+      total_phases,
+      completed_phases,
+      progress_percentage,
+      current_phase,
+      next_phase,
+    };
+  },
+};
+
+// Financial summary helper
+export const getFinancialSummary = (project: Project) => {
+  const contract_sum = project.contract_sum || 0;
+  const cash_received = project.cash_received || 0;
+  const balance = project.balance || contract_sum - cash_received;
+
+  const progress_percentage =
+    contract_sum > 0 ? Math.round((cash_received / contract_sum) * 100) : 0;
+
+  return {
+    contract_sum,
+    cash_received,
+    balance,
+    progress_percentage,
+    is_fully_paid: balance <= 0,
+    formatted: {
+      contract_sum: `GHS ${contract_sum.toLocaleString()}`,
+      cash_received: `GHS ${cash_received.toLocaleString()}`,
+      balance: `GHS ${balance.toLocaleString()}`,
+    },
+  };
 };
 
 // Updated document operations with project_id support (backward compatible)
