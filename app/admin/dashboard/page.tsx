@@ -16,27 +16,33 @@ import {
   Edit,
   LogOut,
   Key,
+  Building2,
+  FolderOpen,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
-import { clientService } from "@/lib/supabase";
-import type { Client } from "@/lib/supabase";
+import { clientService, projectService } from "@/lib/supabase";
+import type { Client, Project } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
 interface DashboardStats {
   totalClients: number;
+  totalProjects: number;
   activeProjects: number;
   statusCounts: Record<string, number>;
   recentClients: Client[];
+  recentProjects: (Project & { client: Client })[];
 }
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
     totalClients: 0,
+    totalProjects: 0,
     activeProjects: 0,
     statusCounts: {},
     recentClients: [],
+    recentProjects: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -49,8 +55,21 @@ export default function DashboardPage() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const dashboardStats = await clientService.getDashboardStats();
-        setStats(dashboardStats);
+
+        // Get both client and project stats
+        const [clientStats, projectStats] = await Promise.all([
+          clientService.getDashboardStats(),
+          projectService.getDashboardStats(),
+        ]);
+
+        setStats({
+          totalClients: clientStats.totalClients,
+          totalProjects: projectStats.totalProjects,
+          activeProjects: projectStats.activeProjects,
+          statusCounts: projectStats.statusCounts,
+          recentClients: clientStats.recentClients,
+          recentProjects: projectStats.recentProjects,
+        });
       } catch (err: any) {
         console.error("Failed to fetch dashboard data:", err);
         setError("Failed to load dashboard data");
@@ -109,8 +128,19 @@ export default function DashboardPage() {
       );
 
       // Refresh the dashboard data to show updated status
-      const dashboardStats = await clientService.getDashboardStats();
-      setStats(dashboardStats);
+      const [clientStats, projectStats] = await Promise.all([
+        clientService.getDashboardStats(),
+        projectService.getDashboardStats(),
+      ]);
+
+      setStats({
+        totalClients: clientStats.totalClients,
+        totalProjects: projectStats.totalProjects,
+        activeProjects: projectStats.activeProjects,
+        statusCounts: projectStats.statusCounts,
+        recentClients: clientStats.recentClients,
+        recentProjects: projectStats.recentProjects,
+      });
     } catch (error: any) {
       console.error("Failed to enable portal access:", error);
       alert(`Failed to enable portal access: ${error.message}`);
@@ -194,13 +224,13 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-100 text-sm font-medium">
-                  Active Projects
+                  Total Projects
                 </p>
-                <p className="text-3xl font-bold">{stats.activeProjects}</p>
-                <p className="text-green-100 text-sm mt-1">In progress</p>
+                <p className="text-3xl font-bold">{stats.totalProjects}</p>
+                <p className="text-green-100 text-sm mt-1">All projects</p>
               </div>
               <div className="p-3 rounded-full bg-green-400">
-                <TrendingUp className="h-6 w-6 text-white" />
+                <Building2 className="h-6 w-6 text-white" />
               </div>
             </div>
           </CardContent>
@@ -211,15 +241,13 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-purple-100 text-sm font-medium">
-                  Planning Phase
+                  Active Projects
                 </p>
-                <p className="text-3xl font-bold">
-                  {stats.statusCounts["Planning"] || 0}
-                </p>
-                <p className="text-purple-100 text-sm mt-1">New projects</p>
+                <p className="text-3xl font-bold">{stats.activeProjects}</p>
+                <p className="text-purple-100 text-sm mt-1">In progress</p>
               </div>
               <div className="p-3 rounded-full bg-purple-400">
-                <FileText className="h-6 w-6 text-white" />
+                <TrendingUp className="h-6 w-6 text-white" />
               </div>
             </div>
           </CardContent>
@@ -261,6 +289,10 @@ export default function DashboardPage() {
             <Users className="h-4 w-4" />
             <span>Clients</span>
           </TabsTrigger>
+          <TabsTrigger value="projects" className="flex items-center space-x-2">
+            <Building2 className="h-4 w-4" />
+            <span>Projects</span>
+          </TabsTrigger>
           <TabsTrigger
             value="newsletter"
             className="flex items-center space-x-2"
@@ -279,18 +311,11 @@ export default function DashboardPage() {
             <MessageSquare className="h-4 w-4" />
             <span>Messages</span>
           </TabsTrigger>
-          <TabsTrigger
-            value="analytics"
-            className="flex items-center space-x-2"
-          >
-            <TrendingUp className="h-4 w-4" />
-            <span>Analytics</span>
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent Clients - Updated section */}
+            {/* Recent Clients */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
@@ -319,13 +344,13 @@ export default function DashboardPage() {
                             {client.first_name} {client.last_name}
                           </h4>
                           <p className="text-sm text-slate-600">
-                            {client.project_title}
+                            {client.email}
                           </p>
                           <div className="flex items-center gap-2 mt-2">
-                            <Badge className={getStatusColor(client.status)}>
-                              {client.status}
-                            </Badge>
                             <Badge variant="outline">{client.tier}</Badge>
+                            <Badge variant="outline">
+                              {client.client_status}
+                            </Badge>
                             {client.has_portal_access && (
                               <Badge
                                 variant="outline"
@@ -397,7 +422,85 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Project Status Breakdown */}
+            {/* Recent Projects */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Building2 className="h-5 w-5" />
+                    <span>Recent Projects</span>
+                  </CardTitle>
+                </div>
+                <Button size="sm" asChild>
+                  <Link href="/admin/projects/add">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Project
+                  </Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {stats.recentProjects.length > 0 ? (
+                  <div className="space-y-4">
+                    {stats.recentProjects.map((project) => (
+                      <div
+                        key={project.id}
+                        className="flex items-center justify-between p-4 border border-slate-200 rounded-lg"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-slate-900">
+                            {project.project_title}
+                          </h4>
+                          <p className="text-sm text-slate-600">
+                            Client: {project.client.first_name}{" "}
+                            {project.client.last_name}
+                          </p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge className={getStatusColor(project.status)}>
+                              {project.status}
+                            </Badge>
+                            <Badge variant="outline" className="capitalize">
+                              {project.project_type}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button size="sm" variant="ghost" asChild>
+                            <Link href={`/admin/projects/${project.id}`}>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button size="sm" variant="ghost" asChild>
+                            <Link href={`/admin/projects/${project.id}/edit`}>
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Building2 className="h-12 w-12 text-slate-400 mx-auto mb-3" />
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      No projects yet
+                    </h3>
+                    <p className="text-slate-600 mb-4">
+                      Create your first project
+                    </p>
+                    <Button asChild>
+                      <Link href="/admin/projects/add">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add First Project
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Project Status Breakdown */}
+          <div className="mt-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -407,28 +510,28 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 {Object.keys(stats.statusCounts).length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {Object.entries(stats.statusCounts).map(
                       ([status, count]) => (
                         <div
                           key={status}
-                          className="flex items-center justify-between"
+                          className="flex items-center justify-between p-4 border border-slate-200 rounded-lg"
                         >
                           <div className="flex items-center gap-3">
                             <Badge className={getStatusColor(status)}>
                               {status}
                             </Badge>
                             <span className="text-sm text-slate-600">
-                              {count} projects
+                              {count} project{count !== 1 ? "s" : ""}
                             </span>
                           </div>
-                          <div className="w-24 bg-slate-200 rounded-full h-2">
+                          <div className="w-16 bg-slate-200 rounded-full h-2">
                             <div
                               className="bg-indigo-600 h-2 rounded-full"
                               style={{
                                 width:
-                                  stats.totalClients > 0
-                                    ? `${(count / stats.totalClients) * 100}%`
+                                  stats.totalProjects > 0
+                                    ? `${(count / stats.totalProjects) * 100}%`
                                     : "0%",
                               }}
                             ></div>
@@ -472,6 +575,36 @@ export default function DashboardPage() {
                 <Link href="/admin/clients">
                   <Users className="h-4 w-4 mr-2" />
                   View All Clients
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="projects" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Project Management</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button
+                className="w-full justify-start bg-transparent"
+                variant="outline"
+                asChild
+              >
+                <Link href="/admin/projects/add">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Project
+                </Link>
+              </Button>
+              <Button
+                className="w-full justify-start bg-transparent"
+                variant="outline"
+                asChild
+              >
+                <Link href="/admin/projects">
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  View All Projects
                 </Link>
               </Button>
             </CardContent>
@@ -538,16 +671,6 @@ export default function DashboardPage() {
                   Manage Documents
                 </Link>
               </Button>
-              {/* <Button
-                className="w-full justify-start bg-transparent"
-                variant="outline"
-                asChild
-              >
-                <Link href="/admin/documents/upload">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Simple Upload
-                </Link>
-              </Button> */}
             </CardContent>
           </Card>
         </TabsContent>
@@ -567,30 +690,6 @@ export default function DashboardPage() {
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Message Center
                 </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Analytics & Reports</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button
-                className="w-full justify-start bg-transparent"
-                variant="outline"
-              >
-                <TrendingUp className="h-4 w-4 mr-2" />
-                View Analytics
-              </Button>
-              <Button
-                className="w-full justify-start bg-transparent"
-                variant="outline"
-              >
-                <TrendingUp className="h-4 w-4 mr-2" />
-                Generate Report
               </Button>
             </CardContent>
           </Card>

@@ -76,8 +76,10 @@
 
 @theme inline {
   /* Enhanced font configuration with proper fallback stacks */
-  --font-serif: var(--font-montserrat), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-sans: var(--font-open-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: var(--font-montserrat), system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: var(--font-open-sans), system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   /* Standardized color system with consistent naming and proper variants */
   --color-indigo-deep: #0a2463;

@@ -22,7 +22,6 @@ export const auth = {
   },
 
   // Sign in client
-  // Sign in client
   signIn: async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -89,7 +88,7 @@ export const generateRandomPassword = () => {
   return password;
 };
 
-// Your existing functions with auth integration
+// Your existing newsletter functions
 export const saveSubscriber = async (data: {
   email: string;
   name?: string;
@@ -137,7 +136,7 @@ export const saveContactSubmission = async (data: {
   return { success: true, data: result };
 };
 
-// Types for client management
+// Updated Types
 export interface Client {
   id: string;
   created_at: string;
@@ -148,12 +147,26 @@ export interface Client {
   phone?: string;
   company?: string;
   address?: string;
+  tier: "Tier 1" | "Tier 2" | "Tier 3";
+  client_status: "Active" | "Inactive" | "Archived";
+  last_contact_date?: string;
+  next_followup_date?: string;
+  auth_user_id?: string;
+  has_portal_access?: boolean;
+  temp_password?: string;
+  notes?: string; // Client-level notes
+}
+
+export interface Project {
+  id: string;
+  client_id: string;
+  created_at: string;
+  updated_at: string;
   project_title: string;
   project_type: "residential" | "commercial" | "renovation" | "interior";
   project_description?: string;
   budget_range?: "50000-100000" | "100000-250000" | "250000-500000" | "500000+";
   timeline?: string;
-  tier: "Tier 1" | "Tier 2" | "Tier 3";
   status:
     | "Planning"
     | "In Progress"
@@ -161,20 +174,15 @@ export interface Client {
     | "Completed"
     | "On Hold"
     | "Cancelled";
-  client_status: "Active" | "Inactive" | "Archived";
   project_start_date?: string;
   project_end_date?: string;
-  notes?: string;
-  last_contact_date?: string;
-  next_followup_date?: string;
-  auth_user_id?: string; // Link to Supabase auth user
-  has_portal_access?: boolean; // Track if client has been set up for portal
-  temp_password?: string; // Temporary password for first login
+  notes?: string; // Project-specific notes
 }
 
 export interface ProjectMilestone {
   id: string;
   client_id: string;
+  project_id?: string; // Optional for backward compatibility
   created_at: string;
   title: string;
   description?: string;
@@ -187,6 +195,7 @@ export interface ProjectMilestone {
 export interface ClientDocument {
   id: string;
   client_id: string;
+  project_id?: string; // Optional for backward compatibility
   created_at: string;
   title: string;
   description?: string;
@@ -199,9 +208,9 @@ export interface ClientDocument {
 }
 
 export interface ClientMessage {
-  // timestamp: string;
   id: string;
   client_id: string;
+  project_id?: string; // Optional for backward compatibility
   created_at: string;
   sender_type: "admin" | "client";
   sender_name: string;
@@ -209,9 +218,145 @@ export interface ClientMessage {
   is_read: boolean;
 }
 
-// Enhanced client service with auth integration
+// New Project Service
+export const projectService = {
+  // Get all projects for a client
+  async getByClientId(clientId: string): Promise<Project[]> {
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("client_id", clientId)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Get project by ID
+  async getById(id: string): Promise<Project> {
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Get project with client info
+  async getWithClient(id: string): Promise<Project & { client: Client }> {
+    const { data, error } = await supabase
+      .from("projects")
+      .select(
+        `
+        *,
+        client:clients(*)
+      `
+      )
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Create new project
+  async create(
+    projectData: Omit<Project, "id" | "created_at" | "updated_at">
+  ): Promise<Project> {
+    const { data, error } = await supabase
+      .from("projects")
+      .insert([projectData])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Update project
+  async update(id: string, updates: Partial<Project>): Promise<Project> {
+    const { data, error } = await supabase
+      .from("projects")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Delete project
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase.from("projects").delete().eq("id", id);
+    if (error) throw error;
+  },
+
+  // Get all projects with client info (for admin dashboard)
+  async getAllWithClients(): Promise<(Project & { client: Client })[]> {
+    const { data, error } = await supabase
+      .from("projects")
+      .select(
+        `
+        *,
+        client:clients(*)
+      `
+      )
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Get dashboard stats for projects
+  async getDashboardStats(): Promise<{
+    totalProjects: number;
+    activeProjects: number;
+    statusCounts: Record<string, number>;
+    recentProjects: (Project & { client: Client })[];
+  }> {
+    const [projectsResult, activeProjectsResult, recentProjectsResult] =
+      await Promise.all([
+        supabase.from("projects").select("id, status"),
+        supabase
+          .from("projects")
+          .select("id")
+          .in("status", ["Planning", "In Progress", "Review"]),
+        supabase
+          .from("projects")
+          .select(
+            `
+          *,
+          client:clients(*)
+        `
+          )
+          .order("created_at", { ascending: false })
+          .limit(5),
+      ]);
+
+    if (projectsResult.error) throw projectsResult.error;
+    if (activeProjectsResult.error) throw activeProjectsResult.error;
+    if (recentProjectsResult.error) throw recentProjectsResult.error;
+
+    const statusCounts = projectsResult.data.reduce((acc, project) => {
+      acc[project.status] = (acc[project.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      totalProjects: projectsResult.data.length,
+      activeProjects: activeProjectsResult.data.length,
+      statusCounts,
+      recentProjects: recentProjectsResult.data,
+    };
+  },
+};
+
+// Updated Client Service (no more embedded project data)
 export const clientService = {
-  // Create a new client with optional portal access
+  // Create a new client (without project data)
   async create(
     clientData: Omit<Client, "id" | "created_at" | "updated_at">,
     createPortalAccess: boolean = true
@@ -269,8 +414,24 @@ export const clientService = {
     };
   },
 
+  // Get client with their projects
+  async getWithProjects(id: string): Promise<Client & { projects: Project[] }> {
+    const { data, error } = await supabase
+      .from("clients")
+      .select(
+        `
+        *,
+        projects(*)
+      `
+      )
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
   // Get client by auth user ID (for portal access)
-  // In your clientService object, update the getByAuthUserId method:
   async getByAuthUserId(authUserId: string): Promise<Client | null> {
     console.log("=== INSIDE getByAuthUserId ===");
     console.log("Looking for auth_user_id:", authUserId);
@@ -392,51 +553,53 @@ export const clientService = {
     if (error) throw error;
   },
 
-  // Get dashboard stats
+  // Updated dashboard stats (combined client and project data)
   async getDashboardStats(): Promise<{
     totalClients: number;
+    totalProjects: number;
     activeProjects: number;
     statusCounts: Record<string, number>;
     recentClients: Client[];
+    recentProjects: (Project & { client: Client })[];
   }> {
-    const [clientsResult, activeProjectsResult, recentClientsResult] =
-      await Promise.all([
-        supabase
-          .from("clients")
-          .select("id, status")
-          .eq("client_status", "Active"),
-        supabase
-          .from("clients")
-          .select("id")
-          .in("status", ["Planning", "In Progress", "Review"]),
-        supabase
-          .from("clients")
-          .select("*")
-          .eq("client_status", "Active")
-          .order("created_at", { ascending: false })
-          .limit(5),
-      ]);
+    const [clientsResult, projectStats] = await Promise.all([
+      supabase
+        .from("clients")
+        .select("*")
+        .eq("client_status", "Active")
+        .order("created_at", { ascending: false })
+        .limit(5),
+      projectService.getDashboardStats(),
+    ]);
 
     if (clientsResult.error) throw clientsResult.error;
-    if (activeProjectsResult.error) throw activeProjectsResult.error;
-    if (recentClientsResult.error) throw recentClientsResult.error;
-
-    const statusCounts = clientsResult.data.reduce((acc, client) => {
-      acc[client.status] = (acc[client.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
 
     return {
       totalClients: clientsResult.data.length,
-      activeProjects: activeProjectsResult.data.length,
-      statusCounts,
-      recentClients: recentClientsResult.data,
+      totalProjects: projectStats.totalProjects,
+      activeProjects: projectStats.activeProjects,
+      statusCounts: projectStats.statusCounts,
+      recentClients: clientsResult.data,
+      recentProjects: projectStats.recentProjects,
     };
   },
 };
 
-// Milestone operations (filtered by client)
+// Updated services with project_id support (backward compatible)
 export const milestoneService = {
+  // Get milestones by project ID (new preferred method)
+  async getByProjectId(projectId: string): Promise<ProjectMilestone[]> {
+    const { data, error } = await supabase
+      .from("project_milestones")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("order_index");
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Get milestones by client ID (for backward compatibility)
   async getByClientId(clientId: string): Promise<ProjectMilestone[]> {
     const { data, error } = await supabase
       .from("project_milestones")
@@ -477,8 +640,21 @@ export const milestoneService = {
   },
 };
 
-// Document operations (filtered by client)
+// Updated document operations with project_id support (backward compatible)
 export const documentService = {
+  // Get documents by project ID (new preferred method)
+  async getByProjectId(projectId: string): Promise<ClientDocument[]> {
+    const { data, error } = await supabase
+      .from("client_documents")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Get documents by client ID (for backward compatibility)
   async getByClientId(clientId: string): Promise<ClientDocument[]> {
     const { data, error } = await supabase
       .from("client_documents")
@@ -490,6 +666,7 @@ export const documentService = {
     return data;
   },
 
+  // Updated upload method with project support
   async upload(
     file: File,
     clientId: string,
@@ -498,12 +675,14 @@ export const documentService = {
       description?: string;
       category?: string;
       tags?: string[];
+      projectId?: string; // Optional project association
     }
   ): Promise<ClientDocument> {
     // Upload file to Supabase Storage
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}.${fileExt}`;
-    const filePath = `client-documents/${clientId}/${fileName}`;
+    const projectPath = metadata.projectId ? `/${metadata.projectId}` : "";
+    const filePath = `client-documents/${clientId}${projectPath}/${fileName}`;
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("client-files")
@@ -517,6 +696,7 @@ export const documentService = {
       .insert([
         {
           client_id: clientId,
+          project_id: metadata.projectId,
           title: metadata.title,
           description: metadata.description,
           file_name: file.name,
@@ -552,8 +732,21 @@ export const documentService = {
   },
 };
 
-// Message operations (filtered by client)
+// Updated message operations with project_id support (backward compatible)
 export const messageService = {
+  // Get messages by project ID (new preferred method)
+  async getByProjectId(projectId: string): Promise<ClientMessage[]> {
+    const { data, error } = await supabase
+      .from("client_messages")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("created_at");
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Get messages by client ID (for backward compatibility)
   async getByClientId(clientId: string): Promise<ClientMessage[]> {
     const { data, error } = await supabase
       .from("client_messages")

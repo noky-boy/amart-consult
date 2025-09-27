@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft,
   Edit,
@@ -20,7 +19,6 @@ import {
   MapPin,
   Building2,
   Calendar,
-  DollarSign,
   FileText,
   MessageSquare,
   Upload,
@@ -30,18 +28,22 @@ import {
   CheckCircle,
   File,
   Folder,
+  Plus,
+  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, use } from "react";
 import {
   clientService,
+  projectService,
   documentService,
   messageService,
   milestoneService,
 } from "@/lib/supabase";
 import type {
   Client,
+  Project,
   ClientDocument,
   ClientMessage,
   ProjectMilestone,
@@ -56,6 +58,7 @@ export default function ClientDetails({
   const { id } = use(params);
 
   const [client, setClient] = useState<Client | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [documents, setDocuments] = useState<ClientDocument[]>([]);
   const [messages, setMessages] = useState<ClientMessage[]>([]);
   const [milestones, setMilestones] = useState<ProjectMilestone[]>([]);
@@ -72,10 +75,15 @@ export default function ClientDetails({
         const clientData = await clientService.getById(id);
         setClient(clientData);
 
-        // Fetch related data in parallel
+        // Fetch client's projects
+        const projectsData = await projectService.getByClientId(id);
+        setProjects(projectsData);
+
+        // Fetch related data - we can get by client ID for backward compatibility
+        // or get by project IDs for new project-specific data
         const [documentsData, messagesData, milestonesData] = await Promise.all(
           [
-            documentService.getByClientId(id).catch(() => []), // Return empty array on error
+            documentService.getByClientId(id).catch(() => []),
             messageService.getByClientId(id).catch(() => []),
             milestoneService.getByClientId(id).catch(() => []),
           ]
@@ -256,18 +264,24 @@ export default function ClientDetails({
                   <CardTitle className="text-2xl">
                     {client.first_name} {client.last_name}
                   </CardTitle>
-                  <CardDescription className="text-base">
-                    {client.project_title}
+                  <CardDescription className="text-base mt-1">
+                    {projects.length} project{projects.length !== 1 ? "s" : ""}{" "}
+                    • Joined {new Date(client.created_at).toLocaleDateString()}
                   </CardDescription>
                 </div>
-                <Badge
-                  variant={
-                    client.status === "In Progress" ? "default" : "secondary"
-                  }
-                  className="text-sm"
-                >
-                  {client.status}
-                </Badge>
+                <div className="flex gap-2">
+                  <Badge
+                    variant={
+                      client.client_status === "Active"
+                        ? "default"
+                        : "secondary"
+                    }
+                    className="text-sm"
+                  >
+                    {client.client_status}
+                  </Badge>
+                  <Badge variant="outline">{client.tier}</Badge>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -288,12 +302,14 @@ export default function ClientDetails({
                     <span className="text-slate-900">{client.company}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-4 w-4 text-slate-400" />
-                  <span className="text-sm text-slate-900">
-                    Joined {new Date(client.created_at).toLocaleDateString()}
-                  </span>
-                </div>
+                {client.has_portal_access && (
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-green-900">
+                      Portal Access Enabled
+                    </span>
+                  </div>
+                )}
               </div>
               {client.address && (
                 <div className="flex items-start gap-3 mt-4">
@@ -301,164 +317,167 @@ export default function ClientDetails({
                   <span className="text-slate-900">{client.address}</span>
                 </div>
               )}
+              {client.notes && (
+                <div className="mt-4 p-4 bg-slate-50 rounded-lg">
+                  <h4 className="font-medium text-slate-900 mb-2">
+                    Client Notes
+                  </h4>
+                  <p className="text-slate-700">{client.notes}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
           <Card className="border-0 shadow-sm">
             <CardHeader>
-              <CardTitle>Project Information</CardTitle>
+              <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-slate-400" />
-                    <span className="text-sm text-slate-900 capitalize">
-                      {client.project_type}
-                    </span>
-                  </div>
-                  {client.budget_range && (
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm text-slate-900">
-                        {client.budget_range}
-                      </span>
-                    </div>
-                  )}
-                  {client.timeline && (
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm text-slate-900">
-                        {client.timeline}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">{client.tier}</Badge>
-                  </div>
-                </div>
-              </div>
+            <CardContent className="space-y-3">
+              <Button className="w-full justify-start" asChild>
+                <Link href={`/admin/projects/add?clientId=${client.id}`}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Project
+                </Link>
+              </Button>
+              <Button
+                className="w-full justify-start"
+                variant="outline"
+                asChild
+              >
+                <Link href={`/admin/messages/new?clientId=${client.id}`}>
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Send Message
+                </Link>
+              </Button>
+              <Button
+                className="w-full justify-start"
+                variant="outline"
+                asChild
+              >
+                <Link href={`/admin/documents/upload?clientId=${client.id}`}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Document
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </div>
 
         {/* Detailed Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
+        <Tabs defaultValue="projects" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="projects">
+              Projects ({projects.length})
+            </TabsTrigger>
             <TabsTrigger value="documents">
               Documents ({documents.length})
             </TabsTrigger>
             <TabsTrigger value="messages">
               Messages ({messages.length})
             </TabsTrigger>
+            <TabsTrigger value="milestones">
+              Milestones ({milestones.length})
+            </TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="border-0 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Project Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <span className="text-sm font-medium text-slate-600">
-                      Project Type
-                    </span>
-                    <p className="text-slate-900 capitalize">
-                      {client.project_type}
-                    </p>
-                  </div>
-                  {client.project_description && (
-                    <div>
-                      <span className="text-sm font-medium text-slate-600">
-                        Description
-                      </span>
-                      <p className="text-slate-900">
-                        {client.project_description}
-                      </p>
-                    </div>
-                  )}
-                  {client.project_start_date && (
-                    <div>
-                      <span className="text-sm font-medium text-slate-600">
-                        Start Date
-                      </span>
-                      <p className="text-slate-900">
-                        {new Date(
-                          client.project_start_date
-                        ).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
-                  {client.notes && (
-                    <div>
-                      <span className="text-sm font-medium text-slate-600">
-                        Notes
-                      </span>
-                      <p className="text-slate-900">{client.notes}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Project Milestones</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {milestones.length > 0 ? (
-                    <div className="space-y-3">
-                      {milestones.map((milestone) => (
-                        <div
-                          key={milestone.id}
-                          className="flex items-center gap-3"
-                        >
-                          <div
-                            className={`h-3 w-3 rounded-full ${getMilestoneStatusColor(
-                              milestone.status
-                            )}`}
-                          />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-slate-900">
-                              {milestone.title}
+          <TabsContent value="projects" className="space-y-6">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Client Projects</CardTitle>
+                <Button size="sm" asChild>
+                  <Link href={`/admin/projects/add?clientId=${client.id}`}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Project
+                  </Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {projects.length > 0 ? (
+                  <div className="space-y-4">
+                    {projects.map((project) => (
+                      <div
+                        key={project.id}
+                        className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-slate-900">
+                            {project.project_title}
+                          </h4>
+                          {project.project_description && (
+                            <p className="text-sm text-slate-600 mt-1">
+                              {project.project_description}
                             </p>
-                            {milestone.due_date && (
-                              <p className="text-xs text-slate-600">
-                                Due:{" "}
-                                {new Date(
-                                  milestone.due_date
-                                ).toLocaleDateString()}
-                              </p>
+                          )}
+                          <div className="flex items-center gap-2 mt-3">
+                            <Badge className={getStatusColor(project.status)}>
+                              {project.status}
+                            </Badge>
+                            <Badge variant="outline" className="capitalize">
+                              {project.project_type}
+                            </Badge>
+                            {project.budget_range && (
+                              <Badge variant="outline">
+                                {project.budget_range}
+                              </Badge>
+                            )}
+                            {project.timeline && (
+                              <div className="flex items-center gap-1 text-slate-500">
+                                <Clock className="h-3 w-3" />
+                                <span className="text-xs">
+                                  {project.timeline}
+                                </span>
+                              </div>
                             )}
                           </div>
-                          <Badge
-                            variant={
-                              milestone.status === "completed"
-                                ? "default"
-                                : milestone.status === "in-progress"
-                                ? "secondary"
-                                : "outline"
-                            }
-                            className="text-xs"
-                          >
-                            {milestone.status}
-                          </Badge>
+                          <div className="text-xs text-slate-500 mt-2">
+                            Created:{" "}
+                            {new Date(project.created_at).toLocaleDateString()}
+                            {project.project_start_date && (
+                              <>
+                                {" "}
+                                • Started:{" "}
+                                {new Date(
+                                  project.project_start_date
+                                ).toLocaleDateString()}
+                              </>
+                            )}
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Clock className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                      <p className="text-sm text-slate-600">
-                        No milestones defined
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                        <div className="flex space-x-2">
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link href={`/admin/projects/${project.id}`}>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link href={`/admin/projects/${project.id}/edit`}>
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Building2 className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                      No projects yet
+                    </h3>
+                    <p className="text-slate-600 mb-4">
+                      Create the first project for this client
+                    </p>
+                    <Button asChild>
+                      <Link href={`/admin/projects/add?clientId=${client.id}`}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create First Project
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="documents" className="space-y-6">
@@ -466,7 +485,7 @@ export default function ClientDetails({
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Client Documents</CardTitle>
                 <Button size="sm" asChild>
-                  <Link href="/admin/documents">
+                  <Link href={`/admin/documents/upload?clientId=${client.id}`}>
                     <Upload className="h-4 w-4 mr-2" />
                     Upload Documents
                   </Link>
@@ -548,9 +567,11 @@ export default function ClientDetails({
                       Upload documents for this client to get started
                     </p>
                     <Button asChild>
-                      <Link href="/admin/documents">
+                      <Link
+                        href={`/admin/documents/upload?clientId=${client.id}`}
+                      >
                         <Upload className="h-4 w-4 mr-2" />
-                        Upload Documents
+                        Upload First Document
                       </Link>
                     </Button>
                   </div>
@@ -564,7 +585,7 @@ export default function ClientDetails({
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Message History</CardTitle>
                 <Button size="sm" asChild>
-                  <Link href="/admin/messages">
+                  <Link href={`/admin/messages/new?clientId=${client.id}`}>
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Send Message
                   </Link>
@@ -618,11 +639,74 @@ export default function ClientDetails({
                       Start a conversation with this client
                     </p>
                     <Button asChild>
-                      <Link href="/admin/messages">
+                      <Link href={`/admin/messages/new?clientId=${client.id}`}>
                         <MessageSquare className="h-4 w-4 mr-2" />
                         Send First Message
                       </Link>
                     </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="milestones" className="space-y-6">
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle>Project Milestones</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {milestones.length > 0 ? (
+                  <div className="space-y-3">
+                    {milestones.map((milestone) => (
+                      <div
+                        key={milestone.id}
+                        className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg"
+                      >
+                        <div
+                          className={`h-3 w-3 rounded-full ${getMilestoneStatusColor(
+                            milestone.status
+                          )}`}
+                        />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-slate-900">
+                            {milestone.title}
+                          </p>
+                          {milestone.description && (
+                            <p className="text-xs text-slate-600">
+                              {milestone.description}
+                            </p>
+                          )}
+                          {milestone.due_date && (
+                            <p className="text-xs text-slate-500 mt-1">
+                              Due:{" "}
+                              {new Date(
+                                milestone.due_date
+                              ).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                        <Badge
+                          variant={
+                            milestone.status === "completed"
+                              ? "default"
+                              : milestone.status === "in-progress"
+                              ? "secondary"
+                              : "outline"
+                          }
+                          className="text-xs"
+                        >
+                          {milestone.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Clock className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                    <p className="text-sm text-slate-600">
+                      No milestones defined
+                    </p>
                   </div>
                 )}
               </CardContent>

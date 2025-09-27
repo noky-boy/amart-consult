@@ -1,4 +1,3 @@
-// Update to your existing Add Client component
 "use client";
 
 import type React from "react";
@@ -35,28 +34,38 @@ import {
   Calendar,
   CheckCircle,
   Eye,
-  Copy,
   AlertCircle,
+  Plus,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { clientService } from "@/lib/supabase";
+import { clientService, projectService } from "@/lib/supabase";
+import type { Client, Project } from "@/lib/supabase";
 
 export default function EnhancedAddClient() {
-  const [formData, setFormData] = useState({
+  // Client data (no more project fields)
+  const [clientData, setClientData] = useState({
     first_name: "",
     last_name: "",
     email: "",
     phone: "",
     company: "",
+    address: "",
+    tier: "Tier 3" as "Tier 1" | "Tier 2" | "Tier 3",
+    client_status: "Active" as "Active" | "Inactive" | "Archived",
+    notes: "",
+  });
+
+  // Project data (now separate)
+  const [projectData, setProjectData] = useState({
+    project_title: "",
     project_type: "" as
       | "residential"
       | "commercial"
       | "renovation"
       | "interior"
       | "",
-    project_title: "",
     project_description: "",
     budget_range: "" as
       | "50000-100000"
@@ -65,8 +74,6 @@ export default function EnhancedAddClient() {
       | "500000+"
       | "",
     timeline: "",
-    address: "",
-    tier: "Tier 3" as "Tier 1" | "Tier 2" | "Tier 3",
     status: "Planning" as
       | "Planning"
       | "In Progress"
@@ -74,7 +81,8 @@ export default function EnhancedAddClient() {
       | "Completed"
       | "On Hold"
       | "Cancelled",
-    client_status: "Active" as "Active" | "Inactive" | "Archived",
+    project_start_date: "",
+    project_end_date: "",
     notes: "",
   });
 
@@ -84,11 +92,13 @@ export default function EnhancedAddClient() {
     customWelcomeMessage: "",
   });
 
+  const [createProject, setCreateProject] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [clientResult, setClientResult] = useState<{
-    client: any;
+  const [result, setResult] = useState<{
+    client: Client;
+    project?: Project;
     temporaryPassword?: string;
   } | null>(null);
 
@@ -100,51 +110,53 @@ export default function EnhancedAddClient() {
     setError("");
 
     // Validation
+    if (!clientData.first_name || !clientData.last_name || !clientData.email) {
+      setError("Please fill in required client fields");
+      setIsLoading(false);
+      return;
+    }
+
     if (
-      !formData.first_name ||
-      !formData.last_name ||
-      !formData.email ||
-      !formData.project_title ||
-      !formData.project_type
+      createProject &&
+      (!projectData.project_title || !projectData.project_type)
     ) {
-      setError("Please fill in all required fields");
+      setError("Please fill in required project fields");
       setIsLoading(false);
       return;
     }
 
     try {
-      const result = await clientService.create(
-        {
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          email: formData.email,
-          phone: formData.phone || undefined,
-          company: formData.company || undefined,
-          address: formData.address || undefined,
-          project_title: formData.project_title,
-          project_type: formData.project_type as
-            | "residential"
-            | "commercial"
-            | "renovation"
-            | "interior",
-          project_description: formData.project_description || undefined,
-          budget_range: formData.budget_range || undefined,
-          timeline: formData.timeline || undefined,
-          tier: formData.tier,
-          status: formData.status,
-          client_status: formData.client_status,
-          notes: formData.notes || undefined,
-          project_start_date: new Date().toISOString().split("T")[0],
-        },
+      // Step 1: Create the client
+      const clientResult = await clientService.create(
+        clientData,
         portalSettings.enablePortalAccess
       );
 
-      setClientResult(result);
+      let project: Project | undefined;
+
+      // Step 2: Create the project if requested
+      if (createProject) {
+        project = await projectService.create({
+          client_id: clientResult.client.id,
+          ...projectData,
+        });
+      }
+
+      setResult({
+        client: clientResult.client,
+        project,
+        temporaryPassword: clientResult.temporaryPassword,
+      });
+
       setShowSuccess(true);
 
       // Send welcome email if requested
-      if (portalSettings.sendWelcomeEmail && result.temporaryPassword) {
-        await sendWelcomeEmail(result.client, result.temporaryPassword);
+      if (portalSettings.sendWelcomeEmail && clientResult.temporaryPassword) {
+        await sendWelcomeEmail(
+          clientResult.client,
+          clientResult.temporaryPassword,
+          project
+        );
       }
     } catch (error: any) {
       console.error("Error adding client:", error);
@@ -154,9 +166,11 @@ export default function EnhancedAddClient() {
     }
   };
 
-  // Update your sendWelcomeEmail function in add/page.tsx:
-
-  const sendWelcomeEmail = async (client: any, password: string) => {
+  const sendWelcomeEmail = async (
+    client: Client,
+    password: string,
+    project?: Project
+  ) => {
     try {
       const response = await fetch("/api/send-welcome-email", {
         method: "POST",
@@ -167,7 +181,7 @@ export default function EnhancedAddClient() {
           email: client.email,
           firstName: client.first_name,
           lastName: client.last_name,
-          projectTitle: client.project_title,
+          projectTitle: project?.project_title || "Your Project",
           temporaryPassword: password,
           customMessage: portalSettings.customWelcomeMessage || undefined,
         }),
@@ -177,7 +191,6 @@ export default function EnhancedAddClient() {
 
       if (!response.ok) {
         console.error("Failed to send welcome email:", result.error);
-        // You could show a warning to the admin here
         return false;
       } else {
         console.log("Welcome email sent successfully to:", client.email);
@@ -189,11 +202,21 @@ export default function EnhancedAddClient() {
     }
   };
 
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleClientInputChange = (
+    field: keyof typeof clientData,
+    value: string
+  ) => {
+    setClientData((prev) => ({ ...prev, [field]: value }));
   };
 
-  if (showSuccess && clientResult) {
+  const handleProjectInputChange = (
+    field: keyof typeof projectData,
+    value: string
+  ) => {
+    setProjectData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  if (showSuccess && result) {
     return (
       <div className="min-h-screen bg-slate-50">
         <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
@@ -214,7 +237,7 @@ export default function EnhancedAddClient() {
                 className="h-8 w-auto"
               />
               <h1 className="text-xl font-semibold text-slate-900">
-                Client Added Successfully
+                Client {result.project ? "and Project " : ""}Added Successfully
               </h1>
             </div>
           </div>
@@ -228,16 +251,17 @@ export default function EnhancedAddClient() {
 
                 <div>
                   <h2 className="text-2xl font-semibold text-slate-900 mb-2">
-                    Client Added Successfully!
+                    Successfully Created!
                   </h2>
                   <p className="text-slate-600">
-                    {clientResult.client.first_name}{" "}
-                    {clientResult.client.last_name} has been added to the
-                    system.
+                    {result.client.first_name} {result.client.last_name} has
+                    been added
+                    {result.project &&
+                      ` with project "${result.project.project_title}"`}
                   </p>
                 </div>
 
-                {clientResult.temporaryPassword && (
+                {result.temporaryPassword && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-left">
                     <h3 className="text-lg font-semibold text-blue-900 mb-4">
                       Portal Access Credentials
@@ -248,9 +272,9 @@ export default function EnhancedAddClient() {
                         <Label className="text-sm text-blue-700">Email</Label>
                         <div className="flex items-center gap-2 mt-1">
                           <code className="flex-1 bg-white px-3 py-2 rounded border text-sm">
-                            {clientResult.client.email}
+                            {result.client.email}
                           </code>
-                          <CopyToClipboard text={clientResult.client.email} />
+                          <CopyToClipboard text={result.client.email} />
                         </div>
                       </div>
 
@@ -260,11 +284,9 @@ export default function EnhancedAddClient() {
                         </Label>
                         <div className="flex items-center gap-2 mt-1">
                           <code className="flex-1 bg-white px-3 py-2 rounded border text-sm font-mono">
-                            {clientResult.temporaryPassword}
+                            {result.temporaryPassword}
                           </code>
-                          <CopyToClipboard
-                            text={clientResult.temporaryPassword!}
-                          />
+                          <CopyToClipboard text={result.temporaryPassword} />
                         </div>
                       </div>
 
@@ -299,12 +321,20 @@ export default function EnhancedAddClient() {
                   <Link href="/admin/dashboard">
                     <Button variant="outline">Back to Dashboard</Button>
                   </Link>
-                  <Link href={`/admin/clients/${clientResult.client.id}`}>
+                  <Link href={`/admin/clients/${result.client.id}`}>
                     <Button>
                       <Eye className="h-4 w-4 mr-2" />
                       View Client
                     </Button>
                   </Link>
+                  {result.project && (
+                    <Link href={`/admin/projects/${result.project.id}`}>
+                      <Button variant="outline">
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Project
+                      </Button>
+                    </Link>
+                  )}
                   <Link href="/admin/clients/add">
                     <Button variant="outline">Add Another Client</Button>
                   </Link>
@@ -372,9 +402,9 @@ export default function EnhancedAddClient() {
                   <Label htmlFor="first_name">First Name *</Label>
                   <Input
                     id="first_name"
-                    value={formData.first_name}
+                    value={clientData.first_name}
                     onChange={(e) =>
-                      handleInputChange("first_name", e.target.value)
+                      handleClientInputChange("first_name", e.target.value)
                     }
                     placeholder="John"
                     required
@@ -384,9 +414,9 @@ export default function EnhancedAddClient() {
                   <Label htmlFor="last_name">Last Name *</Label>
                   <Input
                     id="last_name"
-                    value={formData.last_name}
+                    value={clientData.last_name}
                     onChange={(e) =>
-                      handleInputChange("last_name", e.target.value)
+                      handleClientInputChange("last_name", e.target.value)
                     }
                     placeholder="Smith"
                     required
@@ -402,9 +432,9 @@ export default function EnhancedAddClient() {
                     <Input
                       id="email"
                       type="email"
-                      value={formData.email}
+                      value={clientData.email}
                       onChange={(e) =>
-                        handleInputChange("email", e.target.value)
+                        handleClientInputChange("email", e.target.value)
                       }
                       placeholder="john.smith@email.com"
                       className="pl-10"
@@ -418,9 +448,9 @@ export default function EnhancedAddClient() {
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input
                       id="phone"
-                      value={formData.phone}
+                      value={clientData.phone}
                       onChange={(e) =>
-                        handleInputChange("phone", e.target.value)
+                        handleClientInputChange("phone", e.target.value)
                       }
                       placeholder="+233 XX XXX XXXX"
                       className="pl-10"
@@ -433,8 +463,10 @@ export default function EnhancedAddClient() {
                 <Label htmlFor="company">Company (Optional)</Label>
                 <Input
                   id="company"
-                  value={formData.company}
-                  onChange={(e) => handleInputChange("company", e.target.value)}
+                  value={clientData.company}
+                  onChange={(e) =>
+                    handleClientInputChange("company", e.target.value)
+                  }
                   placeholder="Company Name"
                 />
               </div>
@@ -445,19 +477,77 @@ export default function EnhancedAddClient() {
                   <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Textarea
                     id="address"
-                    value={formData.address}
+                    value={clientData.address}
                     onChange={(e) =>
-                      handleInputChange("address", e.target.value)
+                      handleClientInputChange("address", e.target.value)
                     }
                     placeholder="Full address including city and region"
                     className="pl-10 min-h-[80px]"
                   />
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tier">Tier Assignment</Label>
+                  <Select
+                    value={clientData.tier}
+                    onValueChange={(value) =>
+                      handleClientInputChange("tier", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Tier 1">
+                        Tier 1 - Basic Consultation
+                      </SelectItem>
+                      <SelectItem value="Tier 2">
+                        Tier 2 - Design Development
+                      </SelectItem>
+                      <SelectItem value="Tier 3">
+                        Tier 3 - Full Service (Portal Access)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="client_status">Client Status</Label>
+                  <Select
+                    value={clientData.client_status}
+                    onValueChange={(value) =>
+                      handleClientInputChange("client_status", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Inactive">Inactive</SelectItem>
+                      <SelectItem value="Archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="client_notes">Client Notes</Label>
+                <Textarea
+                  id="client_notes"
+                  value={clientData.notes}
+                  onChange={(e) =>
+                    handleClientInputChange("notes", e.target.value)
+                  }
+                  placeholder="General notes about this client"
+                  className="min-h-[80px]"
+                />
+              </div>
             </CardContent>
           </Card>
 
-          {/* Project Information */}
+          {/* Project Creation Toggle */}
           <Card className="border-0 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -465,121 +555,171 @@ export default function EnhancedAddClient() {
                 Project Information
               </CardTitle>
               <CardDescription>
-                Details about the client's project
+                Optionally create an initial project for this client
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="project_type">Project Type *</Label>
-                  <Select
-                    value={formData.project_type}
-                    onValueChange={(value) =>
-                      handleInputChange("project_type", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select project type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="residential">Residential</SelectItem>
-                      <SelectItem value="commercial">Commercial</SelectItem>
-                      <SelectItem value="renovation">Renovation</SelectItem>
-                      <SelectItem value="interior">Interior Design</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="status">Project Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) =>
-                      handleInputChange("status", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Planning">Planning</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="Review">Review</SelectItem>
-                      <SelectItem value="Completed">Completed</SelectItem>
-                      <SelectItem value="On Hold">On Hold</SelectItem>
-                      <SelectItem value="Cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="project_title">Project Title *</Label>
-                <Input
-                  id="project_title"
-                  value={formData.project_title}
-                  onChange={(e) =>
-                    handleInputChange("project_title", e.target.value)
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="createProject"
+                  checked={createProject}
+                  onCheckedChange={(checked: any) =>
+                    setCreateProject(!!checked)
                   }
-                  placeholder="Modern Villa Design"
-                  required
                 />
+                <Label
+                  htmlFor="createProject"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Create initial project for this client
+                </Label>
               </div>
+              <p className="text-sm text-slate-600">
+                You can always add projects later from the client details page
+              </p>
 
-              <div className="space-y-2">
-                <Label htmlFor="project_description">Project Description</Label>
-                <Textarea
-                  id="project_description"
-                  value={formData.project_description}
-                  onChange={(e) =>
-                    handleInputChange("project_description", e.target.value)
-                  }
-                  placeholder="Detailed description of the project requirements and scope"
-                  className="min-h-[100px]"
-                />
-              </div>
+              {createProject && (
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="project_type">Project Type *</Label>
+                      <Select
+                        value={projectData.project_type}
+                        onValueChange={(value) =>
+                          handleProjectInputChange("project_type", value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select project type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="residential">
+                            Residential
+                          </SelectItem>
+                          <SelectItem value="commercial">Commercial</SelectItem>
+                          <SelectItem value="renovation">Renovation</SelectItem>
+                          <SelectItem value="interior">
+                            Interior Design
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Project Status</Label>
+                      <Select
+                        value={projectData.status}
+                        onValueChange={(value) =>
+                          handleProjectInputChange("status", value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Planning">Planning</SelectItem>
+                          <SelectItem value="In Progress">
+                            In Progress
+                          </SelectItem>
+                          <SelectItem value="Review">Review</SelectItem>
+                          <SelectItem value="Completed">Completed</SelectItem>
+                          <SelectItem value="On Hold">On Hold</SelectItem>
+                          <SelectItem value="Cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="budget_range">Budget Range</Label>
-                  <Select
-                    value={formData.budget_range}
-                    onValueChange={(value) =>
-                      handleInputChange("budget_range", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select budget range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="50000-100000">
-                        GHS 50,000 - 100,000
-                      </SelectItem>
-                      <SelectItem value="100000-250000">
-                        GHS 100,000 - 250,000
-                      </SelectItem>
-                      <SelectItem value="250000-500000">
-                        GHS 250,000 - 500,000
-                      </SelectItem>
-                      <SelectItem value="500000+">GHS 500,000+</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="timeline">Timeline</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <div className="space-y-2">
+                    <Label htmlFor="project_title">Project Title *</Label>
                     <Input
-                      id="timeline"
-                      value={formData.timeline}
+                      id="project_title"
+                      value={projectData.project_title}
                       onChange={(e) =>
-                        handleInputChange("timeline", e.target.value)
+                        handleProjectInputChange(
+                          "project_title",
+                          e.target.value
+                        )
                       }
-                      placeholder="6-8 months"
-                      className="pl-10"
+                      placeholder="Modern Villa Design"
+                      required={createProject}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="project_description">
+                      Project Description
+                    </Label>
+                    <Textarea
+                      id="project_description"
+                      value={projectData.project_description}
+                      onChange={(e) =>
+                        handleProjectInputChange(
+                          "project_description",
+                          e.target.value
+                        )
+                      }
+                      placeholder="Detailed description of the project requirements and scope"
+                      className="min-h-[100px]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="budget_range">Budget Range</Label>
+                      <Select
+                        value={projectData.budget_range}
+                        onValueChange={(value) =>
+                          handleProjectInputChange("budget_range", value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select budget range" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="50000-100000">
+                            GHS 50,000 - 100,000
+                          </SelectItem>
+                          <SelectItem value="100000-250000">
+                            GHS 100,000 - 250,000
+                          </SelectItem>
+                          <SelectItem value="250000-500000">
+                            GHS 250,000 - 500,000
+                          </SelectItem>
+                          <SelectItem value="500000+">GHS 500,000+</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="timeline">Timeline</Label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          id="timeline"
+                          value={projectData.timeline}
+                          onChange={(e) =>
+                            handleProjectInputChange("timeline", e.target.value)
+                          }
+                          placeholder="6-8 months"
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="project_notes">Project Notes</Label>
+                    <Textarea
+                      id="project_notes"
+                      value={projectData.notes}
+                      onChange={(e) =>
+                        handleProjectInputChange("notes", e.target.value)
+                      }
+                      placeholder="Specific notes about this project"
+                      className="min-h-[80px]"
                     />
                   </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -666,71 +806,6 @@ export default function EnhancedAddClient() {
             </CardContent>
           </Card>
 
-          {/* Service Tier */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle>Service Tier & Status</CardTitle>
-              <CardDescription>
-                Assign the appropriate service tier for this client
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="tier">Tier Assignment</Label>
-                  <Select
-                    value={formData.tier}
-                    onValueChange={(value) => handleInputChange("tier", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Tier 1">
-                        Tier 1 - Basic Consultation
-                      </SelectItem>
-                      <SelectItem value="Tier 2">
-                        Tier 2 - Design Development
-                      </SelectItem>
-                      <SelectItem value="Tier 3">
-                        Tier 3 - Full Service (Portal Access)
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="client_status">Client Status</Label>
-                  <Select
-                    value={formData.client_status}
-                    onValueChange={(value) =>
-                      handleInputChange("client_status", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Inactive">Inactive</SelectItem>
-                      <SelectItem value="Archived">Archived</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => handleInputChange("notes", e.target.value)}
-                  placeholder="Additional notes about this client"
-                  className="min-h-[80px]"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-4 pt-6">
             <Link href="/admin/dashboard">
@@ -744,7 +819,9 @@ export default function EnhancedAddClient() {
               disabled={isLoading}
             >
               <Save className="h-4 w-4 mr-2" />
-              {isLoading ? "Adding Client..." : "Add Client"}
+              {isLoading
+                ? "Creating..."
+                : `Create Client${createProject ? " & Project" : ""}`}
             </Button>
           </div>
         </form>
