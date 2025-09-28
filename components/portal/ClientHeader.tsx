@@ -4,11 +4,13 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, Settings, LogOut } from "lucide-react";
-import type { Client } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Bell, Settings, LogOut, ArrowLeft, Building2 } from "lucide-react";
+import type { Client, Project } from "@/lib/supabase";
 
 type ClientHeaderProps = {
   client: Client;
+  currentProject?: Project;
   unreadMessagesCount: number;
   onShowSettings: () => void;
   onLogout: () => void;
@@ -16,6 +18,7 @@ type ClientHeaderProps = {
 
 export default function ClientHeader({
   client,
+  currentProject,
   unreadMessagesCount,
   onShowSettings,
   onLogout,
@@ -53,9 +56,28 @@ export default function ClientHeader({
               />
             </Link>
             <div className="h-6 w-px bg-slate-300"></div>
-            <h1 className="text-xl font-serif font-bold text-slate-800">
-              Client Portal
-            </h1>
+
+            {currentProject ? (
+              <div className="flex items-center space-x-3">
+                <Link href="/portal/projects">
+                  <Button variant="ghost" size="sm">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    All Projects
+                  </Button>
+                </Link>
+                <div className="h-6 w-px bg-slate-300"></div>
+                <div className="flex items-center space-x-2">
+                  <Building2 className="h-5 w-5 text-indigo-600" />
+                  <h1 className="text-lg font-semibold text-slate-800">
+                    {currentProject.project_title}
+                  </h1>
+                </div>
+              </div>
+            ) : (
+              <h1 className="text-xl font-serif font-bold text-slate-800">
+                Client Portal
+              </h1>
+            )}
           </div>
 
           <div className="flex items-center space-x-4">

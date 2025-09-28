@@ -1,8 +1,14 @@
 // amart-consult/hooks/useClientData.ts
 import { useState, useEffect, useCallback } from "react";
 import { useRequireAuth } from "@/hooks/useClientAuth";
-import { phaseService, documentService, messageService } from "@/lib/supabase";
+import {
+  projectService,
+  phaseService,
+  documentService,
+  messageService,
+} from "@/lib/supabase";
 import type {
+  Project,
   ProjectPhase,
   ClientDocument,
   ClientMessage,
@@ -13,27 +19,19 @@ export const useClientData = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [milestones, setMilestones] = useState<ProjectPhase[]>([]);
-  const [documents, setDocuments] = useState<ClientDocument[]>([]);
-  const [messages, setMessages] = useState<ClientMessage[]>([]);
+  // Client-level data
+  const [projects, setProjects] = useState<Project[]>([]);
 
-  const fetchClientData = useCallback(async (clientId: string) => {
+  const fetchClientProjects = useCallback(async (clientId: string) => {
     try {
       setLoading(true);
       setError("");
 
-      const [milestonesData, documentsData, messagesData] = await Promise.all([
-        phaseService.getByProjectId(clientId).catch(() => []),
-        documentService.getByClientId(clientId).catch(() => []),
-        messageService.getByClientId(clientId).catch(() => []),
-      ]);
-
-      setMilestones(milestonesData);
-      setDocuments(documentsData);
-      setMessages(messagesData);
+      const projectsData = await projectService.getByClientId(clientId);
+      setProjects(projectsData);
     } catch (err) {
-      console.error("Failed to fetch client data:", err);
-      setError("Failed to load dashboard data");
+      console.error("Failed to fetch client projects:", err);
+      setError("Failed to load projects");
     } finally {
       setLoading(false);
     }
@@ -41,12 +39,64 @@ export const useClientData = () => {
 
   useEffect(() => {
     if (client?.id) {
-      fetchClientData(client.id);
+      fetchClientProjects(client.id);
     }
-  }, [client?.id, fetchClientData]);
+  }, [client?.id, fetchClientProjects]);
+
+  return {
+    user,
+    client,
+    authLoading,
+    loading,
+    error,
+    projects,
+    refreshData: () => client?.id && fetchClientProjects(client.id),
+  };
+};
+
+// New hook for project-specific data
+export const useProjectData = (projectId: string | null) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [project, setProject] = useState<Project | null>(null);
+  const [phases, setPhases] = useState<ProjectPhase[]>([]);
+  const [documents, setDocuments] = useState<ClientDocument[]>([]);
+  const [messages, setMessages] = useState<ClientMessage[]>([]);
+
+  const fetchProjectData = useCallback(async (projectId: string) => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const [projectData, phasesData, documentsData, messagesData] =
+        await Promise.all([
+          projectService.getById(projectId),
+          phaseService.getByProjectId(projectId),
+          documentService.getByProjectId(projectId),
+          messageService.getByProjectId(projectId),
+        ]);
+
+      setProject(projectData);
+      setPhases(phasesData);
+      setDocuments(documentsData);
+      setMessages(messagesData);
+    } catch (err) {
+      console.error("Failed to fetch project data:", err);
+      setError("Failed to load project data");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (projectId) {
+      fetchProjectData(projectId);
+    }
+  }, [projectId, fetchProjectData]);
 
   const markAdminMessagesAsRead = async () => {
-    if (!client?.id) return;
+    if (!projectId) return;
 
     const unreadAdminMessages = messages.filter(
       (msg) => msg.sender_type === "admin" && !msg.is_read
@@ -56,7 +106,6 @@ export const useClientData = () => {
       const messageIds = unreadAdminMessages.map((msg) => msg.id);
       try {
         await messageService.markAsRead(messageIds);
-        // Update local state to reflect the change immediately
         setMessages((prevMessages) =>
           prevMessages.map((msg) =>
             messageIds.includes(msg.id) ? { ...msg, is_read: true } : msg
@@ -77,18 +126,16 @@ export const useClientData = () => {
   ).length;
 
   return {
-    user,
-    client,
-    authLoading,
     loading,
     error,
-    milestones,
+    project,
+    phases,
     documents,
     messages,
     photos,
     unreadMessagesCount,
     setMessages,
-    refreshData: () => client?.id && fetchClientData(client.id),
+    refreshData: () => projectId && fetchProjectData(projectId),
     markAdminMessagesAsRead,
   };
 };

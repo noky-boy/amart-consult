@@ -6,28 +6,57 @@ import { Progress } from "@/components/ui/progress";
 import {
   TrendingUp,
   Calendar,
-  CheckCircle,
   MessageSquare,
   Clock,
   FileText,
   Eye,
+  DollarSign,
+  CreditCard,
+  Wallet,
+  ClipboardList,
 } from "lucide-react";
-import {
-  getStatusColor,
-  calculateProjectProgress,
-  getMilestoneStatusColor,
-} from "@/lib/dashboardUtils";
-import { documentService } from "@/lib/supabase";
+import { documentService, getFinancialSummary } from "@/lib/supabase";
 import type {
   Client,
-  ProjectMilestone,
+  Project,
+  ProjectPhase,
   ClientDocument,
   ClientMessage,
 } from "@/lib/supabase";
 
+function getStatusColor(status: string) {
+  switch (status) {
+    case "Planning":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "In Progress":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case "Review":
+      return "bg-purple-100 text-purple-800 border-purple-200";
+    case "Completed":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "On Hold":
+      return "bg-orange-100 text-orange-800 border-orange-200";
+    case "Cancelled":
+      return "bg-red-100 text-red-800 border-red-200";
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200";
+  }
+}
+
+function calculateProjectProgress(phases: ProjectPhase[]): number {
+  if (phases.length === 0) return 0;
+  const completedPhases = phases.filter((phase) => phase.is_completed).length;
+  return Math.round((completedPhases / phases.length) * 100);
+}
+
+function getPhaseStatusColor(isCompleted: boolean) {
+  return isCompleted ? "bg-green-500" : "bg-slate-300";
+}
+
 type DashboardOverviewProps = {
   client: Client;
-  milestones: ProjectMilestone[];
+  project: Project;
+  phases: ProjectPhase[];
   documents: ClientDocument[];
   messages: ClientMessage[];
   unreadMessagesCount: number;
@@ -35,15 +64,15 @@ type DashboardOverviewProps = {
 
 export default function DashboardOverview({
   client,
-  milestones,
+  project,
+  phases,
   documents,
   messages,
   unreadMessagesCount,
 }: DashboardOverviewProps) {
-  const projectProgress = calculateProjectProgress(milestones);
-  const completedMilestones = milestones.filter(
-    (m) => m.status === "completed"
-  ).length;
+  const projectProgress = calculateProjectProgress(phases);
+  const completedPhases = phases.filter((p) => p.is_completed).length;
+  const financial = getFinancialSummary(project);
 
   return (
     <div className="space-y-8">
@@ -51,14 +80,32 @@ export default function DashboardOverview({
         <h2 className="text-3xl font-serif font-bold text-slate-900 mb-2">
           Project Overview
         </h2>
-        <p className="text-slate-600">{client.project_title}</p>
-        <Badge className={`mt-2 ${getStatusColor(client.status)}`}>
-          {client.status}
+        <p className="text-slate-600">{project.project_title}</p>
+        <Badge className={`mt-2 ${getStatusColor(project.status)}`}>
+          {project.status}
         </Badge>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Stats Cards */}
+        {/* Project Type Card - Now First */}
+        <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+          <CardContent className="p-6 text-center">
+            <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl mb-4 mx-auto w-fit">
+              <ClipboardList className="h-6 w-6 text-white" />
+            </div>
+            <p className="text-sm font-medium text-slate-600 mb-2">
+              Project Type
+            </p>
+            <p className="text-2xl font-bold text-slate-900 mb-4 capitalize">
+              {project.project_type}
+            </p>
+            <p className="text-xs text-slate-500">
+              {project.timeline || "Timeline TBD"}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Overall Progress Card */}
         <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6 text-center">
             <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl mb-4 mx-auto w-fit">
@@ -72,42 +119,54 @@ export default function DashboardOverview({
             </p>
             <Progress value={projectProgress} className="h-2 w-full" />
             <p className="text-xs text-slate-500 mt-2">
-              {completedMilestones} of {milestones.length} milestones
+              {completedPhases} of {phases.length} phases
             </p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6 text-center">
-            <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl mb-4 mx-auto w-fit">
-              <Calendar className="h-6 w-6 text-white" />
-            </div>
-            <p className="text-sm font-medium text-slate-600 mb-2">
-              Project Type
-            </p>
-            <p className="text-2xl font-bold text-slate-900 mb-4 capitalize">
-              {client.project_type}
-            </p>
-            <p className="text-xs text-slate-500">
-              {client.timeline || "Timeline TBD"}
-            </p>
-          </CardContent>
-        </Card>
+
+        {/* Financial Summary Card - Replacing Completed Tasks */}
         <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6 text-center">
             <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl mb-4 mx-auto w-fit">
-              <CheckCircle className="h-6 w-6 text-white" />
+              <DollarSign className="h-6 w-6 text-white" />
             </div>
             <p className="text-sm font-medium text-slate-600 mb-2">
-              Completed Tasks
+              Project Financials
             </p>
-            <p className="text-3xl font-bold text-slate-900 mb-4">
-              {completedMilestones}
-            </p>
-            <p className="text-xs text-slate-500">
-              {milestones.length - completedMilestones} remaining
-            </p>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 flex items-center">
+                  <CreditCard className="h-3 w-3 mr-1" />
+                  Contract:
+                </span>
+                <span className="font-semibold text-slate-900">
+                  {financial.formatted.contract_sum}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 flex items-center">
+                  <Wallet className="h-3 w-3 mr-1 text-green-600" />
+                  Received:
+                </span>
+                <span className="font-semibold text-green-700">
+                  {financial.formatted.cash_received}
+                </span>
+              </div>
+              <div className="border-t pt-2 flex justify-between items-center">
+                <span className="text-slate-600 font-medium">Balance:</span>
+                <span
+                  className={`font-bold ${
+                    financial.balance > 0 ? "text-orange-600" : "text-green-600"
+                  }`}
+                >
+                  {financial.formatted.balance}
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
+
+        {/* Messages Card */}
         <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6 text-center">
             <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl mb-4 mx-auto w-fit">
@@ -125,47 +184,67 @@ export default function DashboardOverview({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Recent Milestones */}
+        {/* Project Phases - Replacing Milestones */}
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Clock className="h-5 w-5 text-indigo-600" />
-              <span>Project Milestones</span>
+              <span>Project Phases</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {milestones.length > 0 ? (
+            {phases.length > 0 ? (
               <div className="space-y-4">
-                {milestones.slice(0, 5).map((milestone) => (
+                {phases.slice(0, 5).map((phase) => (
                   <div
-                    key={milestone.id}
+                    key={phase.id}
                     className="flex items-start space-x-4 p-3 rounded-lg border border-slate-200"
                   >
                     <div
-                      className={`h-3 w-3 rounded-full mt-2 ${getMilestoneStatusColor(
-                        milestone.status
+                      className={`h-3 w-3 rounded-full mt-2 ${getPhaseStatusColor(
+                        phase.is_completed
                       )}`}
                     ></div>
                     <div className="flex-1">
                       <h4 className="font-medium text-slate-900">
-                        {milestone.title}
+                        {phase.phase_name}
                       </h4>
-                      {milestone.description && (
+                      {phase.phase_description && (
                         <p className="text-sm text-slate-600 mt-1">
-                          {milestone.description}
+                          {phase.phase_description}
                         </p>
                       )}
+                      <div className="flex items-center justify-between mt-2">
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            phase.is_completed
+                              ? "bg-green-100 text-green-700"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {phase.is_completed ? "Completed" : "In Progress"}
+                        </span>
+                        {phase.completed_date && (
+                          <span className="text-xs text-slate-500">
+                            Completed:{" "}
+                            {new Date(
+                              phase.completed_date
+                            ).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <p className="text-slate-600 text-center py-8">
-                No milestones defined yet.
+                No project phases defined yet.
               </p>
             )}
           </CardContent>
         </Card>
+
         {/* Recent Documents */}
         <Card className="border-0 shadow-lg">
           <CardHeader>

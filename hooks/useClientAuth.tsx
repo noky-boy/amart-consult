@@ -57,7 +57,6 @@ export function ClientAuthProvider({
 
         if (mounted) {
           if (session?.user) {
-            console.log("Initial session found:", session.user.id);
             setUser(session.user);
             await loadClientData(session.user.id);
           }
@@ -69,25 +68,26 @@ export function ClientAuthProvider({
           setLoading(false);
         }
       }
-    }, 100); // Small delay
+    }, 100);
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state change:", event, !!session, session?.user?.id);
+      console.log("Auth state change:", event, session?.user?.id);
 
-      // Completely skip USER_UPDATED events - they cause database connection issues
+      // Skip USER_UPDATED events to avoid database connection issues
       if (event === "USER_UPDATED") {
-        console.log("Skipping USER_UPDATED event entirely");
-        return; // Exit early, don't process anything
+        return;
       }
 
       if (mounted) {
+        // Check if session exists and has a user
         if (session?.user) {
           setUser(session.user);
           await loadClientData(session.user.id);
         } else {
+          // No session means user is signed out
           setUser(null);
           setClient(null);
         }
@@ -104,47 +104,30 @@ export function ClientAuthProvider({
 
   const loadClientData = async (authUserId: string) => {
     try {
-      console.log("=== LOADING CLIENT DATA ===");
-      console.log("Auth user ID:", authUserId);
-
       // Add delay to prevent race conditions
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      console.log("About to call clientService.getByAuthUserId...");
       const clientData = await clientService.getByAuthUserId(authUserId);
-      console.log("clientService.getByAuthUserId result:", clientData);
 
       if (clientData) {
-        console.log("Setting client data...");
         setClient(clientData);
-        console.log("Client set successfully - session should persist");
       } else {
-        console.log("No client found by auth_user_id, trying by email...");
-
         const { user: authUser } = await auth.getUser();
-        console.log("Auth user for email lookup:", authUser);
 
         if (authUser?.email) {
-          console.log("Looking up client by email:", authUser.email);
           const clientByEmail = await clientService.getByEmail(authUser.email);
-          console.log("Client found by email:", clientByEmail);
 
           if (clientByEmail) {
-            console.log("Linking client to auth user...");
             await clientService.update(clientByEmail.id, {
               auth_user_id: authUserId,
               has_portal_access: true,
             });
             setClient(clientByEmail);
-            console.log("Client linked and set successfully");
           } else {
-            console.log("No client found by email - this will cause logout");
           }
         } else {
-          console.log("No auth user email found - this will cause logout");
         }
       }
-      console.log("=== END CLIENT DATA LOADING ===");
     } catch (error) {
       console.error("CRITICAL: Failed to load client data:", error);
       console.error("This error will cause immediate logout");
@@ -177,13 +160,24 @@ export function ClientAuthProvider({
   const signOut = async () => {
     try {
       setLoading(true);
-      await auth.signOut();
+
+      // Clear local state immediately
       setUser(null);
       setClient(null);
+
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error("Supabase signOut error:", error);
+      }
+
+      // Force redirect to login page regardless of any errors
+      window.location.href = "/portal/login";
     } catch (error) {
       console.error("Sign out error:", error);
-    } finally {
-      setLoading(false);
+      // Force redirect even on error
+      window.location.href = "/portal/login";
     }
   };
 

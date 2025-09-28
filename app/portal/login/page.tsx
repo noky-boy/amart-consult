@@ -44,7 +44,7 @@ export default function ClientLoginPage() {
 
     if (user && client) {
       // Only redirect if we have both user AND client data
-      router.push("/portal/dashboard");
+      router.push("/portal/projects"); // Changed from /portal/dashboard
     } else if (user && !client) {
       // Give it a bit more time in case client data is still loading
       const timeoutId = setTimeout(() => {
@@ -122,7 +122,7 @@ export default function ClientLoginPage() {
       if (result.success) {
         // Clear temp password flag in database
         // This would require an additional API call
-        router.push("/portal/dashboard");
+        router.push("/portal/projects"); // Changed from /portal/dashboard
       } else {
         setError(result.error || "Failed to update password");
       }
@@ -135,7 +135,7 @@ export default function ClientLoginPage() {
   };
 
   const skipPasswordUpdate = () => {
-    router.push("/portal/dashboard");
+    router.push("/portal/projects"); // Changed from /portal/dashboard
   };
 
   // Show password update form for first-time login
