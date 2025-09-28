@@ -410,15 +410,17 @@ export const projectService = {
   async getAllWithProgress(): Promise<ProjectWithProgress[]> {
     const projects = await this.getAll();
 
+    // Corrected code - type is inferred automatically
     const projectsWithProgress = await Promise.all(
-      projects.map(async (project: { id: string }) => {
+      projects.map(async (project) => {
+        // No need to specify the type here
         const [progressResult, phases] = await Promise.all([
           supabase.rpc("get_project_progress", { project_uuid: project.id }),
           phaseService.getByProjectId(project.id),
         ]);
 
         return {
-          ...project,
+          ...project, // Now this correctly spreads the full 'Project' object
           progress_percentage: progressResult.data || 0,
           total_phases: phases.length,
           completed_phases: phases.filter((p) => p.is_completed).length,
@@ -428,6 +430,29 @@ export const projectService = {
 
     return projectsWithProgress;
   },
+
+  // Update project with financial data
+  // async updateFinancials(
+  //   id: string,
+  //   financials: {
+  //     contract_sum?: number;
+  //     cash_received?: number;
+  //   }
+  // ): Promise<Project> {
+  //   const { data, error } = await supabase
+  //     .from("projects")
+  //     .update({
+  //       contract_sum: financials.contract_sum,
+  //       cash_received: financials.cash_received,
+  //       // balance will be calculated automatically by the database trigger
+  //     })
+  //     .eq("id", id)
+  //     .select()
+  //     .single();
+
+  //   if (error) throw error;
+  //   return data;
+  // },
 };
 
 // Updated Client Service (no more embedded project data)
@@ -495,29 +520,6 @@ export const clientService = {
       `
       )
       .eq("id", id)
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  // Update project with financial data
-  async updateFinancials(
-    id: string,
-    financials: {
-      contract_sum?: number;
-      cash_received?: number;
-    }
-  ): Promise<Project> {
-    const { data, error } = await supabase
-      .from("projects")
-      .update({
-        contract_sum: financials.contract_sum,
-        cash_received: financials.cash_received,
-        // balance will be calculated automatically by the database trigger
-      })
-      .eq("id", id)
-      .select()
       .single();
 
     if (error) throw error;

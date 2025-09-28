@@ -1,13 +1,9 @@
 // amart-consult/hooks/useClientData.ts
 import { useState, useEffect, useCallback } from "react";
 import { useRequireAuth } from "@/hooks/useClientAuth";
-import {
-  milestoneService,
-  documentService,
-  messageService,
-} from "@/lib/supabase";
+import { phaseService, documentService, messageService } from "@/lib/supabase";
 import type {
-  ProjectMilestone,
+  ProjectPhase,
   ClientDocument,
   ClientMessage,
 } from "@/lib/supabase";
@@ -17,7 +13,7 @@ export const useClientData = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [milestones, setMilestones] = useState<ProjectMilestone[]>([]);
+  const [milestones, setMilestones] = useState<ProjectPhase[]>([]);
   const [documents, setDocuments] = useState<ClientDocument[]>([]);
   const [messages, setMessages] = useState<ClientMessage[]>([]);
 
@@ -27,7 +23,7 @@ export const useClientData = () => {
       setError("");
 
       const [milestonesData, documentsData, messagesData] = await Promise.all([
-        milestoneService.getByClientId(clientId).catch(() => []),
+        phaseService.getByProjectId(clientId).catch(() => []),
         documentService.getByClientId(clientId).catch(() => []),
         messageService.getByClientId(clientId).catch(() => []),
       ]);
