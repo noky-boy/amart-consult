@@ -74,14 +74,7 @@ export default function ClientLoginPage() {
     }
 
     try {
-      // Add debugging logs
-      console.log("Attempting login with:", {
-        email: formData.email,
-        passwordLength: formData.password.length,
-      });
-
       const result = await signIn(formData.email, formData.password);
-      console.log("Login result:", result);
 
       if (result.success) {
         setIsFirstLogin(true);

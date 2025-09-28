@@ -74,8 +74,6 @@ export function ClientAuthProvider({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state change:", event, session?.user?.id);
-
       // Skip USER_UPDATED events to avoid database connection issues
       if (event === "USER_UPDATED") {
         return;

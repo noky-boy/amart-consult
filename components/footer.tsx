@@ -1,27 +1,33 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Phone, Mail, MapPin, Clock, ExternalLink } from "@/components/ui/icons"
-import NewsletterSignup from "@/components/newsletter-signup"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Phone,
+  Mail,
+  MapPin,
+  Clock,
+  ExternalLink,
+} from "@/components/ui/icons";
+import NewsletterSignup from "@/components/newsletter-signup";
 
 export default function Footer() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   const isActiveLink = (href: string) => {
     if (href === "/") {
-      return pathname === "/"
+      return pathname === "/";
     }
-    return pathname.startsWith(href)
-  }
+    return pathname.startsWith(href);
+  };
 
   return (
     <footer className="bg-slate-900 text-white">
-      <div className="border-b border-slate-800">
+      {/* <div className="border-b border-slate-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <NewsletterSignup variant="footer" showIncentive={true} />
         </div>
-      </div>
+      </div> */}
 
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -29,11 +35,15 @@ export default function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <img src="/images/amart-logo.png" alt="Amart Consult" className="h-8 w-auto" />
+              <img
+                src="/images/amart-logo.png"
+                alt="Amart Consult"
+                className="h-8 w-auto"
+              />
             </div>
             <p className="text-slate-300 text-sm leading-relaxed">
-              Transform Your Vision Into Enduring Structures. End-to-end Design-to-Build architectural services in
-              Ghana.
+              Transform Your Vision Into Enduring Structures. End-to-end
+              Design-to-Build architectural services in Ghana.
             </p>
             <div className="flex items-center space-x-2 text-sm text-slate-300">
               <Clock className="h-4 w-4 text-terracotta" />
@@ -43,7 +53,9 @@ export default function Footer() {
 
           {/* Services */}
           <div className="space-y-4">
-            <h3 className="text-lg font-serif font-semibold text-white">Our Services</h3>
+            <h3 className="text-lg font-serif font-semibold text-white">
+              Our Services
+            </h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
@@ -110,7 +122,9 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="text-lg font-serif font-semibold text-white">Quick Links</h3>
+            <h3 className="text-lg font-serif font-semibold text-white">
+              Quick Links
+            </h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
@@ -128,7 +142,9 @@ export default function Footer() {
                 <Link
                   href="/about"
                   className={`transition-colors ${
-                    isActiveLink("/about") ? "text-terracotta font-medium" : "text-slate-300 hover:text-terracotta"
+                    isActiveLink("/about")
+                      ? "text-terracotta font-medium"
+                      : "text-slate-300 hover:text-terracotta"
                   }`}
                 >
                   About Us
@@ -138,7 +154,9 @@ export default function Footer() {
                 <Link
                   href="/portfolio"
                   className={`transition-colors ${
-                    isActiveLink("/portfolio") ? "text-terracotta font-medium" : "text-slate-300 hover:text-terracotta"
+                    isActiveLink("/portfolio")
+                      ? "text-terracotta font-medium"
+                      : "text-slate-300 hover:text-terracotta"
                   }`}
                 >
                   Portfolio
@@ -148,7 +166,9 @@ export default function Footer() {
                 <Link
                   href="/blog"
                   className={`transition-colors ${
-                    isActiveLink("/blog") ? "text-terracotta font-medium" : "text-slate-300 hover:text-terracotta"
+                    isActiveLink("/blog")
+                      ? "text-terracotta font-medium"
+                      : "text-slate-300 hover:text-terracotta"
                   }`}
                 >
                   Blog
@@ -158,7 +178,9 @@ export default function Footer() {
                 <Link
                   href="/resources"
                   className={`transition-colors ${
-                    isActiveLink("/resources") ? "text-terracotta font-medium" : "text-slate-300 hover:text-terracotta"
+                    isActiveLink("/resources")
+                      ? "text-terracotta font-medium"
+                      : "text-slate-300 hover:text-terracotta"
                   }`}
                 >
                   Resources
@@ -169,12 +191,17 @@ export default function Footer() {
 
           {/* Contact Info */}
           <div className="space-y-4">
-            <h3 className="text-lg font-serif font-semibold text-white">Get In Touch</h3>
+            <h3 className="text-lg font-serif font-semibold text-white">
+              Get In Touch
+            </h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-start space-x-3">
                 <Phone className="h-4 w-4 text-terracotta mt-0.5 flex-shrink-0" />
                 <div>
-                  <a href="tel:+233543543356" className="text-slate-300 hover:text-terracotta transition-colors">
+                  <a
+                    href="tel:+233543543356"
+                    className="text-slate-300 hover:text-terracotta transition-colors"
+                  >
                     +233 54 354 3356
                   </a>
                   <p className="text-xs text-slate-400">Nathan Amarkwei</p>
@@ -229,5 +256,5 @@ export default function Footer() {
         </div>
       </div>
     </footer>
-  )
+  );
 }
