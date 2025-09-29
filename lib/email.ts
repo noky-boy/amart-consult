@@ -320,6 +320,89 @@ interface WelcomeEmailData {
   logoUrl?: string;
 }
 
+// Client Welcome Email
+interface ClientWelcomeEmailData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  projectTitle?: string;
+  temporaryPassword: string;
+  portalUrl: string;
+  customMessage?: string;
+}
+
+export const sendClientWelcomeEmail = async (data: ClientWelcomeEmailData) => {
+  const websiteUrl =
+    process.env.NEXT_PUBLIC_WEBSITE_URL || "https://amartconsult.com";
+  const logoUrl = `${websiteUrl}/images/amart-logo.png`;
+
+  const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Amart Consult Client Portal</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #f8fafc; font-family: Arial, sans-serif; }
+        .email-container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #4F46E5 0%, #DC2626 100%); padding: 40px; text-align: center; }
+        .logo-container { background-color: white; display: inline-block; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+        .body { padding: 40px; }
+        .credentials { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0; }
+        .button { background-color: #DC2626; color: white; padding: 16px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin: 24px 0; }
+        .footer { background-color: #f9fafb; padding: 24px; text-align: center; font-size: 14px; color: #6b7280; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo-container">
+                <img src="${logoUrl}" alt="Amart Consult" width="120" height="40">
+            </div>
+            <h1 style="color: white; margin: 0;">Welcome to Your Client Portal</h1>
+        </div>
+        <div class="body">
+            <p>Hi ${data.firstName},</p>
+            <p>Welcome to the Amart Consult Client Portal! Your account has been created and you now have access to track your project progress, view documents, and communicate with our team.</p>
+            ${
+              data.projectTitle
+                ? `<p><strong>Project:</strong> ${data.projectTitle}</p>`
+                : ""
+            }
+            ${data.customMessage ? `<p>${data.customMessage}</p>` : ""}
+            <div class="credentials">
+                <p style="margin: 0; color: #92400e;"><strong>Your Login Credentials:</strong></p>
+                <p style="margin: 8px 0 0 0; color: #92400e;">Email: <strong>${
+                  data.email
+                }</strong></p>
+                <p style="margin: 8px 0 0 0; color: #92400e;">Temporary Password: <strong>${
+                  data.temporaryPassword
+                }</strong></p>
+            </div>
+            <div style="text-align: center;">
+                <a href="${
+                  data.portalUrl
+                }" class="button">Access Your Portal</a>
+            </div>
+            <p style="color: #6b7280; font-size: 14px; margin-top: 24px;"><strong>Important:</strong> Please change your password after your first login for security.</p>
+        </div>
+        <div class="footer">
+            <img src="${logoUrl}" alt="Amart Consult" width="80" height="26" style="opacity: 0.6; margin-bottom: 16px;">
+            <p>+233 54 354 3356 | amartconsult1@gmail.com</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+  const result = await sendEmail({
+    to: data.email,
+    subject: "Welcome to Amart Consult Client Portal",
+    html: htmlContent,
+  });
+
+  return result.success;
+};
+
 export const sendWelcomeEmail = async (data: WelcomeEmailData) => {
   const htmlContent = generateWelcomeEmailHTML({
     firstName: data.firstName,
@@ -364,6 +447,50 @@ interface NewsletterEmailData {
   websiteUrl?: string;
   logoUrl?: string;
 }
+
+// Newsletter subscription
+export const addToNewsletterList = async (data: {
+  email: string;
+  name?: string;
+  source?: string;
+}) => {
+  const websiteUrl =
+    process.env.NEXT_PUBLIC_WEBSITE_URL || "https://amartconsult.com";
+  const logoUrl = `${websiteUrl}/images/amart-logo.png`;
+
+  const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { margin: 0; padding: 0; background-color: #f8fafc; font-family: Arial, sans-serif; }
+        .email-container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #4F46E5 0%, #DC2626 100%); padding: 40px; text-align: center; }
+        .body { padding: 40px; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1 style="color: white; margin: 0;">Welcome to Amart Consult Newsletter!</h1>
+        </div>
+        <div class="body">
+            <p>Hi${data.name ? ` ${data.name}` : ""},</p>
+            <p>Thank you for subscribing to the Amart Consult newsletter. You'll receive updates about our latest projects, design tips, and industry insights.</p>
+            <p>Best regards,<br><strong>The Amart Consult Team</strong></p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+  const result = await sendEmail({
+    to: data.email,
+    subject: "Welcome to Amart Consult Newsletter",
+    html: htmlContent,
+  });
+
+  return result.success;
+};
 
 export const sendNewsletterEmail = async (data: NewsletterEmailData) => {
   const htmlContent = generateNewsletterEmailHTML({
@@ -557,6 +684,97 @@ export const sendBulkEmails = async (emails: BaseEmailOptions[]) => {
   }
 
   return results;
+};
+// Quote form email
+interface QuoteFormData {
+  name: string;
+  email: string;
+  phone: string;
+  projectType: string;
+  location: string;
+  timeline: string;
+  serviceTier: string;
+  budgetRange: string;
+  requirements: string;
+  additionalDetails?: string;
+}
+
+export const sendQuoteFormEmail = async (data: QuoteFormData) => {
+  const websiteUrl =
+    process.env.NEXT_PUBLIC_WEBSITE_URL || "https://amartconsult.com";
+  const logoUrl = `${websiteUrl}/images/amart-logo.png`;
+
+  const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { margin: 0; padding: 0; background-color: #f8fafc; font-family: Arial, sans-serif; }
+        .email-container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #4F46E5 0%, #DC2626 100%); padding: 40px; text-align: center; }
+        .body { padding: 40px; }
+        .info-section { background-color: #f9fafb; border-left: 4px solid #4F46E5; padding: 16px; margin: 16px 0; }
+        .info-row { margin: 12px 0; }
+        .label { font-weight: bold; color: #374151; display: inline-block; width: 150px; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1 style="color: white; margin: 0;">New Quote Request</h1>
+        </div>
+        <div class="body">
+            <h2 style="color: #4F46E5;">Contact Information</h2>
+            <div class="info-section">
+                <div class="info-row"><span class="label">Name:</span> ${
+                  data.name
+                }</div>
+                <div class="info-row"><span class="label">Email:</span> ${
+                  data.email
+                }</div>
+                <div class="info-row"><span class="label">Phone:</span> ${
+                  data.phone
+                }</div>
+                <div class="info-row"><span class="label">Location:</span> ${
+                  data.location
+                }</div>
+            </div>
+            <h2 style="color: #4F46E5;">Project Details</h2>
+            <div class="info-section">
+                <div class="info-row"><span class="label">Project Type:</span> ${
+                  data.projectType
+                }</div>
+                <div class="info-row"><span class="label">Timeline:</span> ${
+                  data.timeline
+                }</div>
+                <div class="info-row"><span class="label">Service Tier:</span> ${
+                  data.serviceTier
+                }</div>
+                <div class="info-row"><span class="label">Budget Range:</span> ${
+                  data.budgetRange
+                }</div>
+            </div>
+            <h2 style="color: #4F46E5;">Requirements</h2>
+            <p style="white-space: pre-wrap;">${data.requirements}</p>
+            ${
+              data.additionalDetails
+                ? `<h2 style="color: #4F46E5;">Additional Details</h2><p style="white-space: pre-wrap;">${data.additionalDetails}</p>`
+                : ""
+            }
+        </div>
+    </div>
+</body>
+</html>`;
+
+  const adminEmail = process.env.SMTP_USER || "amartconsult1@gmail.com";
+
+  const result = await sendEmail({
+    to: adminEmail,
+    subject: `New Quote Request from ${data.name}`,
+    html: htmlContent,
+  });
+
+  return result.success;
 };
 
 // Email template validation
