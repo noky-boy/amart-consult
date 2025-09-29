@@ -22,8 +22,9 @@ import { DashboardStatCards } from "@/components/admin/DashboardStatCards";
 import { RecentClientsCard } from "@/components/admin/RecentClientsCard";
 import { RecentProjectsCard } from "@/components/admin/RecentProjectsCard";
 import { ProjectStatusBreakdown } from "@/components/admin/ProjectStatusBreakdown";
+import { Suspense } from "react";
 
-export default function DashboardPage() {
+function DashboardPage() {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const { stats, loading, error, enablingPortal, handleEnablePortalAccess } =
@@ -266,5 +267,29 @@ export default function DashboardPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function DashboardPages() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto p-6">
+          <div className="animate-pulse">
+            <div className="mb-8">
+              <div className="h-8 bg-gray-200 rounded w-64 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-96"></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-32 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <DashboardPage />
+    </Suspense>
   );
 }

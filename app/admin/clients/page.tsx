@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +30,7 @@ import Image from "next/image";
 import { clientService } from "@/lib/supabase";
 import type { Client } from "@/lib/supabase";
 
-export default function ClientListing() {
+function ClientListing() {
   const [clients, setClients] = useState<Client[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,9 +76,7 @@ export default function ClientListing() {
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
           client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          client.project_title
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
+          client.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (client.company &&
             client.company.toLowerCase().includes(searchTerm.toLowerCase()))
       );
@@ -86,19 +84,14 @@ export default function ClientListing() {
 
     // Status filter
     if (statusFilter !== "all") {
-      filtered = filtered.filter((client) => client.status === statusFilter);
+      filtered = filtered.filter(
+        (client) => client.client_status === statusFilter
+      );
     }
 
     // Tier filter
     if (tierFilter !== "all") {
       filtered = filtered.filter((client) => client.tier === tierFilter);
-    }
-
-    // Project type filter
-    if (projectTypeFilter !== "all") {
-      filtered = filtered.filter(
-        (client) => client.project_type === projectTypeFilter
-      );
     }
 
     setFilteredClients(filtered);
@@ -155,8 +148,7 @@ export default function ClientListing() {
       `${client.first_name} ${client.last_name}`,
       client.email,
       client.company || "",
-      client.project_title,
-      client.status,
+      client.client_status,
       client.tier,
       new Date(client.created_at).toLocaleDateString(),
     ]);
@@ -379,18 +371,9 @@ export default function ClientListing() {
                     </div>
 
                     <div className="flex items-center space-x-6">
-                      <div className="text-right">
-                        <p className="font-medium text-slate-900">
-                          {client.project_title}
-                        </p>
-                        <p className="text-sm text-slate-600 capitalize">
-                          {client.project_type}
-                        </p>
-                      </div>
-
                       <div className="flex items-center space-x-2">
-                        <Badge className={getStatusColor(client.status)}>
-                          {client.status}
+                        <Badge className={getStatusColor(client.client_status)}>
+                          {client.client_status}
                         </Badge>
                         <Badge variant="outline">{client.tier}</Badge>
                       </div>
@@ -483,5 +466,36 @@ export default function ClientListing() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function ClientListingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50">
+          <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+            <div className="px-6 py-4">
+              <div className="flex items-center gap-4">
+                <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </header>
+          <div className="max-w-7xl mx-auto p-6">
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-16 bg-gray-200 rounded animate-pulse"
+                ></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <ClientListing />
+    </Suspense>
   );
 }

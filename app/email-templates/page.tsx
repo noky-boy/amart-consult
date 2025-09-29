@@ -80,7 +80,7 @@ const emailTemplates = {
       timeRemaining: "3 weeks",
     },
   },
-};
+} as const;
 
 export default function EmailTemplatesPage() {
   const [selectedTemplate, setSelectedTemplate] = useState("welcome-1");

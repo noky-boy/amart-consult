@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { useMessageSystem } from "./useMessageSystem";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
@@ -10,7 +10,7 @@ import { ConversationFilters } from "./components/ConversationFilters";
 import { ConversationView } from "./components/ConversationView";
 import { TemplatesTab } from "./components/TemplatesTab";
 
-export default function MessagesSystem() {
+function MessagesSystem() {
   const [activeTab, setActiveTab] = useState<
     "compose" | "conversations" | "templates"
   >("compose");
@@ -57,5 +57,20 @@ export default function MessagesSystem() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function MessagesSytemPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 text-indigo-600 mx-auto mb-4 animate-spin" />
+          <p className="text-slate-600">Loading Messages...</p>
+        </div>
+      }
+    >
+      <MessagesSystem />
+    </Suspense>
   );
 }
