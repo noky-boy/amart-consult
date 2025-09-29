@@ -44,7 +44,7 @@
     "@sanity/image-url": "latest",
     "@sanity/vision": "latest",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
-    "@supabase/supabase-js": "^2.57.4",
+    "@supabase/supabase-js": "latest",
     "@types/react-google-recaptcha": "^2.1.9",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
