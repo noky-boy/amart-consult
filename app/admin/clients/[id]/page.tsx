@@ -347,7 +347,7 @@ export default function ClientDetails({
                 variant="outline"
                 asChild
               >
-                <Link href={`/admin/documents/upload?clientId=${client.id}`}>
+                <Link href={`/admin/documents?clientId=${client.id}`}>
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Document
                 </Link>
@@ -374,13 +374,272 @@ export default function ClientDetails({
           </TabsList>
 
           <TabsContent value="projects" className="space-y-6">
-            {/* ... Projects tab content is correct, no changes needed ... */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Client Projects</CardTitle>
+                <Button size="sm" asChild>
+                  <Link href={`/admin/projects/add?clientId=${client.id}`}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Project
+                  </Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {projects.length > 0 ? (
+                  <div className="space-y-4">
+                    {projects.map((project) => (
+                      <div
+                        key={project.id}
+                        className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-slate-900">
+                            {project.project_title}
+                          </h4>
+                          {project.project_description && (
+                            <p className="text-sm text-slate-600 mt-1">
+                              {project.project_description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 mt-3">
+                            <Badge className={getStatusColor(project.status)}>
+                              {project.status}
+                            </Badge>
+                            <Badge variant="outline" className="capitalize">
+                              {project.project_type}
+                            </Badge>
+                            {project.budget_range && (
+                              <Badge variant="outline">
+                                {project.budget_range}
+                              </Badge>
+                            )}
+                            {project.timeline && (
+                              <div className="flex items-center gap-1 text-slate-500">
+                                <Clock className="h-3 w-3" />
+                                <span className="text-xs">
+                                  {project.timeline}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-2">
+                            Created:{" "}
+                            {new Date(project.created_at).toLocaleDateString()}
+                            {project.project_start_date && (
+                              <>
+                                {" "}
+                                • Started:{" "}
+                                {new Date(
+                                  project.project_start_date
+                                ).toLocaleDateString()}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link href={`/admin/projects/${project.id}`}>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link href={`/admin/projects/${project.id}/edit`}>
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Building2 className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                      No projects yet
+                    </h3>
+                    <p className="text-slate-600 mb-4">
+                      Create the first project for this client
+                    </p>
+                    <Button asChild>
+                      <Link href={`/admin/projects/add?clientId=${client.id}`}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create First Project
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
+
           <TabsContent value="documents" className="space-y-6">
-            {/* ... Documents tab content is correct, no changes needed ... */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Client Documents</CardTitle>
+                <Button size="sm" asChild>
+                  <Link href={`/admin/documents/upload?clientId=${client.id}`}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Documents
+                  </Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {documents.length > 0 ? (
+                  <div className="space-y-3">
+                    {documents.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-4 border border-slate-200 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          {getFileIcon(doc.file_type)}
+                          <div>
+                            <h4 className="font-medium text-slate-900">
+                              {doc.title}
+                            </h4>
+                            {doc.description && (
+                              <p className="text-sm text-slate-600">
+                                {doc.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 mt-1">
+                              {doc.category && (
+                                <Badge variant="secondary">
+                                  {doc.category}
+                                </Badge>
+                              )}
+                              <span className="text-xs text-slate-500">
+                                {formatFileSize(doc.file_size)} •{" "}
+                                {new Date(doc.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              const url = await documentService.getDownloadUrl(
+                                doc.file_path
+                              );
+                              if (url) window.open(url, "_blank");
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              const url = await documentService.getDownloadUrl(
+                                doc.file_path
+                              );
+                              if (url) {
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = doc.file_name;
+                                a.click();
+                              }
+                            }}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Folder className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                      No documents uploaded
+                    </h3>
+                    <p className="text-slate-600 mb-4">
+                      Upload documents for this client to get started
+                    </p>
+                    <Button asChild>
+                      <Link
+                        href={`/admin/documents/upload?clientId=${client.id}`}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload First Document
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
+
           <TabsContent value="messages" className="space-y-6">
-            {/* ... Messages tab content is correct, no changes needed ... */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Message History</CardTitle>
+                <Button size="sm" asChild>
+                  <Link href={`/admin/messages?clientId=${client.id}`}>
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Send Message
+                  </Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {messages.length > 0 ? (
+                  <div className="space-y-4">
+                    {messages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`p-4 rounded-lg border ${
+                          msg.sender_type === "admin"
+                            ? "bg-indigo-50 border-indigo-200 ml-8"
+                            : "bg-slate-50 border-slate-200 mr-8"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={
+                                msg.sender_type === "admin"
+                                  ? "default"
+                                  : "secondary"
+                              }
+                            >
+                              {msg.sender_name}
+                            </Badge>
+                            {!msg.is_read && msg.sender_type === "client" && (
+                              <Badge variant="destructive">Unread</Badge>
+                            )}
+                          </div>
+                          <span className="text-sm text-slate-500">
+                            {new Date(msg.created_at).toLocaleDateString()}{" "}
+                            {new Date(msg.created_at).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <p className="text-slate-900 whitespace-pre-wrap">
+                          {msg.message}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <MessageSquare className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                      No messages yet
+                    </h3>
+                    <p className="text-slate-600 mb-4">
+                      Start a conversation with this client
+                    </p>
+                    <Button asChild>
+                      <Link href={`/admin/messages?clientId=${client.id}`}>
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Send First Message
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* CHANGE: The entire 'milestones' tab has been replaced with the 'phases' tab */}

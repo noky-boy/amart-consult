@@ -85,15 +85,17 @@ export function ComposeTab({
             <div className="space-y-2">
               <Label>Project (Optional)</Label>
               <Select
-                value={selectedProject}
-                onValueChange={setSelectedProject}
+                value={selectedProject || "none"}
+                onValueChange={(val) =>
+                  setSelectedProject(val === "none" ? "" : val)
+                }
                 disabled={!selectedClient || projects.length === 0}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All projects (Client-level)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">
+                  <SelectItem value="none">
                     <div className="flex items-center gap-2">
                       <FolderOpen className="h-4 w-4" />
                       All Projects (Client-level)

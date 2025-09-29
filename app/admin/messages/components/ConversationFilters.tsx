@@ -80,15 +80,17 @@ export function ConversationFilters({
           </Select>
 
           <Select
-            value={selectedProject}
-            onValueChange={setSelectedProject}
+            value={selectedProject || "all"}
+            onValueChange={(val) =>
+              setSelectedProject(val === "all" ? "" : val)
+            }
             disabled={!selectedClient}
           >
             <SelectTrigger>
               <SelectValue placeholder="All projects" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Projects</SelectItem>
+              <SelectItem value="all">All Projects</SelectItem>
               {projects.map((project) => (
                 <SelectItem key={project.id} value={project.id}>
                   {project.project_title}
