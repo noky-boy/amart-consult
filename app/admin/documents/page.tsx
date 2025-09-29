@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { useDocumentManagement } from "./useDocumentManagement";
 import { DocumentUploader } from "./components/DocumentUploader";
 import { DocumentManager } from "./components/DocumentManager";
 
-export default function DocumentManagementPage() {
+function DocumentManagementContent() {
   const [activeTab, setActiveTab] = useState<"upload" | "manage">("upload");
   const {
     clients,
@@ -125,5 +125,19 @@ export default function DocumentManagementPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function DocumentManagementPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center">
+          <Loader2 className="h-12 w-12 text-indigo-600 animate-spin" />
+        </div>
+      }
+    >
+      <DocumentManagementContent />
+    </Suspense>
   );
 }
