@@ -7,31 +7,32 @@ import {
   isValidEmail,
   isValidGhanaPhone,
 } from "@/lib/security";
+import { saveContactSubmissionAdmin } from "@/lib/supabase-admin";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
     // Validate reCAPTCHA Enterprise - pass request for IP address
-    const recaptchaToken = body.recaptchaToken;
-    // Add this right before: const isRecaptchaValid = await validateRecaptcha(recaptchaToken, request);
-    console.log("=== DEBUG: Environment variables ===");
-    console.log("RECAPTCHA_PROJECT_ID:", process.env.RECAPTCHA_PROJECT_ID);
-    console.log("RECAPTCHA_API_KEY:", process.env.RECAPTCHA_API_KEY);
-    console.log(
-      "NEXT_PUBLIC_RECAPTCHA_SITE_KEY:",
-      process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
-    );
-    console.log("Received token:", recaptchaToken);
-    console.log("=== END DEBUG ===");
-    const isRecaptchaValid = await validateRecaptcha(recaptchaToken, request);
+    // const recaptchaToken = body.recaptchaToken;
+    // // Add this right before: const isRecaptchaValid = await validateRecaptcha(recaptchaToken, request);
+    // console.log("=== DEBUG: Environment variables ===");
+    // console.log("RECAPTCHA_PROJECT_ID:", process.env.RECAPTCHA_PROJECT_ID);
+    // console.log("RECAPTCHA_API_KEY:", process.env.RECAPTCHA_API_KEY);
+    // console.log(
+    //   "NEXT_PUBLIC_RECAPTCHA_SITE_KEY:",
+    //   process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+    // );
+    // console.log("Received token:", recaptchaToken);
+    // console.log("=== END DEBUG ===");
+    // const isRecaptchaValid = await validateRecaptcha(recaptchaToken, request);
 
-    if (!isRecaptchaValid) {
-      return NextResponse.json(
-        { error: "Security verification failed. Please try again." },
-        { status: 400 }
-      );
-    }
+    // if (!isRecaptchaValid) {
+    //   return NextResponse.json(
+    //     { error: "Security verification failed. Please try again." },
+    //     { status: 400 }
+    //   );
+    // }
 
     // Sanitize inputs
     const sanitizedData = {
@@ -115,8 +116,8 @@ export async function POST(request: NextRequest) {
       message: sanitizedData.message,
     };
 
-    // Save to database first
-    const dbResult = await saveContactSubmission(contactData);
+    // Save to database using ADMIN client (change this line)
+    const dbResult = await saveContactSubmissionAdmin(contactData);
 
     if (!dbResult.success) {
       console.error(

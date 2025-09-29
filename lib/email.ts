@@ -57,7 +57,258 @@ export const sendEmail = async (options: BaseEmailOptions) => {
     return { success: true, messageId: result.messageId };
   } catch (error) {
     console.error("Failed to send email:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+};
+
+// Contact Form Email Interface
+interface ContactFormData {
+  name: string;
+  email: string;
+  phone: string;
+  projectType: string;
+  location: string;
+  budgetRange?: string;
+  serviceInterest?: string[];
+  message: string;
+}
+
+// Generate Contact Form Email HTML
+const generateContactFormEmailHTML = (data: ContactFormData): string => {
+  const websiteUrl =
+    process.env.NEXT_PUBLIC_WEBSITE_URL || "https://amartconsult.com";
+  const logoUrl = `${websiteUrl}/images/amart-logo.png`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Contact Form Submission - Amart Consult</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #f8fafc; font-family: Arial, sans-serif; }
+        .email-container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #4F46E5 0%, #DC2626 100%); padding: 40px; text-align: center; }
+        .logo-container { background-color: white; display: inline-block; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+        .body { padding: 40px; }
+        .info-section { background-color: #f9fafb; border-left: 4px solid #4F46E5; padding: 16px; margin: 16px 0; }
+        .info-row { margin: 12px 0; }
+        .label { font-weight: bold; color: #374151; display: inline-block; width: 150px; }
+        .value { color: #6b7280; }
+        .message-section { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0; }
+        .footer { background-color: #f9fafb; padding: 24px; text-align: center; font-size: 14px; color: #6b7280; }
+        .services-list { list-style: none; padding: 0; margin: 8px 0; }
+        .services-list li { display: inline-block; background-color: #e0e7ff; color: #4F46E5; padding: 4px 12px; border-radius: 12px; margin: 4px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo-container">
+                <img src="${logoUrl}" alt="Amart Consult" width="120" height="40">
+            </div>
+            <h1 style="color: white; margin: 0;">New Contact Form Submission</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">You have a new inquiry from your website</p>
+        </div>
+        
+        <div class="body">
+            <h2 style="color: #4F46E5; margin-top: 0;">Contact Information</h2>
+            <div class="info-section">
+                <div class="info-row">
+                    <span class="label">Name:</span>
+                    <span class="value">${data.name}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Email:</span>
+                    <span class="value"><a href="mailto:${
+                      data.email
+                    }" style="color: #4F46E5;">${data.email}</a></span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Phone:</span>
+                    <span class="value"><a href="tel:${
+                      data.phone
+                    }" style="color: #4F46E5;">${data.phone}</a></span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Location:</span>
+                    <span class="value">${data.location}</span>
+                </div>
+            </div>
+
+            <h2 style="color: #4F46E5; margin-top: 32px;">Project Details</h2>
+            <div class="info-section">
+                <div class="info-row">
+                    <span class="label">Project Type:</span>
+                    <span class="value">${
+                      data.projectType.charAt(0).toUpperCase() +
+                      data.projectType.slice(1)
+                    }</span>
+                </div>
+                ${
+                  data.budgetRange
+                    ? `
+                <div class="info-row">
+                    <span class="label">Budget Range:</span>
+                    <span class="value">${data.budgetRange}</span>
+                </div>
+                `
+                    : ""
+                }
+                ${
+                  data.serviceInterest && data.serviceInterest.length > 0
+                    ? `
+                <div class="info-row">
+                    <span class="label">Services Interested:</span>
+                    <ul class="services-list">
+                        ${data.serviceInterest
+                          .map((service) => `<li>${service}</li>`)
+                          .join("")}
+                    </ul>
+                </div>
+                `
+                    : ""
+                }
+            </div>
+
+            <h2 style="color: #4F46E5; margin-top: 32px;">Message</h2>
+            <div class="message-section">
+                <p style="margin: 0; color: #92400e; white-space: pre-wrap;">${
+                  data.message
+                }</p>
+            </div>
+
+            <div style="margin-top: 32px; padding: 16px; background-color: #dbeafe; border-radius: 8px;">
+                <p style="margin: 0; color: #1e40af; font-size: 14px;">
+                    <strong>⏰ Quick Action Required:</strong> Please respond to this inquiry within 24 hours to maintain excellent customer service.
+                </p>
+            </div>
+
+            <div style="margin-top: 24px; text-align: center;">
+                <a href="mailto:${
+                  data.email
+                }?subject=Re: Your Inquiry - Amart Consult" 
+                   style="background-color: #DC2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                    Reply to ${data.name}
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <img src="${logoUrl}" alt="Amart Consult" width="80" height="26" style="opacity: 0.6; margin-bottom: 16px;">
+            <p>This email was sent from your website contact form</p>
+            <p style="margin-top: 8px; font-size: 12px; color: #9ca3af;">
+                Submitted on: ${new Date().toLocaleString("en-US", {
+                  dateStyle: "full",
+                  timeStyle: "short",
+                  timeZone: "Africa/Accra",
+                })}
+            </p>
+        </div>
+    </div>
+</body>
+</html>`;
+};
+
+// Send Contact Form Email
+export const sendContactFormEmail = async (data: ContactFormData) => {
+  const htmlContent = generateContactFormEmailHTML(data);
+
+  // Send to admin/company email
+  const adminEmail = process.env.SMTP_USER || "amartconsult1@gmail.com";
+
+  // Also send confirmation to client
+  const clientConfirmationHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You - Amart Consult</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #f8fafc; font-family: Arial, sans-serif; }
+        .email-container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #4F46E5 0%, #DC2626 100%); padding: 40px; text-align: center; }
+        .logo-container { background-color: white; display: inline-block; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+        .body { padding: 40px; }
+        .footer { background-color: #f9fafb; padding: 24px; text-align: center; font-size: 14px; color: #6b7280; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo-container">
+                <img src="${
+                  process.env.NEXT_PUBLIC_WEBSITE_URL ||
+                  "https://amartconsult.com"
+                }/images/amart-logo.png" alt="Amart Consult" width="120" height="40">
+            </div>
+            <h1 style="color: white; margin: 0;">Thank You for Contacting Us!</h1>
+        </div>
+        
+        <div class="body">
+            <p style="color: #374151;">Hi ${data.name},</p>
+            <p style="color: #374151;">Thank you for reaching out to Amart Consult. We've received your inquiry about your ${
+              data.projectType
+            } project in ${data.location}.</p>
+            <p style="color: #374151;">Our team will review your message and get back to you within 24 hours with next steps.</p>
+            
+            <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px; margin: 24px 0;">
+                <p style="margin: 0; color: #166534;"><strong>What happens next?</strong></p>
+                <ul style="color: #166534; margin: 8px 0;">
+                    <li>We'll review your project requirements</li>
+                    <li>A project consultant will contact you</li>
+                    <li>We'll schedule an initial consultation</li>
+                    <li>You'll receive a detailed proposal</li>
+                </ul>
+            </div>
+            
+            <p style="color: #374151;">If you have any urgent questions, feel free to call us at <strong>+233 54 354 3356</strong>.</p>
+            
+            <p style="color: #374151; margin-top: 32px;">
+                Best regards,<br>
+                <strong>The Amart Consult Team</strong>
+            </p>
+        </div>
+        
+        <div class="footer">
+            <img src="${
+              process.env.NEXT_PUBLIC_WEBSITE_URL || "https://amartconsult.com"
+            }/images/amart-logo.png" alt="Amart Consult" width="80" height="26" style="opacity: 0.6; margin-bottom: 16px;">
+            <p>+233 54 354 3356 | amartconsult1@gmail.com</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+  try {
+    // Send email to admin
+    const adminResult = await sendEmail({
+      to: adminEmail,
+      subject: `New Contact Form: ${data.name} - ${data.projectType}`,
+      html: htmlContent,
+    });
+
+    // Send confirmation to client
+    const clientResult = await sendEmail({
+      to: data.email,
+      subject: "Thank You for Contacting Amart Consult",
+      html: clientConfirmationHTML,
+    });
+
+    return {
+      success: adminResult.success && clientResult.success,
+      adminEmail: adminResult,
+      clientEmail: clientResult,
+    };
+  } catch (error) {
+    console.error("Failed to send contact form emails:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to send emails",
+    };
   }
 };
 
@@ -298,7 +549,8 @@ export const sendBulkEmails = async (emails: BaseEmailOptions[]) => {
     } catch (error) {
       results.push({
         success: false,
-        error: error.message,
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
         recipient: emailOptions.to,
       });
     }

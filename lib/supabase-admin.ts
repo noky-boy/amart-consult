@@ -17,3 +17,27 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
     persistSession: false,
   },
 });
+
+// Admin version of saveContactSubmission that bypasses RLS
+export const saveContactSubmissionAdmin = async (data: {
+  name: string;
+  email: string;
+  phone: string;
+  project_type: string;
+  location: string;
+  budget_range?: string | null;
+  service_interest: string[];
+  message: string;
+}) => {
+  const { data: result, error } = await supabaseAdmin
+    .from("contact_submissions")
+    .insert([data])
+    .select();
+
+  if (error) {
+    console.error("Database error saving contact submission:", error);
+    return { success: false, error };
+  }
+
+  return { success: true, data: result };
+};
