@@ -24,6 +24,10 @@ export default function ProjectPhasesPage({
     progress,
     togglePhaseCompletion,
     generateDefaultPhases,
+    addParentPhase,
+    addSubTask,
+    updatePhase,
+    deletePhase,
     duplicatePhase,
   } = useProjectPhases(id);
 
@@ -53,6 +57,10 @@ export default function ProjectPhasesPage({
           phases={phases}
           onToggle={togglePhaseCompletion}
           onGenerate={generateDefaultPhases}
+          onAddParent={addParentPhase}
+          onAddSubTask={addSubTask}
+          onUpdate={updatePhase}
+          onDelete={deletePhase}
           onDuplicate={duplicatePhase}
           isSaving={isSaving}
         />

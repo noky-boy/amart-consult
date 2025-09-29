@@ -748,6 +748,124 @@ export const phaseService = {
     return data;
   },
 
+  // ADD THESE METHODS TO YOUR EXISTING phaseService
+
+  // Create a single parent phase
+  async createParentPhase(
+    projectId: string,
+    data: {
+      phase_name: string;
+      phase_description?: string;
+      estimated_duration?: string;
+      phase_weight: number;
+    }
+  ): Promise<ProjectPhase> {
+    // Get the highest phase_order to add at the end
+    const { data: existingPhases } = await supabase
+      .from("project_phases")
+      .select("phase_order")
+      .eq("project_id", projectId)
+      .order("phase_order", { ascending: false })
+      .limit(1);
+
+    const nextOrder =
+      existingPhases && existingPhases.length > 0
+        ? existingPhases[0].phase_order + 1
+        : 1;
+
+    const { data: newPhase, error } = await supabase
+      .from("project_phases")
+      .insert({
+        project_id: projectId,
+        phase_name: data.phase_name,
+        phase_description: data.phase_description || null,
+        estimated_duration: data.estimated_duration || null,
+        phase_weight: data.phase_weight,
+        phase_order: nextOrder,
+        is_completed: false,
+        parent_phase_id: null,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return newPhase as ProjectPhase;
+  },
+
+  // Create a sub-task under a parent phase
+  async createSubTask(
+    projectId: string,
+    parentPhaseId: string,
+    data: {
+      phase_name: string;
+      phase_description?: string;
+      estimated_duration?: string;
+      phase_weight: number;
+    }
+  ): Promise<ProjectPhase> {
+    // Get the highest phase_order to add at the end
+    const { data: existingPhases } = await supabase
+      .from("project_phases")
+      .select("phase_order")
+      .eq("project_id", projectId)
+      .order("phase_order", { ascending: false })
+      .limit(1);
+
+    const nextOrder =
+      existingPhases && existingPhases.length > 0
+        ? existingPhases[0].phase_order + 1
+        : 1;
+
+    const { data: newSubTask, error } = await supabase
+      .from("project_phases")
+      .insert({
+        project_id: projectId,
+        parent_phase_id: parentPhaseId,
+        phase_name: data.phase_name,
+        phase_description: data.phase_description || null,
+        estimated_duration: data.estimated_duration || null,
+        phase_weight: data.phase_weight,
+        phase_order: nextOrder,
+        is_completed: false,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return newSubTask as ProjectPhase;
+  },
+
+  // Update an existing phase (parent or child)
+  async updatePhase(
+    phaseId: string,
+    data: {
+      phase_name?: string;
+      phase_description?: string;
+      estimated_duration?: string;
+      phase_weight?: number;
+    }
+  ): Promise<ProjectPhase> {
+    const { data: updatedPhase, error } = await supabase
+      .from("project_phases")
+      .update(data)
+      .eq("id", phaseId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return updatedPhase as ProjectPhase;
+  },
+
+  // Delete a phase (will cascade delete children if it's a parent)
+  async deletePhase(phaseId: string): Promise<void> {
+    const { error } = await supabase
+      .from("project_phases")
+      .delete()
+      .eq("id", phaseId);
+
+    if (error) throw error;
+  },
+
   // Update phase
   async update(
     id: string,
