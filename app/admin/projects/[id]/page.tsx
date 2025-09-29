@@ -696,7 +696,7 @@ export default function ProjectDetails({
                 <CardTitle>Project Documents</CardTitle>
                 <Button size="sm" asChild>
                   <Link
-                    href={`/admin/documents/upload?clientId=${project.client_id}&projectId=${project.id}`}
+                    href={`/admin/documents?clientId=${project.client_id}&projectId=${project.id}`}
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     Upload Documents
@@ -780,7 +780,7 @@ export default function ProjectDetails({
                     </p>
                     <Button asChild>
                       <Link
-                        href={`/admin/documents/upload?clientId=${project.client_id}&projectId=${project.id}`}
+                        href={`/admin/documents?clientId=${project.client_id}&projectId=${project.id}`}
                       >
                         <Upload className="h-4 w-4 mr-2" />
                         Upload First Document
@@ -798,7 +798,7 @@ export default function ProjectDetails({
                 <CardTitle>Project Messages</CardTitle>
                 <Button size="sm" asChild>
                   <Link
-                    href={`/admin/messages/new?clientId=${project.client_id}&projectId=${project.id}`}
+                    href={`/admin/messages?clientId=${project.client_id}&projectId=${project.id}`}
                   >
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Send Message
@@ -854,7 +854,7 @@ export default function ProjectDetails({
                     </p>
                     <Button asChild>
                       <Link
-                        href={`/admin/messages/new?clientId=${project.client_id}&projectId=${project.id}`}
+                        href={`/admin/messages?clientId=${project.client_id}&projectId=${project.id}`}
                       >
                         <MessageSquare className="h-4 w-4 mr-2" />
                         Send First Message
