@@ -24,6 +24,7 @@ export default function ProjectPhasesPage({
     progress,
     togglePhaseCompletion,
     generateDefaultPhases,
+    duplicatePhase,
   } = useProjectPhases(id);
 
   if (loading) {
@@ -45,11 +46,14 @@ export default function ProjectPhasesPage({
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
+
         <ProgressTracker progress={progress} />
+
         <PhaseList
           phases={phases}
           onToggle={togglePhaseCompletion}
           onGenerate={generateDefaultPhases}
+          onDuplicate={duplicatePhase}
           isSaving={isSaving}
         />
       </main>

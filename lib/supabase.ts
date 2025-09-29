@@ -188,11 +188,47 @@ export interface ProjectPhase {
   created_at: string;
   updated_at: string;
   phase_name: string;
-  phase_description?: string;
+  phase_description: string | null;
   phase_order: number;
   is_completed: boolean;
-  completed_date?: string;
+  completed_date: string | null;
+  estimated_duration: string | null;
+  parent_phase_id: string | null; // NEW
+  phase_weight: number; // NEW
+}
+
+// Helper type for nested phase structure
+export interface PhaseWithChildren extends ProjectPhase {
+  children?: ProjectPhase[];
+  progress?: number; // Calculated progress for parent phases
+}
+
+// Template structure for phase creation
+export interface PhaseTemplate {
+  phase_name: string;
+  description?: string;
   estimated_duration?: string;
+  phase_weight: number;
+  sub_tasks?: SubTaskTemplate[];
+}
+
+export interface SubTaskTemplate {
+  phase_name: string;
+  description?: string;
+  estimated_duration?: string;
+  phase_weight: number;
+}
+
+// For creating phases in the database
+export interface CreatePhaseInput {
+  project_id: string;
+  phase_name: string;
+  phase_description?: string | null;
+  estimated_duration?: string | null;
+  phase_order: number;
+  is_completed: boolean;
+  parent_phase_id?: string | null;
+  phase_weight: number;
 }
 
 // Project with progress calculation
@@ -726,6 +762,219 @@ export const phaseService = {
 
     if (error) throw error;
     return data;
+  },
+
+  // ADD THESE METHODS TO YOUR EXISTING phaseService OBJECT
+  // (Keep all your existing methods, just add these new ones)
+
+  // Get all phases with parent-child structure
+  async getByProjectIdHierarchical(
+    projectId: string
+  ): Promise<PhaseWithChildren[]> {
+    const { data, error } = await supabase
+      .from("project_phases")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("phase_order", { ascending: true });
+
+    if (error) throw error;
+
+    const phases = data as ProjectPhase[];
+    const parentPhases = phases.filter((p) => !p.parent_phase_id);
+
+    return parentPhases.map((parent) => {
+      const children = phases.filter((p) => p.parent_phase_id === parent.id);
+      const completedChildren = children.filter((c) => c.is_completed).length;
+      const progress =
+        children.length > 0
+          ? Math.round((completedChildren / children.length) * 100)
+          : 0;
+
+      return {
+        ...parent,
+        children,
+        progress,
+      };
+    });
+  },
+
+  // Create multiple phases with hierarchy
+  async createMultipleHierarchical(
+    phases: CreatePhaseInput[]
+  ): Promise<ProjectPhase[]> {
+    const { data, error } = await supabase
+      .from("project_phases")
+      .insert(phases)
+      .select();
+
+    if (error) throw error;
+    return data as ProjectPhase[];
+  },
+
+  // Toggle parent phase (affects all children)
+  async toggleParentPhase(
+    phaseId: string,
+    isCompleted: boolean
+  ): Promise<ProjectPhase[]> {
+    const { data: children } = await supabase
+      .from("project_phases")
+      .select("id")
+      .eq("parent_phase_id", phaseId);
+
+    const childIds = children?.map((c) => c.id) || [];
+
+    const { error: parentError } = await supabase
+      .from("project_phases")
+      .update({
+        is_completed: isCompleted,
+        completed_date: isCompleted ? new Date().toISOString() : null,
+      })
+      .eq("id", phaseId);
+
+    if (parentError) throw parentError;
+
+    if (childIds.length > 0) {
+      const { error: childError } = await supabase
+        .from("project_phases")
+        .update({
+          is_completed: isCompleted,
+          completed_date: isCompleted ? new Date().toISOString() : null,
+        })
+        .in("id", childIds);
+
+      if (childError) throw childError;
+    }
+
+    const { data, error } = await supabase
+      .from("project_phases")
+      .select("*")
+      .or(`id.eq.${phaseId},parent_phase_id.eq.${phaseId}`);
+
+    if (error) throw error;
+    return data as ProjectPhase[];
+  },
+
+  // Toggle child phase (may affect parent)
+  async toggleChildPhase(
+    phaseId: string,
+    isCompleted: boolean,
+    parentPhaseId: string
+  ): Promise<ProjectPhase[]> {
+    const { error: childError } = await supabase
+      .from("project_phases")
+      .update({
+        is_completed: isCompleted,
+        completed_date: isCompleted ? new Date().toISOString() : null,
+      })
+      .eq("id", phaseId);
+
+    if (childError) throw childError;
+
+    const { data: siblings } = await supabase
+      .from("project_phases")
+      .select("is_completed")
+      .eq("parent_phase_id", parentPhaseId);
+
+    const allCompleted = siblings?.every((s) => s.is_completed) || false;
+
+    if (allCompleted) {
+      const { error: parentError } = await supabase
+        .from("project_phases")
+        .update({
+          is_completed: true,
+          completed_date: new Date().toISOString(),
+        })
+        .eq("id", parentPhaseId);
+
+      if (parentError) throw parentError;
+    } else {
+      const { error: parentError } = await supabase
+        .from("project_phases")
+        .update({
+          is_completed: false,
+          completed_date: null,
+        })
+        .eq("id", parentPhaseId);
+
+      if (parentError) throw parentError;
+    }
+
+    const { data, error } = await supabase
+      .from("project_phases")
+      .select("*")
+      .or(
+        `id.eq.${phaseId},id.eq.${parentPhaseId},parent_phase_id.eq.${parentPhaseId}`
+      );
+
+    if (error) throw error;
+    return data as ProjectPhase[];
+  },
+
+  // Duplicate a parent phase with all its children (for repeating floors)
+  async duplicatePhase(
+    phaseId: string,
+    newPhaseName: string,
+    newOrder: number
+  ): Promise<ProjectPhase[]> {
+    const { data: parent, error: parentError } = await supabase
+      .from("project_phases")
+      .select("*")
+      .eq("id", phaseId)
+      .single();
+
+    if (parentError) throw parentError;
+
+    const { data: children, error: childrenError } = await supabase
+      .from("project_phases")
+      .select("*")
+      .eq("parent_phase_id", phaseId)
+      .order("phase_order");
+
+    if (childrenError) throw childrenError;
+
+    const { data: newParent, error: newParentError } = await supabase
+      .from("project_phases")
+      .insert({
+        project_id: parent.project_id,
+        phase_name: newPhaseName,
+        phase_description: parent.phase_description,
+        estimated_duration: parent.estimated_duration,
+        phase_order: newOrder,
+        phase_weight: parent.phase_weight,
+        is_completed: false,
+        parent_phase_id: null,
+      })
+      .select()
+      .single();
+
+    if (newParentError) throw newParentError;
+
+    if (children && children.length > 0) {
+      const newChildren = children.map((child, index) => ({
+        project_id: child.project_id,
+        phase_name: child.phase_name,
+        phase_description: child.phase_description,
+        estimated_duration: child.estimated_duration,
+        phase_order: newOrder + index + 1,
+        phase_weight: child.phase_weight,
+        is_completed: false,
+        parent_phase_id: newParent.id,
+      }));
+
+      const { error: childrenInsertError } = await supabase
+        .from("project_phases")
+        .insert(newChildren);
+
+      if (childrenInsertError) throw childrenInsertError;
+    }
+
+    const { data: allNew, error: allNewError } = await supabase
+      .from("project_phases")
+      .select("*")
+      .or(`id.eq.${newParent.id},parent_phase_id.eq.${newParent.id}`);
+
+    if (allNewError) throw allNewError;
+    return allNew as ProjectPhase[];
   },
 
   // Mark phase as completed

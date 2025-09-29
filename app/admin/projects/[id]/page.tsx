@@ -112,7 +112,7 @@ export default function ProjectDetails({
 
   const handlePhaseToggle = async (phase: ProjectPhase) => {
     try {
-      let updatedPhase;
+      let updatedPhase: ProjectPhase;
       if (phase.is_completed) {
         updatedPhase = await phaseService.markIncomplete(phase.id);
       } else {

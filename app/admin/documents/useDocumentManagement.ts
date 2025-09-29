@@ -89,7 +89,13 @@ export const useDocumentManagement = () => {
 
   const availableCategories = useMemo(
     () =>
-      Array.from(new Set(documents.map((doc) => doc.category).filter(Boolean))),
+      Array.from(
+        new Set(
+          documents
+            .map((doc) => doc.category)
+            .filter((cat): cat is string => Boolean(cat))
+        )
+      ),
     [documents]
   );
 
