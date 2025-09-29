@@ -1,6 +1,6 @@
 // amart-consult/app/portal/dashboard/page.tsx
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useClientData, useProjectData } from "@/hooks/useClientData";
@@ -25,7 +25,7 @@ import { Loader2, AlertCircle, ArrowLeft } from "lucide-react";
 
 type Tab = "overview" | "timeline" | "photos" | "documents" | "messages";
 
-export default function ClientDashboard() {
+function ClientDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [showSettings, setShowSettings] = useState(false);
   const { signOut } = useClientAuth();
@@ -200,5 +200,22 @@ export default function ClientDashboard() {
         <main className="flex-1 p-8">{renderContent()}</main>
       </div>
     </div>
+  );
+}
+
+export default function ClientDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mb-4" />
+            <p className="text-slate-600">Loading dashboard...</p>
+          </div>
+        </div>
+      }
+    >
+      <ClientDashboard />
+    </Suspense>
   );
 }

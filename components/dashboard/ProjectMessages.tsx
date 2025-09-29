@@ -7,11 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { MessageSquare, Send, Loader2 } from "lucide-react";
 import { formatTimestamp } from "@/lib/dashboardUtils";
 import { messageService } from "@/lib/supabase";
-import type { ClientMessage, Client, User } from "@/lib/supabase";
+import type { ClientMessage, Client, User, Project } from "@/lib/supabase";
 
 type ProjectMessagesProps = {
   messages: ClientMessage[];
   client: Client;
+  project: Project;
   user: User;
   onNewMessage: (newMessages: ClientMessage[]) => void;
 };

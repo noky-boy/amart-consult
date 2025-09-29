@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,7 +18,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [email, setEmail] = useState("");
@@ -161,5 +161,20 @@ export default function ForgotPasswordPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function ForgotPasswordPages() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+          Sending...
+        </div>
+      }
+    >
+      <ForgotPasswordPage />
+    </Suspense>
   );
 }

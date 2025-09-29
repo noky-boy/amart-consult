@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,7 +38,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { clientService, projectService } from "@/lib/supabase";
 import type { Client, Project } from "@/lib/supabase";
 
-export default function AddProject() {
+function AddProject() {
   const [projectData, setProjectData] = useState({
     client_id: "",
     project_title: "",
@@ -512,5 +512,13 @@ export default function AddProject() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function AddProjectPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AddProject />
+    </Suspense>
   );
 }

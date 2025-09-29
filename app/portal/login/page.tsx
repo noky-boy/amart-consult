@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,7 +19,7 @@ import Image from "next/image";
 import { useClientAuth } from "@/hooks/useClientAuth";
 import { useRouter } from "next/navigation";
 
-export default function ClientLoginPage() {
+function ClientLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -455,5 +455,20 @@ export default function ClientLoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ClientLoginPages() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+          Updating...
+        </div>
+      }
+    >
+      <ClientLoginPage />
+    </Suspense>
   );
 }

@@ -1,7 +1,7 @@
 // amart-consult/app/portal/projects/page.tsx
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
 import { useClientData } from "@/hooks/useClientData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +24,7 @@ import { useClientAuth } from "@/hooks/useClientAuth";
 import { useState } from "react";
 import { getFinancialSummary } from "@/lib/supabase";
 
-export default function ClientProjectsPage() {
+function ClientProjectsPage() {
   const [showSettings, setShowSettings] = useState(false);
   const { signOut } = useClientAuth();
 
@@ -230,5 +230,22 @@ export default function ClientProjectsPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function ClientProjectsPages() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mx-auto mb-4" />
+            <p className="text-slate-600">Loading your projects...</p>
+          </div>
+        </div>
+      }
+    >
+      <ClientProjectsPage />
+    </Suspense>
   );
 }
