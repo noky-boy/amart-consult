@@ -56,6 +56,9 @@ import type {
   ProjectWithProgress,
 } from "@/lib/supabase";
 
+import { getPhaseStatus, getStatusColorClasses } from "@/lib/phase-helpers";
+import type { PhaseStatus } from "@/lib/phase-helpers";
+
 type ProjectWithClientAndProgress = ProjectWithProgress & { client: Client };
 
 export default function ProjectDetails({
@@ -632,72 +635,174 @@ export default function ProjectDetails({
               <CardContent>
                 {phases.length > 0 ? (
                   <div className="space-y-3">
-                    {phases.map((phase, index) => (
-                      <div
-                        key={phase.id}
-                        className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 border border-slate-200 rounded-lg"
-                      >
-                        <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              id={`phase-${phase.id}`}
-                              checked={phase.is_completed}
-                              onCheckedChange={() => handlePhaseToggle(phase)}
-                            />
-                            <span className="text-sm font-medium text-slate-600">
-                              Phase {phase.phase_order}
-                            </span>
-                          </div>
-                          <div className="flex-1">
-                            <h4
-                              className={`font-medium ${
-                                phase.is_completed
-                                  ? "line-through text-slate-500"
-                                  : "text-slate-900"
-                              }`}
-                            >
-                              {phase.phase_name}
-                            </h4>
-                            {phase.phase_description && (
-                              <p className="text-sm text-slate-600 mt-1">
-                                {phase.phase_description}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                              {phase.estimated_duration && (
-                                <span>
-                                  Duration: {phase.estimated_duration}
-                                </span>
-                              )}
-                              {phase.completed_date && (
-                                <span>
-                                  Completed:{" "}
-                                  {new Date(
-                                    phase.completed_date
-                                  ).toLocaleDateString()}
-                                </span>
-                              )}
+                    {/* Filter to show only parent phases */}
+                    {phases
+                      .filter((phase) => !phase.parent_phase_id)
+                      .map((parentPhase) => {
+                        // Get children for this parent
+                        const children = phases.filter(
+                          (p) => p.parent_phase_id === parentPhase.id
+                        );
+                        const parentStatus = getPhaseStatus(
+                          parentPhase,
+                          children
+                        );
+                        const hasChildren = children.length > 0;
+
+                        return (
+                          <div
+                            key={parentPhase.id}
+                            className="border border-slate-200 rounded-lg"
+                          >
+                            {/* Parent Phase */}
+                            <div className="p-4 bg-slate-50">
+                              <div className="flex items-start gap-3">
+                                <div className="flex items-center gap-2 mt-1">
+                                  <Checkbox
+                                    id={`phase-${parentPhase.id}`}
+                                    checked={parentPhase.is_completed}
+                                    onCheckedChange={() =>
+                                      handlePhaseToggle(parentPhase)
+                                    }
+                                    disabled={hasChildren} // Disable if has children
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h4
+                                      className={`font-semibold text-base ${
+                                        parentPhase.is_completed
+                                          ? "line-through text-slate-500"
+                                          : "text-slate-900"
+                                      }`}
+                                    >
+                                      {parentPhase.phase_name}
+                                    </h4>
+                                    <Badge
+                                      variant="outline"
+                                      className={getStatusColorClasses(
+                                        parentStatus
+                                      )}
+                                    >
+                                      {parentStatus}
+                                    </Badge>
+                                  </div>
+                                  {parentPhase.phase_description && (
+                                    <p className="text-sm text-slate-600 mb-2">
+                                      {parentPhase.phase_description}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center gap-4 text-xs text-slate-500">
+                                    {parentPhase.estimated_duration && (
+                                      <span className="flex items-center gap-1">
+                                        <Clock className="h-3 w-3" />
+                                        {parentPhase.estimated_duration}
+                                      </span>
+                                    )}
+                                    {hasChildren && (
+                                      <span className="flex items-center gap-1">
+                                        <Target className="h-3 w-3" />
+                                        {
+                                          children.filter((c) => c.is_completed)
+                                            .length
+                                        }{" "}
+                                        / {children.length} subtasks completed
+                                      </span>
+                                    )}
+                                    {parentPhase.completed_date && (
+                                      <span>
+                                        Completed:{" "}
+                                        {new Date(
+                                          parentPhase.completed_date
+                                        ).toLocaleDateString()}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
                             </div>
+
+                            {/* Child Phases */}
+                            {hasChildren && (
+                              <div className="border-t border-slate-200">
+                                {children.map((childPhase, index) => {
+                                  const childStatus = getPhaseStatus(
+                                    childPhase,
+                                    undefined,
+                                    parentStatus
+                                  );
+                                  const isLast = index === children.length - 1;
+
+                                  return (
+                                    <div
+                                      key={childPhase.id}
+                                      className={`p-3 pl-8 bg-white ${
+                                        !isLast
+                                          ? "border-b border-slate-100"
+                                          : ""
+                                      }`}
+                                    >
+                                      <div className="flex items-start gap-3">
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <Checkbox
+                                            id={`phase-${childPhase.id}`}
+                                            checked={childPhase.is_completed}
+                                            onCheckedChange={() =>
+                                              handlePhaseToggle(childPhase)
+                                            }
+                                          />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 mb-1">
+                                            <h5
+                                              className={`font-medium text-sm ${
+                                                childPhase.is_completed
+                                                  ? "line-through text-slate-500"
+                                                  : "text-slate-900"
+                                              }`}
+                                            >
+                                              {childPhase.phase_name}
+                                            </h5>
+                                            <Badge
+                                              variant="outline"
+                                              className={`text-xs ${getStatusColorClasses(
+                                                childStatus
+                                              )}`}
+                                            >
+                                              {childStatus}
+                                            </Badge>
+                                          </div>
+                                          {childPhase.phase_description && (
+                                            <p className="text-xs text-slate-600 mb-1">
+                                              {childPhase.phase_description}
+                                            </p>
+                                          )}
+                                          <div className="flex items-center gap-3 text-xs text-slate-500">
+                                            {childPhase.estimated_duration && (
+                                              <span className="flex items-center gap-1">
+                                                <Clock className="h-3 w-3" />
+                                                {childPhase.estimated_duration}
+                                              </span>
+                                            )}
+                                            {childPhase.completed_date && (
+                                              <span>
+                                                Completed:{" "}
+                                                {new Date(
+                                                  childPhase.completed_date
+                                                ).toLocaleDateString()}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {phase.is_completed ? (
-                            <Badge
-                              variant="default"
-                              className="bg-green-100 text-green-800"
-                            >
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Complete
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline">
-                              <Clock className="h-3 w-3 mr-1" />
-                              Pending
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                        );
+                      })}
                   </div>
                 ) : (
                   <div className="text-center py-8 sm:py-12">
