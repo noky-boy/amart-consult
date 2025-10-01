@@ -112,6 +112,7 @@ export const metadata: Metadata = {
     // Add Google Search Console verification here once you set it up
     // google: 'your-google-verification-code',
   },
+    generator: 'v0.app'
 };
 
 export default function RootLayout({
