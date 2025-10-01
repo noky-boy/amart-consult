@@ -22,6 +22,10 @@ import {
   searchQuery,
   sitemapQuery,
   servicesListQuery,
+  materialBySlugQuery,
+  materialsQuery,
+  materialsByCategoryQuery,
+  featuredMaterialsQuery,
 } from "./queries";
 import type {
   Service,
@@ -30,6 +34,7 @@ import type {
   BlogPost,
   Testimonial,
   FAQ,
+  Material,
 } from "./types";
 
 // Cache configuration
@@ -40,6 +45,7 @@ const CACHE_TAGS = {
   blog: "blog",
   testimonials: "testimonials",
   faqs: "faqs",
+  materials: "materials",
 } as const;
 
 // Service API functions
@@ -203,6 +209,43 @@ export async function getFeaturedFAQs(): Promise<FAQ[]> {
     featuredFaqsQuery,
     {},
     { next: { tags: [CACHE_TAGS.faqs] } }
+  );
+}
+
+// Material API functions
+export async function getMaterials(): Promise<Material[]> {
+  return client.fetch(
+    materialsQuery,
+    {},
+    { next: { tags: [CACHE_TAGS.materials] } }
+  );
+}
+
+export async function getMaterialsByCategory(
+  category: string
+): Promise<Material[]> {
+  return client.fetch(
+    materialsByCategoryQuery,
+    { category },
+    { next: { tags: [CACHE_TAGS.materials] } }
+  );
+}
+
+export async function getFeaturedMaterials(): Promise<Material[]> {
+  return client.fetch(
+    featuredMaterialsQuery,
+    {},
+    { next: { tags: [CACHE_TAGS.materials] } }
+  );
+}
+
+export async function getMaterialBySlug(
+  slug: string
+): Promise<Material | null> {
+  return client.fetch(
+    materialBySlugQuery,
+    { slug },
+    { next: { tags: [CACHE_TAGS.materials] } }
   );
 }
 

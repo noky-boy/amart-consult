@@ -101,3 +101,34 @@ export interface FAQ {
   order: number;
   featured: boolean;
 }
+
+export interface Material {
+  _id: string;
+  name: string;
+  slug: {
+    current: string;
+  };
+  category:
+    | "structural"
+    | "finishing"
+    | "fixtures"
+    | "roofing"
+    | "electrical-plumbing";
+  description: string;
+  image: string;
+  imageAlt?: string;
+  applications: string[];
+  priceRange: {
+    min?: number;
+    max?: number;
+    unit: string;
+    currency: "GHS" | "USD";
+    note?: string;
+  };
+  specifications?: Array<{
+    label: string;
+    value: string;
+  }>;
+  featured: boolean;
+  order?: number;
+}

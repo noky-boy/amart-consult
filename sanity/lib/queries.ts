@@ -430,3 +430,69 @@ export const sitemapQuery = groq`
   }
 }
 `;
+
+// Material Queries
+export const materialsQuery = groq`
+  *[_type == "material"] | order(order asc, name asc) {
+    _id,
+    name,
+    slug,
+    category,
+    description,
+    "image": image.asset->url,
+    "imageAlt": image.alt,
+    applications,
+    priceRange,
+    specifications,
+    featured,
+    order
+  }
+`;
+
+export const materialsByCategoryQuery = groq`
+  *[_type == "material" && category == $category] | order(order asc, name asc) {
+    _id,
+    name,
+    slug,
+    category,
+    description,
+    "image": image.asset->url,
+    "imageAlt": image.alt,
+    applications,
+    priceRange,
+    specifications,
+    featured,
+    order
+  }
+`;
+
+export const featuredMaterialsQuery = groq`
+  *[_type == "material" && featured == true] | order(order asc, name asc) [0...6] {
+    _id,
+    name,
+    slug,
+    category,
+    description,
+    "image": image.asset->url,
+    "imageAlt": image.alt,
+    applications,
+    priceRange,
+    featured
+  }
+`;
+
+export const materialBySlugQuery = groq`
+  *[_type == "material" && slug.current == $slug][0] {
+    _id,
+    name,
+    slug,
+    category,
+    description,
+    "image": image.asset->url,
+    "imageAlt": image.alt,
+    applications,
+    priceRange,
+    specifications,
+    featured
+  }
+`;
