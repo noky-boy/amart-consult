@@ -55,6 +55,7 @@ export interface Portfolio {
 }
 
 export interface BlogPost {
+  _updatedAt: string;
   _id: string;
   title: string;
   slug: { current: string };

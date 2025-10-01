@@ -23,6 +23,63 @@ import { client } from "@/sanity/lib/client";
 import { blogPostBySlugQuery } from "@/sanity/lib/queries";
 import type { BlogPost } from "@/sanity/lib/types";
 
+import { Metadata } from "next";
+
+type Props = {
+  params: Promise<{ slug: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const unwrappedParams = await params;
+  const post = await getBlogPost(unwrappedParams.slug);
+
+  if (!post) {
+    return {
+      title: "Post Not Found",
+    };
+  }
+
+  const publishedTime = post.publishedAt
+    ? new Date(post.publishedAt).toISOString()
+    : undefined;
+  const modifiedTime = post._updatedAt
+    ? new Date(post._updatedAt).toISOString()
+    : undefined;
+
+  return {
+    title: `${post.title} | Amart Consult Blog`,
+    description: post.seo?.metaDescription || post.excerpt,
+    keywords: post.tags || [],
+    authors: post.author?.name ? [{ name: post.author.name }] : [],
+    openGraph: {
+      title: post.title,
+      description: post.seo?.metaDescription || post.excerpt,
+      type: "article",
+      publishedTime,
+      modifiedTime,
+      authors: post.author?.name ? [post.author.name] : [],
+      url: `https://amart-consult.vercel.app/blog/${unwrappedParams.slug}`,
+      images: post.featuredImage?.url
+        ? [
+            {
+              url: post.featuredImage.url,
+              width: 1200,
+              height: 630,
+              alt: post.featuredImage.alt || post.title,
+            },
+          ]
+        : [],
+      tags: post.tags,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.seo?.metaDescription || post.excerpt,
+      images: post.featuredImage?.url ? [post.featuredImage.url] : [],
+    },
+  };
+}
+
 // Get blog post by slug
 async function getBlogPost(slug: string): Promise<BlogPost | null> {
   return await client.fetch(blogPostBySlugQuery, { slug });
@@ -66,20 +123,44 @@ export default function BlogPostPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  // Unwrap the params Promise using React.use()
   const unwrappedParams = use(params);
-
-  // Fetch blog post data
   const post = use(getBlogPost(unwrappedParams.slug));
 
   if (!post) {
     notFound();
   }
 
-  // Fetch related posts
   const relatedPosts = use(getRelatedPosts(post));
 
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  // Add these schemas
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt,
+    image: post.featuredImage?.url || "",
+    datePublished: post.publishedAt,
+    dateModified: post._updatedAt || post.publishedAt,
+    author: {
+      "@type": "Person",
+      name: post.author?.name || "Amart Consult",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Amart Consult",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://amart-consult.vercel.app/images/amart-logo.png",
+      },
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://amart-consult.vercel.app/blog/${unwrappedParams.slug}`,
+    },
+    keywords: post.tags?.join(", ") || "",
+  };
+
+  const shareUrl = `https://amart-consult.vercel.app/blog/${unwrappedParams.slug}`;
   const shareTitle = post.title;
 
   // Calculate read time (rough estimate based on content)
@@ -102,262 +183,271 @@ export default function BlogPostPage({
   const readTime = calculateReadTime(post.content);
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="relative h-96 md:h-[500px] overflow-hidden">
-        {post.featuredImage?.url && (
-          <Image
-            src={post.featuredImage.url}
-            alt={post.featuredImage.alt || post.title}
-            fill
-            className="object-cover"
-            priority
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-4">
-              <span className="bg-terracotta text-white px-4 py-2 rounded-full text-sm font-medium">
-                {post.category
-                  ? post.category.charAt(0).toUpperCase() +
-                    post.category.slice(1).replace("-", " ")
-                  : "Article"}
-              </span>
-            </div>
-            <h1 className="text-3xl md:text-5xl font-serif font-bold text-white mb-4 leading-tight">
-              {post.title}
-            </h1>
-            <div className="flex items-center text-white/90 text-sm md:text-base">
-              <User className="h-5 w-5 mr-2" />
-              <span className="mr-6">
-                {post.author?.name || "Amart Consult Team"}
-              </span>
-              <Calendar className="h-5 w-5 mr-2" />
-              <span className="mr-6">
-                {new Date(post.publishedAt).toLocaleDateString()}
-              </span>
-              <Clock className="h-5 w-5 mr-2" />
-              <span>{readTime}</span>
+    <>
+      {/* Add structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <div className="min-h-screen bg-white">
+        {/* Hero Section */}
+        <section className="relative h-96 md:h-[500px] overflow-hidden">
+          {post.featuredImage?.url && (
+            <Image
+              src={post.featuredImage.url}
+              alt={post.featuredImage.alt || post.title}
+              fill
+              className="object-cover"
+              priority
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+            <div className="max-w-4xl mx-auto">
+              <div className="mb-4">
+                <span className="bg-terracotta text-white px-4 py-2 rounded-full text-sm font-medium">
+                  {post.category
+                    ? post.category.charAt(0).toUpperCase() +
+                      post.category.slice(1).replace("-", " ")
+                    : "Article"}
+                </span>
+              </div>
+              <h1 className="text-3xl md:text-5xl font-serif font-bold text-white mb-4 leading-tight">
+                {post.title}
+              </h1>
+              <div className="flex items-center text-white/90 text-sm md:text-base">
+                <User className="h-5 w-5 mr-2" />
+                <span className="mr-6">
+                  {post.author?.name || "Amart Consult Team"}
+                </span>
+                <Calendar className="h-5 w-5 mr-2" />
+                <span className="mr-6">
+                  {new Date(post.publishedAt).toLocaleDateString()}
+                </span>
+                <Clock className="h-5 w-5 mr-2" />
+                <span>{readTime}</span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex flex-col lg:flex-row gap-12">
-          {/* Main Content */}
-          <article className="lg:w-2/3">
-            {/* Back Button */}
-            <Link
-              href="/blog"
-              className="inline-flex items-center text-indigo-deep hover:text-terracotta mb-8 transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Blog
-            </Link>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex flex-col lg:flex-row gap-12">
+            {/* Main Content */}
+            <article className="lg:w-2/3">
+              {/* Back Button */}
+              <Link
+                href="/blog"
+                className="inline-flex items-center text-indigo-deep hover:text-terracotta mb-8 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Blog
+              </Link>
 
-            {/* Article Content */}
-            <div className="mb-8">
-              <p className="text-xl text-gray-600 leading-relaxed mb-8">
-                {post.excerpt}
-              </p>
-              <CustomPortableText value={post.content} />
-            </div>
-
-            {/* Tags */}
-            {post.tags && post.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-8 pt-8 border-t border-gray-200">
-                {post.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Social Actions */}
-            <div className="flex items-center justify-between mt-8 pt-8 border-t border-gray-200">
-              <div className="flex items-center gap-4">
-                <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
-                  <Heart className="h-5 w-5" />
-                  <span>Like</span>
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
-                  <MessageCircle className="h-5 w-5" />
-                  <span>Comments</span>
-                </button>
+              {/* Article Content */}
+              <div className="mb-8">
+                <p className="text-xl text-gray-600 leading-relaxed mb-8">
+                  {post.excerpt}
+                </p>
+                <CustomPortableText value={post.content} />
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-gray-600 mr-2">Share:</span>
-                <a
-                  href={`https://facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-                    shareUrl
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                >
-                  <Facebook className="h-4 w-4" />
-                </a>
-                <a
-                  href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(
-                    shareUrl
-                  )}&text=${encodeURIComponent(shareTitle)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-full bg-sky-500 text-white hover:bg-sky-600 transition-colors"
-                >
-                  <Twitter className="h-4 w-4" />
-                </a>
-                <a
-                  href={`https://linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                    shareUrl
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-full bg-blue-700 text-white hover:bg-blue-800 transition-colors"
-                >
-                  <Linkedin className="h-4 w-4" />
-                </a>
-                <a
-                  href={`mailto:?subject=${encodeURIComponent(
-                    shareTitle
-                  )}&body=${encodeURIComponent(shareUrl)}`}
-                  className="p-2 rounded-full bg-gray-600 text-white hover:bg-gray-700 transition-colors"
-                >
-                  <Mail className="h-4 w-4" />
-                </a>
-              </div>
-            </div>
-
-            {/* Comments Section */}
-            <div className="mt-8 pt-8 border-t border-gray-200">
-              <h3 className="text-xl font-serif font-bold text-gray-900 mb-6">
-                Leave a Comment
-              </h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input placeholder="Your Name" />
-                  <Input type="email" placeholder="Your Email" />
+              {/* Tags */}
+              {post.tags && post.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-8 pt-8 border-t border-gray-200">
+                  {post.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
                 </div>
-                <Textarea placeholder="Your Comment" rows={4} />
-                <Button className="bg-indigo-deep hover:bg-indigo-deep/90">
-                  Post Comment
-                </Button>
-              </div>
-            </div>
-          </article>
-
-          {/* Sidebar */}
-          <aside className="lg:w-1/3">
-            <div className="sticky top-8 space-y-8">
-              {/* Author Bio */}
-              {post.author && (
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4 mb-4">
-                      {post.author.image ? (
-                        <Image
-                          src={post.author.image}
-                          alt={post.author.name}
-                          width={64}
-                          height={64}
-                          className="rounded-full"
-                        />
-                      ) : (
-                        <div className="w-16 h-16 bg-indigo-deep rounded-full flex items-center justify-center text-white font-bold text-xl">
-                          {post.author.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </div>
-                      )}
-                      <div>
-                        <h3 className="font-serif font-bold text-gray-900">
-                          {post.author.name}
-                        </h3>
-                        <p className="text-sm text-gray-600">Author</p>
-                      </div>
-                    </div>
-                    {post.author.bio && (
-                      <p className="text-gray-600 text-sm">{post.author.bio}</p>
-                    )}
-                  </CardContent>
-                </Card>
               )}
 
-              {/* Related Posts */}
-              {relatedPosts.length > 0 && (
+              {/* Social Actions */}
+              <div className="flex items-center justify-between mt-8 pt-8 border-t border-gray-200">
+                <div className="flex items-center gap-4">
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
+                    <Heart className="h-5 w-5" />
+                    <span>Like</span>
+                  </button>
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
+                    <MessageCircle className="h-5 w-5" />
+                    <span>Comments</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600 mr-2">Share:</span>
+                  <a
+                    href={`https://facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+                      shareUrl
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  >
+                    <Facebook className="h-4 w-4" />
+                  </a>
+                  <a
+                    href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(
+                      shareUrl
+                    )}&text=${encodeURIComponent(shareTitle)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-full bg-sky-500 text-white hover:bg-sky-600 transition-colors"
+                  >
+                    <Twitter className="h-4 w-4" />
+                  </a>
+                  <a
+                    href={`https://linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+                      shareUrl
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-full bg-blue-700 text-white hover:bg-blue-800 transition-colors"
+                  >
+                    <Linkedin className="h-4 w-4" />
+                  </a>
+                  <a
+                    href={`mailto:?subject=${encodeURIComponent(
+                      shareTitle
+                    )}&body=${encodeURIComponent(shareUrl)}`}
+                    className="p-2 rounded-full bg-gray-600 text-white hover:bg-gray-700 transition-colors"
+                  >
+                    <Mail className="h-4 w-4" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Comments Section */}
+              <div className="mt-8 pt-8 border-t border-gray-200">
+                <h3 className="text-xl font-serif font-bold text-gray-900 mb-6">
+                  Leave a Comment
+                </h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input placeholder="Your Name" />
+                    <Input type="email" placeholder="Your Email" />
+                  </div>
+                  <Textarea placeholder="Your Comment" rows={4} />
+                  <Button className="bg-indigo-deep hover:bg-indigo-deep/90">
+                    Post Comment
+                  </Button>
+                </div>
+              </div>
+            </article>
+
+            {/* Sidebar */}
+            <aside className="lg:w-1/3">
+              <div className="sticky top-8 space-y-8">
+                {/* Author Bio */}
+                {post.author && (
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        {post.author.image ? (
+                          <Image
+                            src={post.author.image}
+                            alt={post.author.name}
+                            width={64}
+                            height={64}
+                            className="rounded-full"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 bg-indigo-deep rounded-full flex items-center justify-center text-white font-bold text-xl">
+                            {post.author.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </div>
+                        )}
+                        <div>
+                          <h3 className="font-serif font-bold text-gray-900">
+                            {post.author.name}
+                          </h3>
+                          <p className="text-sm text-gray-600">Author</p>
+                        </div>
+                      </div>
+                      {post.author.bio && (
+                        <p className="text-gray-600 text-sm">
+                          {post.author.bio}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Related Posts */}
+                {relatedPosts.length > 0 && (
+                  <Card>
+                    <CardContent className="p-6">
+                      <h3 className="text-xl font-serif font-bold text-gray-900 mb-4">
+                        Related Articles
+                      </h3>
+                      <div className="space-y-4">
+                        {relatedPosts.map((relatedPost) => (
+                          <Link
+                            key={relatedPost._id}
+                            href={`/blog/${relatedPost.slug.current}`}
+                            className="block group"
+                          >
+                            <div className="flex gap-3">
+                              {relatedPost.featuredImage?.url && (
+                                <Image
+                                  src={relatedPost.featuredImage.url}
+                                  alt={
+                                    relatedPost.featuredImage.alt ||
+                                    relatedPost.title
+                                  }
+                                  width={80}
+                                  height={60}
+                                  className="w-20 h-15 object-cover rounded flex-shrink-0"
+                                />
+                              )}
+                              <div>
+                                <h4 className="font-medium text-gray-900 group-hover:text-indigo-deep transition-colors line-clamp-2 text-sm">
+                                  {relatedPost.title}
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {new Date(
+                                    relatedPost.publishedAt
+                                  ).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Newsletter Signup */}
                 <Card>
                   <CardContent className="p-6">
                     <h3 className="text-xl font-serif font-bold text-gray-900 mb-4">
-                      Related Articles
+                      Stay Updated
                     </h3>
-                    <div className="space-y-4">
-                      {relatedPosts.map((relatedPost) => (
-                        <Link
-                          key={relatedPost._id}
-                          href={`/blog/${relatedPost.slug.current}`}
-                          className="block group"
-                        >
-                          <div className="flex gap-3">
-                            {relatedPost.featuredImage?.url && (
-                              <Image
-                                src={relatedPost.featuredImage.url}
-                                alt={
-                                  relatedPost.featuredImage.alt ||
-                                  relatedPost.title
-                                }
-                                width={80}
-                                height={60}
-                                className="w-20 h-15 object-cover rounded flex-shrink-0"
-                              />
-                            )}
-                            <div>
-                              <h4 className="font-medium text-gray-900 group-hover:text-indigo-deep transition-colors line-clamp-2 text-sm">
-                                {relatedPost.title}
-                              </h4>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {new Date(
-                                  relatedPost.publishedAt
-                                ).toLocaleDateString()}
-                              </p>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
+                    <p className="text-gray-600 mb-4 text-sm">
+                      Get the latest architectural insights delivered to your
+                      inbox.
+                    </p>
+                    <div className="space-y-3">
+                      <Input type="email" placeholder="Your email address" />
+                      <Button className="w-full bg-indigo-deep hover:bg-indigo-deep/90">
+                        Subscribe
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
-              )}
-
-              {/* Newsletter Signup */}
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-serif font-bold text-gray-900 mb-4">
-                    Stay Updated
-                  </h3>
-                  <p className="text-gray-600 mb-4 text-sm">
-                    Get the latest architectural insights delivered to your
-                    inbox.
-                  </p>
-                  <div className="space-y-3">
-                    <Input type="email" placeholder="Your email address" />
-                    <Button className="w-full bg-indigo-deep hover:bg-indigo-deep/90">
-                      Subscribe
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </aside>
+              </div>
+            </aside>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { client } from "@/sanity/lib/client";
 import ProjectPageClient from "./project-client";
@@ -14,7 +15,7 @@ interface ProjectData {
   projectValue?: number;
   currency?: string;
   images: Array<{
-    asset: { _ref: string };
+    asset: { _ref: string; url?: string };
     alt?: string;
     caption?: string;
   }>;
@@ -23,14 +24,15 @@ interface ProjectData {
     _id: string;
     title: string;
   }>;
-  content?: any; // PortableText content
+  content?: any;
   seo?: {
     metaTitle?: string;
     metaDescription?: string;
   };
+  _updatedAt?: string;
 }
 
-// Fetch individual project from Sanity
+// Update the query to include image URLs
 async function getProject(slug: string): Promise<ProjectData | null> {
   try {
     const project = await client.fetch(
@@ -47,7 +49,10 @@ async function getProject(slug: string): Promise<ProjectData | null> {
         projectValue,
         currency,
         images[] {
-          asset,
+          asset-> {
+            _ref,
+            url
+          },
           alt,
           caption
         },
@@ -57,7 +62,8 @@ async function getProject(slug: string): Promise<ProjectData | null> {
           title
         },
         content,
-        seo
+        seo,
+        _updatedAt
       }
     `,
       { slug }
@@ -70,7 +76,6 @@ async function getProject(slug: string): Promise<ProjectData | null> {
   }
 }
 
-// Fetch related projects (same category, different project)
 async function getRelatedProjects(
   category: string,
   currentId: string
@@ -86,7 +91,10 @@ async function getRelatedProjects(
         category,
         completionDate,
         images[0] {
-          asset,
+          asset-> {
+            _ref,
+            url
+          },
           alt
         }
       }
@@ -101,11 +109,60 @@ async function getRelatedProjects(
   }
 }
 
-export default async function ProjectPage({
-  params,
-}: {
+type Props = {
   params: { slug: string };
-}) {
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const project = await getProject(params.slug);
+
+  if (!project) {
+    return {
+      title: "Project Not Found",
+    };
+  }
+
+  const mainImage = project.images?.[0]?.asset?.url;
+
+  return {
+    title: `${project.title} - Portfolio | Amart Consult`,
+    description:
+      project.seo?.metaDescription ||
+      project.description ||
+      `View ${project.title}, a ${project.category} project by Amart Consult in ${project.location}`,
+    keywords: [
+      project.category,
+      project.location || "",
+      "architectural project Ghana",
+      "construction project",
+      ...(project.services?.map((s) => s.title) || []),
+    ],
+    openGraph: {
+      title: project.title,
+      description: project.seo?.metaDescription || project.description,
+      type: "website",
+      url: `https://amart-consult.vercel.app/portfolio/${params.slug}`,
+      images: mainImage
+        ? [
+            {
+              url: mainImage,
+              width: 1200,
+              height: 630,
+              alt: project.images?.[0]?.alt || project.title,
+            },
+          ]
+        : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: project.title,
+      description: project.seo?.metaDescription || project.description,
+      images: mainImage ? [mainImage] : [],
+    },
+  };
+}
+
+export default async function ProjectPage({ params }: Props) {
   const project = await getProject(params.slug);
 
   if (!project) {
@@ -117,7 +174,40 @@ export default async function ProjectPage({
     project._id
   );
 
+  // Structured data
+  const projectSchema = {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    name: project.title,
+    description: project.description,
+    image:
+      project.images?.map((img: any) => img.asset?.url).filter(Boolean) || [],
+    creator: {
+      "@type": "Organization",
+      name: "Amart Consult",
+    },
+    dateCreated: project.completionDate,
+    locationCreated: project.location
+      ? {
+          "@type": "Place",
+          name: project.location,
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: project.location,
+            addressCountry: "GH",
+          },
+        }
+      : undefined,
+    category: project.category,
+  };
+
   return (
-    <ProjectPageClient project={project} relatedProjects={relatedProjects} />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(projectSchema) }}
+      />
+      <ProjectPageClient project={project} relatedProjects={relatedProjects} />
+    </>
   );
 }

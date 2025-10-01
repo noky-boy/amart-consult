@@ -1,0 +1,13 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow admin and portal areas
+User-agent: *
+Disallow: /admin/
+Disallow: /portal/
+Disallow: /api/
+Disallow: /studio/
+
+# Sitemap location
+Sitemap: https://amart-consult.vercel.app/sitemap.xml

@@ -39,14 +39,78 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Amart Consult - Transform Your Vision Into Enduring Structures",
+  metadataBase: new URL("https://amart-consult.vercel.app"),
+  title: {
+    default:
+      "Amart Consult - Premier Architectural & Construction Services in Ghana",
+    template: "%s | Amart Consult",
+  },
   description:
-    "End-to-end Design-to-Build architectural services in Ghana. 50+ Projects Completed, 8+ Years Experience, 98% Client Satisfaction.",
-  generator: "v0.dev",
+    "Leading architectural design and construction management firm in Ghana. 50+ projects completed, 8+ years experience. Expert design-to-build services, BOQ preparation, and project consultation.",
+  keywords: [
+    "architecture Ghana",
+    "construction management Ghana",
+    "architectural design",
+    "building construction",
+    "bill of quantities",
+    "project consultation Ghana",
+    "design and build Ghana",
+    "Amart Consult",
+    "construction services Accra",
+  ],
+  authors: [{ name: "Amart Consult" }],
+  creator: "Amart Consult",
+  publisher: "Amart Consult",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_GH",
+    url: "https://amart-consult.vercel.app",
+    siteName: "Amart Consult",
+    title:
+      "Amart Consult - Premier Architectural & Construction Services in Ghana",
+    description:
+      "Leading architectural design and construction management firm in Ghana. 50+ projects completed, 8+ years experience.",
+    images: [
+      {
+        url: "/images/amart-logo.png", // Update this to your actual OG image
+        width: 1200,
+        height: 630,
+        alt: "Amart Consult - Architectural Services",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title:
+      "Amart Consult - Premier Architectural & Construction Services in Ghana",
+    description:
+      "Leading architectural design and construction management firm in Ghana. 50+ projects completed, 8+ years experience.",
+    images: ["/images/amart-logo.png"], // Update this to your actual Twitter card image
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
     apple: "/favicon.ico",
+  },
+  verification: {
+    // Add Google Search Console verification here once you set it up
+    // google: 'your-google-verification-code',
   },
 };
 
