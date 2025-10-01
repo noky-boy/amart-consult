@@ -174,13 +174,13 @@ export default function ProjectDetails({
       <div className="min-h-screen bg-slate-50">
         <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
           <div className="px-6 py-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
               <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
               <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
             </div>
           </div>
         </header>
-        <div className="max-w-6xl mx-auto p-6">
+        <div className="max-w-6xl mx-auto p-4 sm:p-6">
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
               <div
@@ -200,7 +200,7 @@ export default function ProjectDetails({
       <div className="min-h-screen bg-slate-50">
         <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
           <div className="px-6 py-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
               <Link href="/admin/projects">
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
@@ -213,15 +213,15 @@ export default function ProjectDetails({
                 alt="Amart Consult"
                 width={120}
                 height={40}
-                className="h-8 w-auto"
+                className="h-6 sm:h-8 w-auto hidden sm:block"
               />
-              <h1 className="text-xl font-semibold text-slate-900">
+              <h1 className="text-base sm:text-xl font-semibold text-slate-900 truncate">
                 Project Details
               </h1>
             </div>
           </div>
         </header>
-        <div className="max-w-6xl mx-auto p-6">
+        <div className="max-w-6xl mx-auto p-4 sm:p-6">
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
             {error || "Project not found"}
           </div>
@@ -236,9 +236,9 @@ export default function ProjectDetails({
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
               <Link href="/admin/projects">
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
@@ -251,30 +251,34 @@ export default function ProjectDetails({
                 alt="Amart Consult"
                 width={120}
                 height={40}
-                className="h-8 w-auto"
+                className="h-6 sm:h-8 w-auto hidden sm:block"
               />
-              <h1 className="text-xl font-semibold text-slate-900">
+              <h1 className="text-base sm:text-xl font-semibold text-slate-900 truncate">
                 Project Details
               </h1>
             </div>
-            <Button asChild className="bg-indigo-600 hover:bg-indigo-700">
+            <Button
+              asChild
+              className="bg-indigo-600 hover:bg-indigo-700 w-full sm:w-auto text-sm"
+            >
               <Link href={`/admin/projects/${id}/edit`}>
                 <Edit className="h-4 w-4 mr-2" />
-                Edit Project
+                <span className="hidden sm:inline">Edit Project</span>
+                <span className="sm:hidden">Edit</span>
               </Link>
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6">
         {/* Project Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
           <Card className="lg:col-span-2 border-0 shadow-sm">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-2xl">
+                  <CardTitle className="text-xl sm:text-2xl truncate">
                     {project.project_title}
                   </CardTitle>
                   <CardDescription className="text-base mt-1">
@@ -309,25 +313,25 @@ export default function ProjectDetails({
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
                   <Building2 className="h-4 w-4 text-slate-400" />
                   <span className="text-slate-900 capitalize">
                     {project.project_type}
                   </span>
                 </div>
                 {project.timeline && (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
                     <Clock className="h-4 w-4 text-slate-400" />
                     <span className="text-slate-900">{project.timeline}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
                   <Calendar className="h-4 w-4 text-slate-400" />
                   <span className="text-sm text-slate-900">
                     Created {new Date(project.created_at).toLocaleDateString()}
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
                   <Target className="h-4 w-4 text-slate-400" />
                   <span className="text-sm text-slate-900">
                     {project.progress_percentage || 0}% Complete
@@ -488,14 +492,16 @@ export default function ProjectDetails({
                 <CardTitle>Client Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
                   <Mail className="h-4 w-4 text-slate-400" />
-                  <span className="text-slate-900">{project.client.email}</span>
+                  <span className="text-xs sm:text-sm text-slate-900 truncate">
+                    {project.client.email}
+                  </span>
                 </div>
                 {project.client.phone && (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
                     <Phone className="h-4 w-4 text-slate-400" />
-                    <span className="text-slate-900">
+                    <span className="text-xs sm:text-sm text-slate-900 truncate">
                       {project.client.phone}
                     </span>
                   </div>
@@ -503,7 +509,7 @@ export default function ProjectDetails({
                 {project.client.address && (
                   <div className="flex items-start gap-3">
                     <MapPin className="h-4 w-4 text-slate-400 mt-1" />
-                    <span className="text-slate-900 text-sm">
+                    <span className="text-xs sm:text-sm text-slate-900 truncate">
                       {project.client.address}
                     </span>
                   </div>
@@ -577,15 +583,39 @@ export default function ProjectDetails({
 
         {/* Detailed Tabs */}
         <Tabs defaultValue="phases" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="phases">Phases ({phases.length})</TabsTrigger>
-            <TabsTrigger value="documents">
-              Documents ({documents.length})
+          <TabsList className="flex sm:grid w-full sm:grid-cols-4 overflow-x-auto">
+            <TabsTrigger
+              className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+              value="phases"
+            >
+              <span className="hidden sm:inline">Phases ({phases.length})</span>
+              <span className="sm:hidden">Phases</span>
             </TabsTrigger>
-            <TabsTrigger value="messages">
-              Messages ({messages.length})
+            <TabsTrigger
+              className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+              value="documents"
+            >
+              <span className="hidden sm:inline">
+                Documents ({documents.length})
+              </span>
+              <span className="sm:hidden">Documents</span>
             </TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger
+              className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+              value="messages"
+            >
+              <span className="hidden sm:inline">
+                Messages ({messages.length})
+              </span>
+              <span className="sm:hidden">Messages</span>
+            </TabsTrigger>
+            <TabsTrigger
+              className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+              value="activity"
+            >
+              <span className="hidden sm:inline">Activity</span>
+              <span className="sm:hidden">Activity</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="phases" className="space-y-6">
@@ -605,9 +635,9 @@ export default function ProjectDetails({
                     {phases.map((phase, index) => (
                       <div
                         key={phase.id}
-                        className="flex items-center gap-4 p-4 border border-slate-200 rounded-lg"
+                        className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 border border-slate-200 rounded-lg"
                       >
-                        <div className="flex items-center gap-3 flex-1">
+                        <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <Checkbox
                               id={`phase-${phase.id}`}
@@ -670,7 +700,7 @@ export default function ProjectDetails({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12">
+                  <div className="text-center py-8 sm:py-12">
                     <Target className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-slate-900 mb-2">
                       No phases defined
@@ -709,12 +739,12 @@ export default function ProjectDetails({
                     {documents.map((doc) => (
                       <div
                         key={doc.id}
-                        className="flex items-center justify-between p-4 border border-slate-200 rounded-lg"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border border-slate-200 rounded-lg gap-3"
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
                           {getFileIcon(doc.file_type)}
                           <div>
-                            <h4 className="font-medium text-slate-900">
+                            <h4 className="text-sm sm:text-base font-medium text-slate-900 truncate">
                               {doc.title}
                             </h4>
                             {doc.description && (
@@ -735,7 +765,7 @@ export default function ProjectDetails({
                             </div>
                           </div>
                         </div>
-                        <div className="flex space-x-2">
+                        <div className="flex gap-2 justify-end flex-shrink-0">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -770,7 +800,7 @@ export default function ProjectDetails({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12">
+                  <div className="text-center py-8 sm:py-12">
                     <Folder className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-slate-900 mb-2">
                       No documents uploaded
@@ -811,10 +841,10 @@ export default function ProjectDetails({
                     {messages.map((msg) => (
                       <div
                         key={msg.id}
-                        className={`p-4 rounded-lg border ${
+                        className={`p-3 sm:p-4 rounded-lg border ${
                           msg.sender_type === "admin"
-                            ? "bg-indigo-50 border-indigo-200 ml-8"
-                            : "bg-slate-50 border-slate-200 mr-8"
+                            ? "bg-indigo-50 border-indigo-200 sm:ml-8"
+                            : "bg-slate-50 border-slate-200 sm:mr-8"
                         }`}
                       >
                         <div className="flex items-center justify-between mb-2">
@@ -844,7 +874,7 @@ export default function ProjectDetails({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12">
+                  <div className="text-center py-8 sm:py-12">
                     <MessageSquare className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-slate-900 mb-2">
                       No messages yet
@@ -872,7 +902,7 @@ export default function ProjectDetails({
                 <CardTitle>Project Activity</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
+                <div className="text-center py-8 sm:py-12">
                   <TrendingUp className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-slate-900 mb-2">
                     Activity tracking coming soon

@@ -60,7 +60,6 @@ export default function ClientDetails({
   const [projects, setProjects] = useState<Project[]>([]);
   const [documents, setDocuments] = useState<ClientDocument[]>([]);
   const [messages, setMessages] = useState<ClientMessage[]>([]);
-  // CHANGE: Renamed state from 'milestones' to 'phases' for clarity.
   const [phases, setPhases] = useState<ProjectPhase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -71,7 +70,6 @@ export default function ClientDetails({
         setLoading(true);
         setError("");
 
-        // Fetch client and top-level data
         const clientData = await clientService.getById(id);
         setClient(clientData);
 
@@ -88,13 +86,11 @@ export default function ClientDetails({
           .catch(() => []);
         setMessages(messagesData);
 
-        // CHANGE: Correctly fetch phases for EACH project.
         if (projectsData.length > 0) {
           const phasePromises = projectsData.map((project) =>
             phaseService.getByProjectId(project.id)
           );
           const phasesByProject = await Promise.all(phasePromises);
-          // Flatten the array of arrays into a single array of phases
           const allPhases = phasesByProject.flat();
           setPhases(allPhases);
         } else {
@@ -132,8 +128,6 @@ export default function ClientDetails({
     }
   };
 
-  // CHANGE: Removed getMilestoneStatusColor as it's no longer needed.
-
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return "Unknown size";
     if (bytes === 0) return "0 Bytes";
@@ -156,14 +150,14 @@ export default function ClientDetails({
     return (
       <div className="min-h-screen bg-slate-50">
         <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-          <div className="px-6 py-4">
+          <div className="px-4 sm:px-6 py-3 sm:py-4">
             <div className="flex items-center gap-4">
               <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
               <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
             </div>
           </div>
         </header>
-        <div className="max-w-6xl mx-auto p-6">
+        <div className="max-w-6xl mx-auto p-4 sm:p-6">
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
               <div
@@ -181,12 +175,13 @@ export default function ClientDetails({
     return (
       <div className="min-h-screen bg-slate-50">
         <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-          <div className="px-6 py-4">
-            <div className="flex items-center gap-4">
+          <div className="px-4 sm:px-6 py-3 sm:py-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Link href="/admin/dashboard">
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
+                  <span className="hidden sm:inline">Back to Dashboard</span>
+                  <span className="sm:hidden">Back</span>
                 </Button>
               </Link>
               <div className="h-6 w-px bg-slate-300" />
@@ -195,15 +190,15 @@ export default function ClientDetails({
                 alt="Amart Consult"
                 width={120}
                 height={40}
-                className="h-8 w-auto"
+                className="h-6 sm:h-8 w-auto hidden sm:block"
               />
-              <h1 className="text-xl font-semibold text-slate-900">
+              <h1 className="text-base sm:text-xl font-semibold text-slate-900">
                 Client Details
               </h1>
             </div>
           </div>
         </header>
-        <div className="max-w-6xl mx-auto p-6">
+        <div className="max-w-6xl mx-auto p-4 sm:p-6">
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
             {error || "Client not found"}
           </div>
@@ -216,89 +211,106 @@ export default function ClientDetails({
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
               <Link href="/admin/dashboard">
-                <Button variant="ghost" size="sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs sm:text-sm"
+                >
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
+                  <span className="hidden sm:inline">Back to Dashboard</span>
+                  <span className="sm:hidden">Back</span>
                 </Button>
               </Link>
-              <div className="h-6 w-px bg-slate-300" />
+              <div className="h-6 w-px bg-slate-300 hidden sm:block" />
               <Image
                 src="/images/amart-logo.png"
                 alt="Amart Consult"
                 width={120}
                 height={40}
-                className="h-8 w-auto"
+                className="h-6 sm:h-8 w-auto hidden sm:block"
               />
-              <h1 className="text-xl font-semibold text-slate-900">
+              <h1 className="text-base sm:text-xl font-semibold text-slate-900 truncate">
                 Client Details
               </h1>
             </div>
-            <Button asChild className="bg-indigo-600 hover:bg-indigo-700">
+            <Button
+              asChild
+              className="bg-indigo-600 hover:bg-indigo-700 w-full sm:w-auto text-sm"
+            >
               <Link href={`/admin/clients/${id}/edit`}>
                 <Edit className="h-4 w-4 mr-2" />
-                Edit Client
+                <span className="hidden sm:inline">Edit Client</span>
+                <span className="sm:hidden">Edit</span>
               </Link>
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6">
         {/* Client Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
           <Card className="lg:col-span-2 border-0 shadow-sm">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-2xl">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="min-w-0">
+                  <CardTitle className="text-xl sm:text-2xl truncate">
                     {client.first_name} {client.last_name}
                   </CardTitle>
-                  <CardDescription className="text-base mt-1">
+                  <CardDescription className="text-sm sm:text-base mt-1">
                     {projects.length} project{projects.length !== 1 ? "s" : ""}{" "}
                     • Joined {new Date(client.created_at).toLocaleDateString()}
                   </CardDescription>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Badge
                     variant={
                       client.client_status === "Active"
                         ? "default"
                         : "secondary"
                     }
-                    className="text-sm"
+                    className="text-xs sm:text-sm"
                   >
                     {client.client_status}
                   </Badge>
-                  <Badge variant="outline">{client.tier}</Badge>
+                  <Badge variant="outline" className="text-xs sm:text-sm">
+                    {client.tier}
+                  </Badge>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <div className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 text-slate-400" />
-                  <span className="text-slate-900">{client.email}</span>
+                  <Mail className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                  <span className="text-sm sm:text-base text-slate-900 truncate">
+                    {client.email}
+                  </span>
                 </div>
                 {client.phone && (
                   <div className="flex items-center gap-3">
-                    <Phone className="h-4 w-4 text-slate-400" />
-                    <span className="text-slate-900">{client.phone}</span>
+                    <Phone className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                    <span className="text-sm sm:text-base text-slate-900">
+                      {client.phone}
+                    </span>
                   </div>
                 )}
                 {client.company && (
                   <div className="flex items-center gap-3">
-                    <Building2 className="h-4 w-4 text-slate-400" />
-                    <span className="text-slate-900">{client.company}</span>
+                    <Building2 className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                    <span className="text-sm sm:text-base text-slate-900 truncate">
+                      {client.company}
+                    </span>
                   </div>
                 )}
                 {client.has_portal_access && (
                   <div className="flex items-center gap-3">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-green-900">
+                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                    <span className="text-sm sm:text-base text-green-900">
                       Portal Access Enabled
                     </span>
                   </div>
@@ -306,16 +318,20 @@ export default function ClientDetails({
               </div>
               {client.address && (
                 <div className="flex items-start gap-3 mt-4">
-                  <MapPin className="h-4 w-4 text-slate-400 mt-1" />
-                  <span className="text-slate-900">{client.address}</span>
+                  <MapPin className="h-4 w-4 text-slate-400 mt-1 flex-shrink-0" />
+                  <span className="text-sm sm:text-base text-slate-900">
+                    {client.address}
+                  </span>
                 </div>
               )}
               {client.notes && (
-                <div className="mt-4 p-4 bg-slate-50 rounded-lg">
-                  <h4 className="font-medium text-slate-900 mb-2">
+                <div className="mt-4 p-3 sm:p-4 bg-slate-50 rounded-lg">
+                  <h4 className="text-sm sm:text-base font-medium text-slate-900 mb-2">
                     Client Notes
                   </h4>
-                  <p className="text-slate-700">{client.notes}</p>
+                  <p className="text-sm sm:text-base text-slate-700">
+                    {client.notes}
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -323,17 +339,19 @@ export default function ClientDetails({
 
           <Card className="border-0 shadow-sm">
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">
+                Quick Actions
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Button className="w-full justify-start" asChild>
+            <CardContent className="space-y-2 sm:space-y-3">
+              <Button className="w-full justify-start text-sm" asChild>
                 <Link href={`/admin/projects/add?clientId=${client.id}`}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add New Project
                 </Link>
               </Button>
               <Button
-                className="w-full justify-start"
+                className="w-full justify-start text-sm"
                 variant="outline"
                 asChild
               >
@@ -343,7 +361,7 @@ export default function ClientDetails({
                 </Link>
               </Button>
               <Button
-                className="w-full justify-start"
+                className="w-full justify-start text-sm"
                 variant="outline"
                 asChild
               >
@@ -357,27 +375,57 @@ export default function ClientDetails({
         </div>
 
         {/* Detailed Tabs */}
-        <Tabs defaultValue="projects" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="projects">
-              Projects ({projects.length})
+        <Tabs defaultValue="projects" className="space-y-4 sm:space-y-6">
+          <TabsList className="flex sm:grid w-full sm:grid-cols-5 overflow-x-auto">
+            <TabsTrigger
+              value="projects"
+              className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+            >
+              <span className="hidden sm:inline">
+                Projects ({projects.length})
+              </span>
+              <span className="sm:hidden">Projects</span>
             </TabsTrigger>
-            <TabsTrigger value="documents">
-              Documents ({documents.length})
+            <TabsTrigger
+              value="documents"
+              className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+            >
+              <span className="hidden sm:inline">
+                Documents ({documents.length})
+              </span>
+              <span className="sm:hidden">Docs</span>
             </TabsTrigger>
-            <TabsTrigger value="messages">
-              Messages ({messages.length})
+            <TabsTrigger
+              value="messages"
+              className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+            >
+              <span className="hidden sm:inline">
+                Messages ({messages.length})
+              </span>
+              <span className="sm:hidden">Messages</span>
             </TabsTrigger>
-            {/* CHANGE: Updated tab to 'phases' and used correct length */}
-            <TabsTrigger value="phases">Phases ({phases.length})</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger
+              value="phases"
+              className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+            >
+              <span className="hidden sm:inline">Phases ({phases.length})</span>
+              <span className="sm:hidden">Phases</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="activity"
+              className="whitespace-nowrap text-xs sm:text-sm flex-shrink-0"
+            >
+              Activity
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="projects" className="space-y-6">
+          <TabsContent value="projects" className="space-y-4 sm:space-y-6">
             <Card className="border-0 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Client Projects</CardTitle>
-                <Button size="sm" asChild>
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <CardTitle className="text-lg sm:text-xl">
+                  Client Projects
+                </CardTitle>
+                <Button size="sm" asChild className="w-full sm:w-auto">
                   <Link href={`/admin/projects/add?clientId=${client.id}`}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Project
@@ -386,30 +434,37 @@ export default function ClientDetails({
               </CardHeader>
               <CardContent>
                 {projects.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {projects.map((project) => (
                       <div
                         key={project.id}
-                        className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors gap-3"
                       >
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-slate-900">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm sm:text-base font-semibold text-slate-900 truncate">
                             {project.project_title}
                           </h4>
                           {project.project_description && (
-                            <p className="text-sm text-slate-600 mt-1">
+                            <p className="text-xs sm:text-sm text-slate-600 mt-1 line-clamp-2">
                               {project.project_description}
                             </p>
                           )}
-                          <div className="flex items-center gap-2 mt-3">
-                            <Badge className={getStatusColor(project.status)}>
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2 sm:mt-3">
+                            <Badge
+                              className={`${getStatusColor(
+                                project.status
+                              )} text-xs`}
+                            >
                               {project.status}
                             </Badge>
-                            <Badge variant="outline" className="capitalize">
+                            <Badge
+                              variant="outline"
+                              className="capitalize text-xs"
+                            >
                               {project.project_type}
                             </Badge>
                             {project.budget_range && (
-                              <Badge variant="outline">
+                              <Badge variant="outline" className="text-xs">
                                 {project.budget_range}
                               </Badge>
                             )}
@@ -436,15 +491,17 @@ export default function ClientDetails({
                             )}
                           </div>
                         </div>
-                        <div className="flex space-x-2">
+                        <div className="flex gap-2 justify-end sm:justify-start flex-shrink-0">
                           <Button variant="ghost" size="sm" asChild>
                             <Link href={`/admin/projects/${project.id}`}>
                               <Eye className="h-4 w-4" />
+                              <span className="sr-only">View</span>
                             </Link>
                           </Button>
                           <Button variant="ghost" size="sm" asChild>
                             <Link href={`/admin/projects/${project.id}/edit`}>
                               <Edit className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
                             </Link>
                           </Button>
                         </div>
@@ -452,15 +509,15 @@ export default function ClientDetails({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12">
-                    <Building2 className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  <div className="text-center py-8 sm:py-12">
+                    <Building2 className="h-10 w-10 sm:h-12 sm:w-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-2">
                       No projects yet
                     </h3>
-                    <p className="text-slate-600 mb-4">
+                    <p className="text-sm text-slate-600 mb-4">
                       Create the first project for this client
                     </p>
-                    <Button asChild>
+                    <Button asChild className="w-full sm:w-auto">
                       <Link href={`/admin/projects/add?clientId=${client.id}`}>
                         <Plus className="h-4 w-4 mr-2" />
                         Create First Project
@@ -472,14 +529,16 @@ export default function ClientDetails({
             </Card>
           </TabsContent>
 
-          <TabsContent value="documents" className="space-y-6">
+          <TabsContent value="documents" className="space-y-4 sm:space-y-6">
             <Card className="border-0 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Client Documents</CardTitle>
-                <Button size="sm" asChild>
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <CardTitle className="text-lg sm:text-xl">
+                  Client Documents
+                </CardTitle>
+                <Button size="sm" asChild className="w-full sm:w-auto">
                   <Link href={`/admin/documents/upload?clientId=${client.id}`}>
                     <Upload className="h-4 w-4 mr-2" />
-                    Upload Documents
+                    Upload
                   </Link>
                 </Button>
               </CardHeader>
@@ -489,22 +548,22 @@ export default function ClientDetails({
                     {documents.map((doc) => (
                       <div
                         key={doc.id}
-                        className="flex items-center justify-between p-4 border border-slate-200 rounded-lg"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border border-slate-200 rounded-lg gap-3"
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
                           {getFileIcon(doc.file_type)}
-                          <div>
-                            <h4 className="font-medium text-slate-900">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm sm:text-base font-medium text-slate-900 truncate">
                               {doc.title}
                             </h4>
                             {doc.description && (
-                              <p className="text-sm text-slate-600">
+                              <p className="text-xs sm:text-sm text-slate-600 line-clamp-2">
                                 {doc.description}
                               </p>
                             )}
-                            <div className="flex items-center gap-2 mt-1">
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
                               {doc.category && (
-                                <Badge variant="secondary">
+                                <Badge variant="secondary" className="text-xs">
                                   {doc.category}
                                 </Badge>
                               )}
@@ -515,7 +574,7 @@ export default function ClientDetails({
                             </div>
                           </div>
                         </div>
-                        <div className="flex space-x-2">
+                        <div className="flex gap-2 justify-end flex-shrink-0">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -527,6 +586,7 @@ export default function ClientDetails({
                             }}
                           >
                             <Eye className="h-4 w-4" />
+                            <span className="sr-only">View</span>
                           </Button>
                           <Button
                             variant="ghost"
@@ -544,21 +604,22 @@ export default function ClientDetails({
                             }}
                           >
                             <Download className="h-4 w-4" />
+                            <span className="sr-only">Download</span>
                           </Button>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12">
-                    <Folder className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  <div className="text-center py-8 sm:py-12">
+                    <Folder className="h-10 w-10 sm:h-12 sm:w-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-2">
                       No documents uploaded
                     </h3>
-                    <p className="text-slate-600 mb-4">
+                    <p className="text-sm text-slate-600 mb-4">
                       Upload documents for this client to get started
                     </p>
-                    <Button asChild>
+                    <Button asChild className="w-full sm:w-auto">
                       <Link
                         href={`/admin/documents/upload?clientId=${client.id}`}
                       >
@@ -572,65 +633,70 @@ export default function ClientDetails({
             </Card>
           </TabsContent>
 
-          <TabsContent value="messages" className="space-y-6">
+          <TabsContent value="messages" className="space-y-4 sm:space-y-6">
             <Card className="border-0 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Message History</CardTitle>
-                <Button size="sm" asChild>
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <CardTitle className="text-lg sm:text-xl">
+                  Message History
+                </CardTitle>
+                <Button size="sm" asChild className="w-full sm:w-auto">
                   <Link href={`/admin/messages?clientId=${client.id}`}>
                     <MessageSquare className="h-4 w-4 mr-2" />
-                    Send Message
+                    Send
                   </Link>
                 </Button>
               </CardHeader>
               <CardContent>
                 {messages.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {messages.map((msg) => (
                       <div
                         key={msg.id}
-                        className={`p-4 rounded-lg border ${
+                        className={`p-3 sm:p-4 rounded-lg border ${
                           msg.sender_type === "admin"
-                            ? "bg-indigo-50 border-indigo-200 ml-8"
-                            : "bg-slate-50 border-slate-200 mr-8"
+                            ? "bg-indigo-50 border-indigo-200 sm:ml-8"
+                            : "bg-slate-50 border-slate-200 sm:mr-8"
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <Badge
                               variant={
                                 msg.sender_type === "admin"
                                   ? "default"
                                   : "secondary"
                               }
+                              className="text-xs"
                             >
                               {msg.sender_name}
                             </Badge>
                             {!msg.is_read && msg.sender_type === "client" && (
-                              <Badge variant="destructive">Unread</Badge>
+                              <Badge variant="destructive" className="text-xs">
+                                Unread
+                              </Badge>
                             )}
                           </div>
-                          <span className="text-sm text-slate-500">
+                          <span className="text-xs sm:text-sm text-slate-500">
                             {new Date(msg.created_at).toLocaleDateString()}{" "}
                             {new Date(msg.created_at).toLocaleTimeString()}
                           </span>
                         </div>
-                        <p className="text-slate-900 whitespace-pre-wrap">
+                        <p className="text-sm sm:text-base text-slate-900 whitespace-pre-wrap break-words">
                           {msg.message}
                         </p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12">
-                    <MessageSquare className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  <div className="text-center py-8 sm:py-12">
+                    <MessageSquare className="h-10 w-10 sm:h-12 sm:w-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-2">
                       No messages yet
                     </h3>
-                    <p className="text-slate-600 mb-4">
+                    <p className="text-sm text-slate-600 mb-4">
                       Start a conversation with this client
                     </p>
-                    <Button asChild>
+                    <Button asChild className="w-full sm:w-auto">
                       <Link href={`/admin/messages?clientId=${client.id}`}>
                         <MessageSquare className="h-4 w-4 mr-2" />
                         Send First Message
@@ -642,12 +708,13 @@ export default function ClientDetails({
             </Card>
           </TabsContent>
 
-          {/* CHANGE: The entire 'milestones' tab has been replaced with the 'phases' tab */}
-          <TabsContent value="phases" className="space-y-6">
+          <TabsContent value="phases" className="space-y-4 sm:space-y-6">
             <Card className="border-0 shadow-sm">
               <CardHeader>
-                <CardTitle>All Project Phases</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-lg sm:text-xl">
+                  All Project Phases
+                </CardTitle>
+                <CardDescription className="text-sm">
                   An overview of all phases across all of this client's
                   projects.
                 </CardDescription>
@@ -656,26 +723,25 @@ export default function ClientDetails({
                 {phases.length > 0 ? (
                   <div className="space-y-3">
                     {phases.map((phase) => {
-                      // Find the parent project to display its title
                       const project = projects.find(
                         (p) => p.id === phase.project_id
                       );
                       return (
                         <div
                           key={phase.id}
-                          className="flex items-center gap-4 p-3 border border-slate-200 rounded-lg"
+                          className="flex items-center gap-3 sm:gap-4 p-3 border border-slate-200 rounded-lg"
                         >
                           {phase.is_completed ? (
-                            <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                            <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0" />
                           ) : (
-                            <Clock className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 flex-shrink-0" />
                           )}
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-slate-900">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">
                               {phase.phase_name}
                             </p>
                             {project && (
-                              <p className="text-xs text-slate-500">
+                              <p className="text-xs text-slate-500 truncate">
                                 Project:{" "}
                                 <Link
                                   href={`/admin/projects/${project.id}`}
@@ -698,6 +764,7 @@ export default function ClientDetails({
                             variant={
                               phase.is_completed ? "default" : "secondary"
                             }
+                            className="text-xs flex-shrink-0"
                           >
                             {phase.is_completed ? "Completed" : "Pending"}
                           </Badge>
@@ -706,12 +773,12 @@ export default function ClientDetails({
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-12">
-                    <Clock className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  <div className="text-center py-8 sm:py-12">
+                    <Clock className="h-10 w-10 sm:h-12 sm:w-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-2">
                       No phases defined
                     </h3>
-                    <p className="text-slate-600">
+                    <p className="text-sm text-slate-600">
                       Project phases will appear here once they are added to a
                       project.
                     </p>
@@ -721,18 +788,20 @@ export default function ClientDetails({
             </Card>
           </TabsContent>
 
-          <TabsContent value="activity" className="space-y-6">
+          <TabsContent value="activity" className="space-y-4 sm:space-y-6">
             <Card className="border-0 shadow-sm">
               <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">
+                  Recent Activity
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <Clock className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                <div className="text-center py-8 sm:py-12">
+                  <Clock className="h-10 w-10 sm:h-12 sm:w-12 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-2">
                     Activity tracking coming soon
                   </h3>
-                  <p className="text-slate-600">
+                  <p className="text-sm text-slate-600">
                     Client activity and timeline will be displayed here
                   </p>
                 </div>
