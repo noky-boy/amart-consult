@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
   TrendingUp,
-  Calendar,
   MessageSquare,
   Clock,
   FileText,
@@ -75,28 +74,32 @@ export default function DashboardOverview({
   const financial = getFinancialSummary(project);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
+      {/* Page Header */}
       <div className="text-center">
-        <h2 className="text-3xl font-serif font-bold text-slate-900 mb-2">
+        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 mb-2">
           Project Overview
         </h2>
-        <p className="text-slate-600">{project.project_title}</p>
+        <p className="text-sm sm:text-base text-slate-600">
+          {project.project_title}
+        </p>
         <Badge className={`mt-2 ${getStatusColor(project.status)}`}>
           {project.status}
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Project Type Card - Now First */}
+      {/* Stats Cards - Responsive Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        {/* Project Type Card */}
         <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6 text-center">
-            <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl mb-4 mx-auto w-fit">
-              <ClipboardList className="h-6 w-6 text-white" />
+          <CardContent className="p-4 sm:p-6 text-center">
+            <div className="p-2.5 sm:p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl mb-3 sm:mb-4 mx-auto w-fit">
+              <ClipboardList className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <p className="text-sm font-medium text-slate-600 mb-2">
+            <p className="text-xs sm:text-sm font-medium text-slate-600 mb-2">
               Project Type
             </p>
-            <p className="text-2xl font-bold text-slate-900 mb-4 capitalize">
+            <p className="text-xl sm:text-2xl font-bold text-slate-900 mb-2 sm:mb-4 capitalize">
               {project.project_type}
             </p>
             <p className="text-xs text-slate-500">
@@ -107,14 +110,14 @@ export default function DashboardOverview({
 
         {/* Overall Progress Card */}
         <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6 text-center">
-            <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl mb-4 mx-auto w-fit">
-              <TrendingUp className="h-6 w-6 text-white" />
+          <CardContent className="p-4 sm:p-6 text-center">
+            <div className="p-2.5 sm:p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl mb-3 sm:mb-4 mx-auto w-fit">
+              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <p className="text-sm font-medium text-slate-600 mb-2">
+            <p className="text-xs sm:text-sm font-medium text-slate-600 mb-2">
               Overall Progress
             </p>
-            <p className="text-3xl font-bold text-slate-900 mb-4">
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3 sm:mb-4">
               {projectProgress}%
             </p>
             <Progress value={projectProgress} className="h-2 w-full" />
@@ -124,16 +127,16 @@ export default function DashboardOverview({
           </CardContent>
         </Card>
 
-        {/* Financial Summary Card - Replacing Completed Tasks */}
+        {/* Financial Summary Card */}
         <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6 text-center">
-            <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl mb-4 mx-auto w-fit">
-              <DollarSign className="h-6 w-6 text-white" />
+          <CardContent className="p-4 sm:p-6 text-center">
+            <div className="p-2.5 sm:p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl mb-3 sm:mb-4 mx-auto w-fit">
+              <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <p className="text-sm font-medium text-slate-600 mb-2">
+            <p className="text-xs sm:text-sm font-medium text-slate-600 mb-2">
               Project Financials
             </p>
-            <div className="space-y-2 text-sm">
+            <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
               <div className="flex justify-between items-center">
                 <span className="text-slate-600 flex items-center">
                   <CreditCard className="h-3 w-3 mr-1" />
@@ -152,7 +155,7 @@ export default function DashboardOverview({
                   {financial.formatted.cash_received}
                 </span>
               </div>
-              <div className="border-t pt-2 flex justify-between items-center">
+              <div className="border-t pt-1.5 sm:pt-2 flex justify-between items-center">
                 <span className="text-slate-600 font-medium">Balance:</span>
                 <span
                   className={`font-bold ${
@@ -168,12 +171,14 @@ export default function DashboardOverview({
 
         {/* Messages Card */}
         <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6 text-center">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl mb-4 mx-auto w-fit">
-              <MessageSquare className="h-6 w-6 text-white" />
+          <CardContent className="p-4 sm:p-6 text-center">
+            <div className="p-2.5 sm:p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl mb-3 sm:mb-4 mx-auto w-fit">
+              <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <p className="text-sm font-medium text-slate-600 mb-2">Messages</p>
-            <p className="text-3xl font-bold text-slate-900 mb-4">
+            <p className="text-xs sm:text-sm font-medium text-slate-600 mb-2">
+              Messages
+            </p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3 sm:mb-4">
               {messages.length}
             </p>
             <p className="text-xs text-slate-500">
@@ -183,40 +188,41 @@ export default function DashboardOverview({
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Project Phases - Replacing Milestones */}
+      {/* Project Phases and Documents - Responsive Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+        {/* Project Phases */}
         <Card className="border-0 shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Clock className="h-5 w-5 text-indigo-600" />
+            <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600" />
               <span>Project Phases</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {phases.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {phases.slice(0, 5).map((phase) => (
                   <div
                     key={phase.id}
-                    className="flex items-start space-x-4 p-3 rounded-lg border border-slate-200"
+                    className="flex items-start space-x-3 sm:space-x-4 p-3 rounded-lg border border-slate-200"
                   >
                     <div
-                      className={`h-3 w-3 rounded-full mt-2 ${getPhaseStatusColor(
+                      className={`h-3 w-3 rounded-full mt-2 flex-shrink-0 ${getPhaseStatusColor(
                         phase.is_completed
                       )}`}
                     ></div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-slate-900">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-slate-900 text-sm sm:text-base">
                         {phase.phase_name}
                       </h4>
                       {phase.phase_description && (
-                        <p className="text-sm text-slate-600 mt-1">
+                        <p className="text-xs sm:text-sm text-slate-600 mt-1">
                           {phase.phase_description}
                         </p>
                       )}
-                      <div className="flex items-center justify-between mt-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
                         <span
-                          className={`text-xs px-2 py-1 rounded-full ${
+                          className={`text-xs px-2 py-1 rounded-full w-fit ${
                             phase.is_completed
                               ? "bg-green-100 text-green-700"
                               : "bg-slate-100 text-slate-600"
@@ -238,7 +244,7 @@ export default function DashboardOverview({
                 ))}
               </div>
             ) : (
-              <p className="text-slate-600 text-center py-8">
+              <p className="text-slate-600 text-center py-8 text-sm sm:text-base">
                 No project phases defined yet.
               </p>
             )}
@@ -248,8 +254,8 @@ export default function DashboardOverview({
         {/* Recent Documents */}
         <Card className="border-0 shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <FileText className="h-5 w-5 text-purple-600" />
+            <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
               <span>Recent Documents</span>
             </CardTitle>
           </CardHeader>
@@ -261,10 +267,10 @@ export default function DashboardOverview({
                     key={doc.id}
                     className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
                   >
-                    <div className="flex items-center space-x-3">
-                      <FileText className="h-5 w-5 text-blue-600" />
-                      <div>
-                        <p className="font-medium text-slate-900">
+                    <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                      <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-slate-900 text-sm sm:text-base truncate">
                           {doc.title}
                         </p>
                         <p className="text-xs text-slate-500">
@@ -275,6 +281,7 @@ export default function DashboardOverview({
                     <Button
                       variant="ghost"
                       size="sm"
+                      className="flex-shrink-0 ml-2"
                       onClick={async () => {
                         const url = await documentService.getDownloadUrl(
                           doc.file_path
@@ -288,7 +295,7 @@ export default function DashboardOverview({
                 ))}
               </div>
             ) : (
-              <p className="text-slate-600 text-center py-8">
+              <p className="text-slate-600 text-center py-8 text-sm sm:text-base">
                 No documents available.
               </p>
             )}

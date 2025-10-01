@@ -28,6 +28,7 @@ type Tab = "overview" | "timeline" | "photos" | "documents" | "messages";
 function ClientDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [showSettings, setShowSettings] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { signOut } = useClientAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -94,11 +95,19 @@ function ClientDashboard() {
     }
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   if (authLoading || clientLoading || projectLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mb-4" />
+          <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mb-4 mx-auto" />
           <p className="text-slate-600">Loading dashboard...</p>
         </div>
       </div>
@@ -107,7 +116,7 @@ function ClientDashboard() {
 
   if (clientError || projectError) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md text-center p-6">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">
@@ -122,7 +131,7 @@ function ClientDashboard() {
 
   if (!client || !user || !project) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md text-center p-6">
           <AlertCircle className="h-12 w-12 text-orange-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Project Not Found</h2>
@@ -183,6 +192,7 @@ function ClientDashboard() {
         unreadMessagesCount={unreadMessagesCount}
         onShowSettings={() => setShowSettings(true)}
         onLogout={signOut}
+        onToggleMobileMenu={toggleMobileMenu}
       />
 
       {showSettings && (
@@ -196,8 +206,12 @@ function ClientDashboard() {
           photoCount={photos.length}
           documentCount={documents.length}
           unreadMessagesCount={unreadMessagesCount}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onCloseMobileMenu={closeMobileMenu}
         />
-        <main className="flex-1 p-8">{renderContent()}</main>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0">
+          {renderContent()}
+        </main>
       </div>
     </div>
   );
@@ -207,9 +221,9 @@ export default function ClientDashboardPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
           <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mb-4" />
+            <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mb-4 mx-auto" />
             <p className="text-slate-600">Loading dashboard...</p>
           </div>
         </div>
