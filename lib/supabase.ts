@@ -882,8 +882,21 @@ export const phaseService = {
     return data;
   },
 
-  // ADD THESE METHODS TO YOUR EXISTING phaseService OBJECT
-  // (Keep all your existing methods, just add these new ones)
+  // Re-order parent phases
+  async reorderParentPhases(
+    updates: { id: string; phase_order: number }[]
+  ): Promise<void> {
+    const updatePromises = updates.map(({ id, phase_order }) =>
+      supabase.from("project_phases").update({ phase_order }).eq("id", id)
+    );
+
+    const results = await Promise.all(updatePromises);
+
+    const errors = results.filter((r) => r.error);
+    if (errors.length > 0) {
+      throw errors[0].error;
+    }
+  },
 
   // Get all phases with parent-child structure
   async getByProjectIdHierarchical(

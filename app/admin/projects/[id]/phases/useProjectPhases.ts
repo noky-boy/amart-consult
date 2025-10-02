@@ -256,6 +256,30 @@ export function useProjectPhases(projectId: string) {
     }
   };
 
+  // NEW: Reorder parent phases
+  const reorderPhases = async (reorderedPhases: PhaseWithChildren[]) => {
+    setIsSaving(true);
+    try {
+      // Create update payload with new order
+      const updates = reorderedPhases.map((phase, index) => ({
+        id: phase.id,
+        phase_order: index + 1,
+      }));
+
+      // Update in database
+      await phaseService.reorderParentPhases(updates);
+
+      // Refresh data from server
+      await fetchData();
+    } catch (err) {
+      console.error("Failed to reorder phases:", err);
+      setError("Failed to reorder phases. Please try again.");
+      throw err;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return {
     project,
     phases,
@@ -270,5 +294,6 @@ export function useProjectPhases(projectId: string) {
     updatePhase,
     deletePhase,
     duplicatePhase,
+    reorderPhases, // NEW
   };
 }

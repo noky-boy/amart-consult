@@ -29,6 +29,7 @@ export default function ProjectPhasesPage({
     updatePhase,
     deletePhase,
     duplicatePhase,
+    reorderPhases, // NEW
   } = useProjectPhases(id);
 
   if (loading) {
@@ -62,6 +63,7 @@ export default function ProjectPhasesPage({
           onUpdate={updatePhase}
           onDelete={deletePhase}
           onDuplicate={duplicatePhase}
+          onReorder={reorderPhases}
           isSaving={isSaving}
         />
       </main>

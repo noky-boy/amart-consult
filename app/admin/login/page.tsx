@@ -158,6 +158,7 @@ export default function AdminLogin() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    suppressHydrationWarning
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -188,7 +189,7 @@ export default function AdminLogin() {
           </CardContent>
         </Card>
 
-        {/* Debug Info */}
+        {/* Debug Info
         <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
           <p className="text-sm text-blue-800 font-medium mb-2">Debug Info:</p>
           <p className="text-xs text-blue-700">
@@ -197,7 +198,7 @@ export default function AdminLogin() {
           <p className="text-xs text-blue-700">
             Key: {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Set" : "Not set"}
           </p>
-        </div>
+        </div> */}
 
         {/* Footer */}
         <div className="mt-8 text-center">
