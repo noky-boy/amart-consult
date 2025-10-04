@@ -104,15 +104,20 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
   verification: {
     // Add Google Search Console verification here once you set it up
     // google: 'your-google-verification-code',
   },
-    generator: 'v0.app'
+  generator: "v0.app",
 };
 
 export default function RootLayout({
@@ -125,7 +130,9 @@ export default function RootLayout({
       lang="en"
       className={`${montserrat.variable} ${openSans.variable} antialiased`}
     >
-      <head></head>
+      <head>
+        <link rel="manifest" href="/site.webmanifest" />
+      </head>
       <body suppressHydrationWarning={true}>
         <AuthProvider>
           <a
