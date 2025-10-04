@@ -53,6 +53,12 @@ export const DOCUMENT_CATEGORIES = [
     label: "Contracts & Agreements",
     group: "Legal & Admin",
   },
+  // NEW: Project Timeline category
+  {
+    value: "project-timeline",
+    label: "Project Timeline",
+    group: "Project Management",
+  },
   { value: "other", label: "Other Documents", group: "Other" },
 ];
 

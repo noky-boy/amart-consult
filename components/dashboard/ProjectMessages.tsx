@@ -20,6 +20,7 @@ type ProjectMessagesProps = {
 export default function ProjectMessages({
   messages,
   client,
+  project,
   user,
   onNewMessage,
 }: ProjectMessagesProps) {
@@ -28,20 +29,26 @@ export default function ProjectMessages({
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
+
     setSending(true);
     try {
+      // Create the message with project_id since this is project-specific
       await messageService.create({
         client_id: client.id,
+        project_id: project.id, // ← IMPORTANT: Include project_id
         sender_type: "client",
         sender_name: `${client.first_name} ${client.last_name}`,
         message: newMessage,
         is_read: false,
       });
+
       setNewMessage("");
-      // Refresh messages by calling the function passed from the parent
-      const updatedMessages = await messageService.getByClientId(client.id);
+
+      // Fetch messages by project_id (not client_id)
+      const updatedMessages = await messageService.getByProjectId(project.id);
       onNewMessage(updatedMessages);
     } catch (error: any) {
+      console.error("Failed to send message:", error);
       alert(`Failed to send message: ${error.message}`);
     } finally {
       setSending(false);
