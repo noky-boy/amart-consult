@@ -239,6 +239,7 @@ export interface ProjectWithProgress extends Project {
 }
 
 export interface ClientDocument {
+  uploaded_at: any;
   id: string;
   client_id: string;
   project_id?: string; // Optional for backward compatibility

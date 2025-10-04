@@ -1,6 +1,6 @@
 // amart-consult/app/portal/dashboard/page.tsx
 "use client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useClientData, useProjectData } from "@/hooks/useClientData";
@@ -55,6 +55,16 @@ function ClientDashboard() {
     setMessages,
     markAdminMessagesAsRead,
   } = useProjectData(projectId);
+
+  // Filter timeline documents
+  const timelineDocuments = useMemo(() => {
+    return documents.filter((doc) => doc.category === "project-timeline");
+  }, [documents]);
+
+  // Filter non-timeline documents for the Documents tab
+  const regularDocuments = useMemo(() => {
+    return documents.filter((doc) => doc.category !== "project-timeline");
+  }, [documents]);
 
   // Redirect to projects page if no project is selected
   useEffect(() => {
@@ -158,15 +168,20 @@ function ClientDashboard() {
             client={client}
             project={project}
             phases={phases}
-            documents={documents}
+            documents={regularDocuments}
             messages={messages}
             unreadMessagesCount={unreadMessagesCount}
           />
         );
       case "timeline":
-        return <ProjectTimeline phases={phases} />;
+        return (
+          <ProjectTimeline
+            phases={phases}
+            timelineDocuments={timelineDocuments}
+          />
+        );
       case "documents":
-        return <ProjectDocuments documents={documents} />;
+        return <ProjectDocuments documents={regularDocuments} />;
       case "photos":
         return <ProjectPhotos photos={photos} />;
       case "messages":
@@ -204,7 +219,7 @@ function ClientDashboard() {
           activeTab={activeTab}
           onTabChange={handleTabChange}
           photoCount={photos.length}
-          documentCount={documents.length}
+          documentCount={regularDocuments.length}
           unreadMessagesCount={unreadMessagesCount}
           isMobileMenuOpen={isMobileMenuOpen}
           onCloseMobileMenu={closeMobileMenu}
