@@ -58,6 +58,7 @@ import type {
 
 import { getPhaseStatus, getStatusColorClasses } from "@/lib/phase-helpers";
 import type { PhaseStatus } from "@/lib/phase-helpers";
+import { DocumentList } from "../../documents/components/DocumentList";
 
 type ProjectWithClientAndProgress = ProjectWithProgress & { client: Client };
 
@@ -153,22 +154,23 @@ export default function ProjectDetails({
     }
   };
 
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return "Unknown size";
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
+  const handleDeleteDocument = async (docToDelete: ClientDocument) => {
+    // Optional: Confirm with the user before deleting
+    if (!confirm(`Are you sure you want to delete "${docToDelete.title}"?`)) {
+      return;
+    }
 
-  const getFileIcon = (fileType?: string) => {
-    if (!fileType) return <File className="h-5 w-5" />;
-    if (fileType.startsWith("image/"))
-      return <FileText className="h-5 w-5 text-green-600" />;
-    if (fileType.includes("pdf"))
-      return <FileText className="h-5 w-5 text-red-600" />;
-    return <File className="h-5 w-5" />;
+    try {
+      await documentService.delete(docToDelete.id);
+      // Update the state to remove the deleted document from the list
+      setDocuments((prevDocs) =>
+        prevDocs.filter((doc) => doc.id !== docToDelete.id)
+      );
+      alert("Document deleted successfully.");
+    } catch (error: any) {
+      console.error("Failed to delete document:", error);
+      alert("Failed to delete document: " + error.message);
+    }
   };
 
   // Loading state
@@ -551,7 +553,7 @@ export default function ProjectDetails({
                   asChild
                 >
                   <Link
-                    href={`/admin/messages/new?clientId=${project.client_id}&projectId=${project.id}`}
+                    href={`/admin/messages?clientId=${project.client_id}&projectId=${project.id}`}
                   >
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Send Message
@@ -563,7 +565,7 @@ export default function ProjectDetails({
                   asChild
                 >
                   <Link
-                    href={`/admin/documents/upload?clientId=${project.client_id}&projectId=${project.id}`}
+                    href={`/admin/documents?clientId=${project.client_id}&projectId=${project.id}`}
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     Upload Document
@@ -839,90 +841,10 @@ export default function ProjectDetails({
                 </Button>
               </CardHeader>
               <CardContent>
-                {documents.length > 0 ? (
-                  <div className="space-y-3">
-                    {documents.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border border-slate-200 rounded-lg gap-3"
-                      >
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          {getFileIcon(doc.file_type)}
-                          <div>
-                            <h4 className="text-sm sm:text-base font-medium text-slate-900 truncate">
-                              {doc.title}
-                            </h4>
-                            {doc.description && (
-                              <p className="text-sm text-slate-600">
-                                {doc.description}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-2 mt-1">
-                              {doc.category && (
-                                <Badge variant="secondary">
-                                  {doc.category}
-                                </Badge>
-                              )}
-                              <span className="text-xs text-slate-500">
-                                {formatFileSize(doc.file_size)} •{" "}
-                                {new Date(doc.created_at).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex gap-2 justify-end flex-shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={async () => {
-                              const url = await documentService.getDownloadUrl(
-                                doc.file_path
-                              );
-                              if (url) window.open(url, "_blank");
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={async () => {
-                              const url = await documentService.getDownloadUrl(
-                                doc.file_path
-                              );
-                              if (url) {
-                                const a = document.createElement("a");
-                                a.href = url;
-                                a.download = doc.file_name;
-                                a.click();
-                              }
-                            }}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 sm:py-12">
-                    <Folder className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                      No documents uploaded
-                    </h3>
-                    <p className="text-slate-600 mb-4">
-                      Upload documents for this project to get started
-                    </p>
-                    <Button asChild>
-                      <Link
-                        href={`/admin/documents?clientId=${project.client_id}&projectId=${project.id}`}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload First Document
-                      </Link>
-                    </Button>
-                  </div>
-                )}
+                <DocumentList
+                  documents={documents}
+                  onDelete={handleDeleteDocument}
+                />
               </CardContent>
             </Card>
           </TabsContent>

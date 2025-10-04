@@ -8,6 +8,7 @@ import {
   File as FileIcon,
   FileText,
   Image as ImageIcon,
+  Eye,
 } from "lucide-react";
 import type { ClientDocument } from "@/lib/supabase";
 import { documentService } from "@/lib/supabase";
@@ -37,15 +38,18 @@ export const DocumentList = ({ documents, onDelete }: DocumentListProps) => {
   const handleDownload = async (doc: ClientDocument) => {
     const url = await documentService.getDownloadUrl(doc.file_path);
     if (url) {
-      // This method triggers a download directly
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = doc.file_name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      window.location.href = url; // This will trigger the download
     } else {
       alert("Could not generate download link.");
+    }
+  };
+
+  const handleView = async (doc: ClientDocument) => {
+    const url = await documentService.getViewUrl(doc.file_path);
+    if (url) {
+      window.open(url, "_blank"); // Opens in new tab for viewing
+    } else {
+      alert("Could not generate view link.");
     }
   };
 
@@ -68,9 +72,9 @@ export const DocumentList = ({ documents, onDelete }: DocumentListProps) => {
       {documents.map((doc) => (
         <div
           key={doc.id}
-          className="flex items-center justify-between p-3 border rounded-lg bg-white hover:border-indigo-300 transition-all"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg bg-white hover:border-indigo-300 transition-all gap-3"
         >
-          <div className="flex items-center gap-4 flex-1 min-w-0">
+          <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
             {getFileIcon(doc.file_type)}
             <div className="flex-1 min-w-0">
               <h4 className="font-medium text-slate-900 truncate">
@@ -93,7 +97,15 @@ export const DocumentList = ({ documents, onDelete }: DocumentListProps) => {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1 ml-2">
+          <div className="flex items-center gap-1 justify-end sm:justify-start flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              title="View"
+              onClick={() => handleView(doc)}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"

@@ -30,7 +30,7 @@ export default function ProjectDocuments({ documents }: ProjectDocumentsProps) {
 
   const handleView = async (doc: ClientDocument) => {
     try {
-      const url = await documentService.getDownloadUrl(doc.file_path);
+      const url = await documentService.getViewUrl(doc.file_path);
       if (url) window.open(url, "_blank");
     } catch (error) {
       console.error("Failed to view document:", error);

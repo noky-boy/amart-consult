@@ -1247,20 +1247,31 @@ export const documentService = {
       description?: string;
       category?: string;
       tags?: string[];
-      projectId?: string; // Optional project association
+      projectId?: string;
     }
   ): Promise<ClientDocument> {
-    // Upload file to Supabase Storage
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}.${fileExt}`;
     const projectPath = metadata.projectId ? `/${metadata.projectId}` : "";
     const filePath = `client-documents/${clientId}${projectPath}/${fileName}`;
 
+    console.log("=== UPLOAD DEBUG ===");
+    console.log("Constructed filePath:", filePath);
+    console.log("Project ID:", metadata.projectId);
+    console.log("Project path segment:", projectPath);
+
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("client-files")
       .upload(filePath, file);
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error("Upload error:", uploadError);
+      throw uploadError;
+    }
+
+    console.log("uploadData.path:", uploadData.path);
+    console.log("uploadData.fullPath:", uploadData.fullPath);
+    console.log("=== END UPLOAD DEBUG ===");
 
     // Save document record to database
     const { data, error } = await supabase
@@ -1272,7 +1283,7 @@ export const documentService = {
           title: metadata.title,
           description: metadata.description,
           file_name: file.name,
-          file_path: uploadData.path,
+          file_path: uploadData.path, // <--- This might be the issue
           file_size: file.size,
           file_type: file.type,
           category: metadata.category,
@@ -1286,12 +1297,54 @@ export const documentService = {
     return data;
   },
 
-  async getDownloadUrl(filePath: string): Promise<string | undefined> {
-    const { data } = await supabase.storage
-      .from("client-files")
-      .createSignedUrl(filePath, 3600); // 1 hour expiry
+  // For viewing (opens in browser)
+  async getViewUrl(filePath: string): Promise<string | undefined> {
+    try {
+      const cleanPath = filePath.replace(/\/+/g, "/").replace(/^\//, "");
 
-    return data?.signedUrl;
+      const response = await fetch("/api/storage/signed-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filePath: cleanPath, download: false }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Signed URL error:", error);
+        return undefined;
+      }
+
+      const { signedUrl } = await response.json();
+      return signedUrl;
+    } catch (err) {
+      console.error("Exception in getViewUrl:", err);
+      return undefined;
+    }
+  },
+
+  // For downloading (forces download)
+  async getDownloadUrl(filePath: string): Promise<string | undefined> {
+    try {
+      const cleanPath = filePath.replace(/\/+/g, "/").replace(/^\//, "");
+
+      const response = await fetch("/api/storage/signed-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filePath: cleanPath, download: true }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Signed URL error:", error);
+        return undefined;
+      }
+
+      const { signedUrl } = await response.json();
+      return signedUrl;
+    } catch (err) {
+      console.error("Exception in getDownloadUrl:", err);
+      return undefined;
+    }
   },
 
   async delete(docId: string): Promise<void> {

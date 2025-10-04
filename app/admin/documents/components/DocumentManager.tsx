@@ -72,7 +72,7 @@ export const DocumentManager = ({
             Find specific documents for the selected client.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid md:grid-cols-4 gap-4">
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <Select
             value={selectedClient}
             onValueChange={(val) => setSelectedClient(val)}
