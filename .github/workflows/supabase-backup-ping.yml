@@ -1,0 +1,67 @@
+# .github/workflows/supabase-direct-ping.yml
+# Alternative approach: Directly query Supabase without going through your app
+name: Supabase Direct Keep-Alive
+
+on:
+  schedule:
+    # Run every 5 days at 2:00 AM UTC
+    - cron: "0 2 */5 * *"
+
+  workflow_dispatch:
+
+jobs:
+  direct-query:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Query Supabase Directly
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "Executing direct Supabase query..."
+
+          # Query clients table
+          response=$(curl -s -w "\n%{http_code}" \
+            "$SUPABASE_URL/rest/v1/clients?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "Response body: $body"
+          echo "HTTP Status: $http_code"
+
+          if [ "$http_code" -eq 200 ]; then
+            echo "✅ Database query successful"
+            echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          else
+            echo "❌ Database query failed"
+            exit 1
+          fi
+
+      - name: Query projects table (backup)
+        if: always()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "Querying projects table..."
+
+          response=$(curl -s -w "\n%{http_code}" \
+            "$SUPABASE_URL/rest/v1/projects?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY")
+
+          http_code=$(echo "$response" | tail -n1)
+
+          if [ "$http_code" -eq 200 ]; then
+            echo "✅ Backup query successful"
+          fi
+
+      - name: Log activity
+        if: always()
+        run: |
+          echo "Keep-alive job completed at $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "Next run: In 5 days"

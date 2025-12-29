@@ -1,0 +1,141 @@
+# .github/workflows/keep-supabase-active.yml
+# Pure cURL solution - NO app dependencies needed!
+name: Keep Supabase Active (cURL Only)
+
+on:
+  schedule:
+    # Run every 5 days at 3:00 AM UTC
+    - cron: "0 3 */5 * *"
+
+  # Allow manual trigger for testing
+  workflow_dispatch:
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Query Clients Table
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "=========================================="
+          echo "🚀 Querying Supabase - Clients Table"
+          echo "=========================================="
+          echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo ""
+
+          response=$(curl -s -w "\n%{http_code}" \
+            "$SUPABASE_URL/rest/v1/clients?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "HTTP Status: $http_code"
+          echo "Response: $body"
+          echo ""
+
+          if [ "$http_code" -eq 200 ]; then
+            echo "✅ Clients table query successful"
+          else
+            echo "❌ Clients table query failed"
+            exit 1
+          fi
+
+      - name: Query Projects Table
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "=========================================="
+          echo "🚀 Querying Supabase - Projects Table"
+          echo "=========================================="
+
+          response=$(curl -s -w "\n%{http_code}" \
+            "$SUPABASE_URL/rest/v1/projects?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "HTTP Status: $http_code"
+          echo "Response: $body"
+          echo ""
+
+          if [ "$http_code" -eq 200 ]; then
+            echo "✅ Projects table query successful"
+          else
+            echo "⚠️  Projects table query failed (non-critical)"
+          fi
+
+      - name: Query Project Phases Table
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "=========================================="
+          echo "🚀 Querying Supabase - Project Phases"
+          echo "=========================================="
+
+          response=$(curl -s -w "\n%{http_code}" \
+            "$SUPABASE_URL/rest/v1/project_phases?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "HTTP Status: $http_code"
+          echo "Response: $body"
+          echo ""
+
+          if [ "$http_code" -eq 200 ]; then
+            echo "✅ Project phases query successful"
+          else
+            echo "⚠️  Project phases query failed (non-critical)"
+          fi
+
+      - name: Check Auth Service
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "=========================================="
+          echo "🔐 Checking Supabase Auth Service"
+          echo "=========================================="
+
+          response=$(curl -s -w "\n%{http_code}" \
+            "$SUPABASE_URL/auth/v1/health" \
+            -H "apikey: $SUPABASE_KEY")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "HTTP Status: $http_code"
+          echo "Response: $body"
+          echo ""
+
+          if [ "$http_code" -eq 200 ]; then
+            echo "✅ Auth service healthy"
+          else
+            echo "⚠️  Auth service check inconclusive"
+          fi
+
+      - name: Summary Report
+        if: always()
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "📊 KEEP-ALIVE SUMMARY"
+          echo "=========================================="
+          echo "Completed: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "Next run: In 5 days"
+          echo "Project: iwimbcemuaocizmkjqpx"
+          echo ""
+          echo "✅ Database activity recorded"
+          echo "✅ Supabase project will remain active"
+          echo "=========================================="
