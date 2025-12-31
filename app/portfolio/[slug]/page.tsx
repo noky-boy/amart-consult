@@ -110,11 +110,13 @@ async function getRelatedProjects(
 }
 
 type Props = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>; // 🔥 CHANGE: params is now a Promise
 };
 
+// 🔥 CHANGE: await params in generateMetadata
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const project = await getProject(params.slug);
+  const { slug } = await params; // 🔥 ADD: await params
+  const project = await getProject(slug);
 
   if (!project) {
     return {
@@ -141,7 +143,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: project.title,
       description: project.seo?.metaDescription || project.description,
       type: "website",
-      url: `https://amart-consult.vercel.app/portfolio/${params.slug}`,
+      url: `https://amart-consult.vercel.app/portfolio/${slug}`,
       images: mainImage
         ? [
             {
@@ -162,8 +164,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// 🔥 CHANGE: await params in the component
 export default async function ProjectPage({ params }: Props) {
-  const project = await getProject(params.slug);
+  const { slug } = await params; // 🔥 ADD: await params
+  const project = await getProject(slug);
 
   if (!project) {
     notFound();

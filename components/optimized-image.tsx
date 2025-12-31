@@ -67,6 +67,9 @@ export default function OptimizedImage({
     ).toString("base64")}`;
   };
 
+  // 🔥 ADD THIS LINE - Strip query strings from placeholder images
+  const cleanSrc = (src || "/placeholder.svg").split("?")[0];
+
   return (
     <div
       className={`relative overflow-hidden ${className}`}
@@ -74,7 +77,7 @@ export default function OptimizedImage({
       onClick={onClick}
     >
       <Image
-        src={src || "/placeholder.svg"}
+        src={cleanSrc}
         alt={alt}
         fill
         sizes={sizes}

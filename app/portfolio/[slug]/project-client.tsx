@@ -3,12 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import JSZip from "jszip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import Breadcrumb from "@/components/breadcrumb";
 import { PortableText } from "@portabletext/react";
-import { urlFor } from "@/sanity/lib/image";
+import { urlFor, buildImageUrl } from "@/sanity/lib/image";
 import {
   ArrowLeft,
   Calendar,
@@ -23,7 +24,22 @@ import {
   Download,
   ArrowRight,
   DollarSign,
+  Check,
+  Facebook,
+  Twitter,
+  Linkedin,
+  Mail,
+  MessageCircle, // WhatsApp
 } from "@/components/ui/icons";
+
+// Add this import at the top if you don't have a dialog component
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ProjectData {
   _id: string;
@@ -37,7 +53,7 @@ interface ProjectData {
   projectValue?: number;
   currency?: string;
   images: Array<{
-    asset: { _ref: string };
+    asset: { _ref: string; url?: string };
     alt?: string;
     caption?: string;
   }>;
@@ -46,7 +62,7 @@ interface ProjectData {
     _id: string;
     title: string;
   }>;
-  content?: any; // PortableText content
+  content?: any;
   seo?: {
     metaTitle?: string;
     metaDescription?: string;
@@ -65,11 +81,20 @@ export default function ProjectPageClient({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false); // 🔥 NEW
+  const [copySuccess, setCopySuccess] = useState(false); // 🔥 NEW
+  const [isDownloading, setIsDownloading] = useState(false); // 🔥 NEW
 
   const allImages = project.images || [];
   const completionYear = project.completionDate
     ? new Date(project.completionDate).getFullYear()
     : new Date().getFullYear();
+
+  // 🔥 NEW: Get the current page URL
+  const projectUrl =
+    typeof window !== "undefined"
+      ? window.location.href
+      : `https://amart-consult.vercel.app/portfolio/${project.slug.current}`;
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
@@ -84,6 +109,150 @@ export default function ProjectPageClient({
   const openLightbox = (index: number) => {
     setLightboxImageIndex(index);
     setIsLightboxOpen(true);
+  };
+
+  // 🔥 NEW: Handle copy link to clipboard
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(projectUrl);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      alert("Failed to copy link");
+    }
+  };
+
+  // 🔥 NEW: Handle social media sharing
+  const handleShare = (platform: string) => {
+    const shareText = `Check out this project: ${project.title}`;
+    const encodedUrl = encodeURIComponent(projectUrl);
+    const encodedText = encodeURIComponent(shareText);
+
+    let shareUrl = "";
+
+    switch (platform) {
+      case "whatsapp":
+        shareUrl = `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
+        break;
+      case "facebook":
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+        break;
+      case "twitter":
+        shareUrl = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`;
+        break;
+      case "linkedin":
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+        break;
+      case "email":
+        shareUrl = `mailto:?subject=${encodeURIComponent(
+          project.title
+        )}&body=${encodedText}%20${encodedUrl}`;
+        break;
+    }
+
+    if (shareUrl) {
+      window.open(shareUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  // 🔥 NEW: Handle native Web Share API (mobile devices)
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: project.title,
+          text: `Check out this project: ${project.title}`,
+          url: projectUrl,
+        });
+      } catch (err) {
+        // User cancelled or error occurred
+        console.log("Share cancelled or failed:", err);
+      }
+    } else {
+      // Fallback to dialog
+      setIsShareDialogOpen(true);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    if (allImages.length === 0) {
+      alert("No images available to download");
+      return;
+    }
+
+    setIsDownloading(true);
+
+    try {
+      const zip = new JSZip();
+
+      // Fetch all images
+      const imagePromises = allImages.map(async (image, index) => {
+        if (!image?.asset) return null;
+
+        const imageUrl = buildImageUrl(image.asset, 1920, 1080);
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+
+        zip.file(`${project.slug.current}-${index + 1}.jpg`, blob);
+      });
+
+      await Promise.all(imagePromises);
+
+      // Generate ZIP file
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+
+      // Download ZIP
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(zipBlob);
+      link.download = `${project.slug.current}-images.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Download failed:", error);
+      alert("Failed to download images. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // 🔥 NEW: Handle image download
+  const handleDownload = async () => {
+    if (!allImages[0]?.asset) {
+      alert("No image available to download");
+      return;
+    }
+
+    setIsDownloading(true);
+
+    try {
+      // Get the image URL
+      const imageUrl = buildImageUrl(allImages[0].asset, 1920, 1080);
+
+      // Fetch the image as a blob
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+
+      // Create a temporary URL for the blob
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // Create a temporary anchor element and trigger download
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `${project.slug.current}-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download failed:", error);
+      alert("Failed to download image. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const getTierBadge = (featured: boolean) => {
@@ -143,10 +312,11 @@ export default function ProjectPageClient({
         >
           <div className="relative h-full">
             <Image
-              src={urlFor(allImages[currentImageIndex].asset)
-                .width(1200)
-                .height(800)
-                .url()}
+              src={buildImageUrl(
+                allImages[currentImageIndex].asset,
+                1200,
+                800
+              )} /* 🔥 CHANGE */
               alt={
                 allImages[currentImageIndex]?.alt ||
                 `${project.title} - Project image`
@@ -289,10 +459,11 @@ export default function ProjectPageClient({
                           <div className="my-8">
                             {value?.asset && (
                               <Image
-                                src={urlFor(value.asset)
-                                  .width(800)
-                                  .height(600)
-                                  .url()}
+                                src={buildImageUrl(
+                                  value.asset,
+                                  800,
+                                  600
+                                )} /* 🔥 CHANGE */
                                 alt={value.alt || "Project image"}
                                 width={800}
                                 height={600}
@@ -329,7 +500,11 @@ export default function ProjectPageClient({
                         onClick={() => openLightbox(index)}
                       >
                         <Image
-                          src={urlFor(image.asset).width(400).height(400).url()}
+                          src={buildImageUrl(
+                            image.asset,
+                            400,
+                            400
+                          )} /* 🔥 CHANGE */
                           alt={
                             image.alt || `${project.title} - Image ${index + 1}`
                           }
@@ -443,7 +618,7 @@ export default function ProjectPageClient({
               </CardContent>
             </Card>
 
-            {/* Share & Download */}
+            {/* 🔥 UPDATED: Share & Download Card */}
             <Card>
               <CardContent className="p-6">
                 <h3 className="text-xl font-semibold text-indigo-deep mb-4">
@@ -453,7 +628,8 @@ export default function ProjectPageClient({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 bg-transparent"
+                    className="flex-1 bg-transparent hover:bg-indigo-deep hover:text-white transition-colors"
+                    onClick={handleNativeShare}
                   >
                     <Share2 className="w-4 h-4 mr-2" />
                     Share
@@ -461,10 +637,12 @@ export default function ProjectPageClient({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 bg-transparent"
+                    className="flex-1"
+                    onClick={handleDownloadAll} // Use this instead
+                    disabled={isDownloading}
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Download
+                    {isDownloading ? "Downloading..." : "Download All"}
                   </Button>
                 </div>
               </CardContent>
@@ -488,10 +666,11 @@ export default function ProjectPageClient({
                     {relatedProject.images?.[0]?.asset && (
                       <div className="relative h-48 overflow-hidden">
                         <Image
-                          src={urlFor(relatedProject.images[0].asset)
-                            .width(600)
-                            .height(400)
-                            .url()}
+                          src={buildImageUrl(
+                            relatedProject.images[0].asset,
+                            600,
+                            400
+                          )} /* 🔥 CHANGE */
                           alt={
                             relatedProject.images[0].alt || relatedProject.title
                           }
@@ -575,10 +754,11 @@ export default function ProjectPageClient({
           <div className="relative max-w-4xl max-h-full">
             {allImages[lightboxImageIndex]?.asset && (
               <Image
-                src={urlFor(allImages[lightboxImageIndex].asset)
-                  .width(1200)
-                  .height(800)
-                  .url()}
+                src={buildImageUrl(
+                  allImages[lightboxImageIndex].asset,
+                  1200,
+                  800
+                )} /* 🔥 CHANGE */
                 alt={
                   allImages[lightboxImageIndex]?.alt ||
                   `${project.title} - Image ${lightboxImageIndex + 1}`
@@ -613,6 +793,91 @@ export default function ProjectPageClient({
           </div>
         </div>
       )}
+      {/* 🔥 NEW: Share Dialog */}
+      <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share this project</DialogTitle>
+            <DialogDescription>
+              Share {project.title} with your network
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Copy Link */}
+            <div className="flex items-center space-x-2">
+              <input
+                type="text"
+                value={projectUrl}
+                readOnly
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md bg-gray-50"
+              />
+              <Button
+                size="sm"
+                onClick={handleCopyLink}
+                className="bg-indigo-deep hover:bg-indigo-deep/90"
+              >
+                {copySuccess ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Copied!
+                  </>
+                ) : (
+                  "Copy"
+                )}
+              </Button>
+            </div>
+
+            {/* Social Media Buttons */}
+            <div className="border-t pt-4">
+              <p className="text-sm font-medium text-gray-700 mb-3">
+                Share on social media:
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => handleShare("whatsapp")}
+                  className="justify-start hover:bg-green-50 hover:border-green-500 hover:text-green-600"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  WhatsApp
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleShare("facebook")}
+                  className="justify-start hover:bg-blue-50 hover:border-blue-500 hover:text-blue-600"
+                >
+                  <Facebook className="w-4 h-4 mr-2" />
+                  Facebook
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleShare("twitter")}
+                  className="justify-start hover:bg-sky-50 hover:border-sky-500 hover:text-sky-600"
+                >
+                  <Twitter className="w-4 h-4 mr-2" />
+                  Twitter
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleShare("linkedin")}
+                  className="justify-start hover:bg-blue-50 hover:border-blue-700 hover:text-blue-700"
+                >
+                  <Linkedin className="w-4 h-4 mr-2" />
+                  LinkedIn
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleShare("email")}
+                  className="justify-start col-span-2 hover:bg-gray-50 hover:border-gray-500"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Email
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

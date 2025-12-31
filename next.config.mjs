@@ -14,6 +14,45 @@ const nextConfig = {
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+
+    // Add these configurations to fix your error
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.sanity.io",
+        pathname: "/images/9mnu7l2c/**",
+      },
+    ],
+    localPatterns: [
+      {
+        pathname: "/placeholder.svg",
+        search: "",
+      },
+      {
+        pathname: "/placeholder.jpg",
+        search: "",
+      },
+      {
+        pathname: "/placeholder-logo.svg",
+        search: "",
+      },
+      {
+        pathname: "/placeholder-logo.png",
+        search: "",
+      },
+      {
+        pathname: "/placeholder-user.jpg",
+        search: "",
+      },
+      {
+        pathname: "/images/**",
+        search: "",
+      },
+      {
+        pathname: "/resources/**",
+        search: "",
+      },
+    ],
   },
 };
 
