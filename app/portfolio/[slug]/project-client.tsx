@@ -175,6 +175,7 @@ export default function ProjectPageClient({
     }
   };
 
+  // 🔥 UPDATED: Download all images via API
   const handleDownloadAll = async () => {
     if (allImages.length === 0) {
       alert("No images available to download");
@@ -184,31 +185,39 @@ export default function ProjectPageClient({
     setIsDownloading(true);
 
     try {
-      const zip = new JSZip();
+      // Prepare image URLs
+      const imageUrls = allImages
+        .filter((img) => img?.asset)
+        .map((img) => buildImageUrl(img.asset, 1920, 1080));
 
-      // Fetch all images
-      const imagePromises = allImages.map(async (image, index) => {
-        if (!image?.asset) return null;
-
-        const imageUrl = buildImageUrl(image.asset, 1920, 1080);
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
-
-        zip.file(`${project.slug.current}-${index + 1}.jpg`, blob);
+      // Call API to generate ZIP
+      const response = await fetch("/api/download-images", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          images: imageUrls,
+          projectSlug: project.slug.current,
+        }),
       });
 
-      await Promise.all(imagePromises);
+      if (!response.ok) {
+        throw new Error("Failed to download images");
+      }
 
-      // Generate ZIP file
-      const zipBlob = await zip.generateAsync({ type: "blob" });
+      // Get the ZIP blob
+      const blob = await response.blob();
 
-      // Download ZIP
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = window.URL.createObjectURL(zipBlob);
+      link.href = url;
       link.download = `${project.slug.current}-images.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Download failed:", error);
       alert("Failed to download images. Please try again.");
@@ -217,7 +226,7 @@ export default function ProjectPageClient({
     }
   };
 
-  // 🔥 NEW: Handle image download
+  // 🔥 UPDATED: Handle image download via API (fixes CORS)
   const handleDownload = async () => {
     if (!allImages[0]?.asset) {
       alert("No image available to download");
@@ -229,24 +238,36 @@ export default function ProjectPageClient({
     try {
       // Get the image URL
       const imageUrl = buildImageUrl(allImages[0].asset, 1920, 1080);
+      const filename = `${project.slug.current}-main-image.jpg`;
 
-      // Fetch the image as a blob
-      const response = await fetch(imageUrl);
+      // Call API to download image
+      const response = await fetch("/api/download-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          imageUrl,
+          filename,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to download image");
+      }
+
+      // Get the image blob
       const blob = await response.blob();
 
-      // Create a temporary URL for the blob
-      const blobUrl = window.URL.createObjectURL(blob);
-
-      // Create a temporary anchor element and trigger download
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = `${project.slug.current}-${Date.now()}.jpg`;
+      link.href = url;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      // Clean up the blob URL
-      window.URL.revokeObjectURL(blobUrl);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Download failed:", error);
       alert("Failed to download image. Please try again.");
@@ -618,32 +639,51 @@ export default function ProjectPageClient({
               </CardContent>
             </Card>
 
-            {/* 🔥 UPDATED: Share & Download Card */}
+            {/* Share & Download Card */}
             <Card>
               <CardContent className="p-6">
                 <h3 className="text-xl font-semibold text-indigo-deep mb-4">
                   Share Project
                 </h3>
-                <div className="flex gap-3">
+                <div className="space-y-3">
+                  {/* Share Button */}
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 bg-transparent hover:bg-indigo-deep hover:text-white transition-colors"
+                    className="w-full bg-transparent hover:bg-indigo-deep hover:text-white transition-colors"
                     onClick={handleNativeShare}
                   >
                     <Share2 className="w-4 h-4 mr-2" />
-                    Share
+                    Share Project
                   </Button>
+
+                  {/* Download Main Image */}
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1"
-                    onClick={handleDownloadAll} // Use this instead
+                    className="w-full bg-transparent hover:bg-terracotta hover:text-white transition-colors"
+                    onClick={handleDownload}
                     disabled={isDownloading}
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    {isDownloading ? "Downloading..." : "Download All"}
+                    {isDownloading ? "Downloading..." : "Download Main Image"}
                   </Button>
+
+                  {/* Download All Images (Optional - only if more than 1 image) */}
+                  {allImages.length > 1 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full bg-transparent hover:bg-indigo-deep hover:text-white transition-colors"
+                      onClick={handleDownloadAll}
+                      disabled={isDownloading}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      {isDownloading
+                        ? "Preparing ZIP..."
+                        : `Download All (${allImages.length} images)`}
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

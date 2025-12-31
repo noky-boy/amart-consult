@@ -25,11 +25,11 @@ export default function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Add this new useEffect
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  // Enhanced handleNavClick with better navigation handling
   const handleNavClick = (href: string) => {
     setIsMenuOpen(false);
 
@@ -48,7 +48,7 @@ export default function Navigation() {
         window.location.href = "/" + href;
       }
     } else if (href.startsWith("/")) {
-      // Handle regular routes
+      // Handle regular routes - let Next.js handle navigation
       setTimeout(() => {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }, 100);
@@ -59,6 +59,11 @@ export default function Navigation() {
     setIsWhatsAppFormOpen(true);
     setIsMenuOpen(false);
   };
+
+  // Close menu on route change (additional safety net)
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
 
   const navItems = [
     { name: "Home", href: "/" },
@@ -71,7 +76,7 @@ export default function Navigation() {
   ];
 
   const isActiveLink = (href: string) => {
-    if (!isMounted) return false; // Prevent hydration mismatch
+    if (!isMounted) return false;
 
     if (href === "/") {
       return pathname === "/";
@@ -206,11 +211,10 @@ export default function Navigation() {
                 </Button>
               </Link>
 
-              {/* For Mobile version (in the mobile menu): */}
               <a href="tel:+233543543356">
                 <Button
                   variant="outline"
-                  className="w-full border-indigo-deep text-indigo-deep hover:bg-indigo-deep hover:text-white transition-all duration-300 bg-transparent focus-visible:ring-enhanced"
+                  className="border-indigo-deep text-indigo-deep hover:bg-indigo-deep hover:text-white transition-all duration-300 bg-transparent focus-visible:ring-enhanced"
                   aria-label="Call Amart Consult now"
                 >
                   <Phone className="h-4 w-4 mr-2" aria-hidden="true" />
@@ -259,6 +263,7 @@ export default function Navigation() {
           </div>
         </div>
 
+        {/* Mobile Menu */}
         <div
           className={`lg:hidden transition-all duration-300 ease-in-out ${
             isMenuOpen
@@ -287,7 +292,11 @@ export default function Navigation() {
               ))}
 
               <div className="pt-4 space-y-3 border-t border-gray-200 mt-4">
-                <Link href="/portal/login">
+                {/* FIXED: Client Portal link now closes menu */}
+                <Link
+                  href="/portal/login"
+                  onClick={() => handleNavClick("/portal/login")}
+                >
                   <Button
                     variant="ghost"
                     className="w-full text-indigo-deep hover:text-terracotta hover:bg-indigo-deep/5 transition-all duration-300 justify-start focus-visible:ring-enhanced"
@@ -296,14 +305,18 @@ export default function Navigation() {
                     Client Portal Sign In
                   </Button>
                 </Link>
-                <Button
-                  variant="outline"
-                  className="w-full border-indigo-deep text-indigo-deep hover:bg-indigo-deep hover:text-white transition-all duration-300 bg-transparent focus-visible:ring-enhanced"
-                  aria-label="Call Amart Consult now"
-                >
-                  <Phone className="h-4 w-4 mr-2" aria-hidden="true" />
-                  Call Now
-                </Button>
+
+                <a href="tel:+233543543356">
+                  <Button
+                    variant="outline"
+                    className="w-full border-indigo-deep text-indigo-deep hover:bg-indigo-deep hover:text-white transition-all duration-300 bg-transparent focus-visible:ring-enhanced"
+                    aria-label="Call Amart Consult now"
+                  >
+                    <Phone className="h-4 w-4 mr-2" aria-hidden="true" />
+                    Call Now
+                  </Button>
+                </a>
+
                 <Button
                   onClick={openWhatsAppForm}
                   className="w-full bg-indigo-deep hover:bg-indigo-800 text-white shadow-lg transition-all duration-300 focus-visible:ring-enhanced"
