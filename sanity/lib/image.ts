@@ -5,40 +5,36 @@ import { client } from "./client";
 
 const builder = imageUrlBuilder(client);
 
-export function urlFor(source: SanityImageSource) {
+// ✅ Fix — narrow the return type
+export function urlFor(source: SanityImageSource): string {
   if (!source) return "/placeholder.svg";
-
-  // 🔥 FIX: If source already has a URL, return it directly
   if (typeof source === "object" && "url" in source && source.url) {
     return source.url as string;
   }
-
   try {
     return builder.image(source).url();
-  } catch (error) {
-    console.error("Error building image URL:", error);
+  } catch {
     return "/placeholder.svg";
   }
 }
 
-export function getImageDimensions(image: any) {
-  if (!image?.asset?._ref) return { width: 800, height: 600 };
-
-  try {
-    const dimensions = image.asset._ref.split("-")[2];
-    const [width, height] = dimensions.split("x").map(Number);
-    return { width: width > 0 ? width : 800, height: height || 600 };
-  } catch (error) {
-    console.error("Error parsing image dimensions:", error);
-    return { width: 800, height: 600 };
+export function getImageDimensions(image: any): {
+  width: number;
+  height: number;
+} {
+  const ref = image?.asset?._ref ?? "";
+  const match = ref.match(/-(\d+)x(\d+)-/);
+  if (match) {
+    return { width: Number(match[1]), height: Number(match[2]) };
   }
+  return { width: 800, height: 600 };
 }
 
 // 🔥 NEW: Add a helper for building images with transformations
 export function buildImageUrl(
   source: SanityImageSource,
   width?: number,
-  height?: number
+  height?: number,
 ) {
   if (!source) return "/placeholder.svg";
 

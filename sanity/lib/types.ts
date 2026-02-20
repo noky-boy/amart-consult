@@ -29,6 +29,39 @@ export interface ServicePackage {
   category?: string;
 }
 
+// ─── Media types ────────────────────────────────────────────────────────────
+
+export interface MediaImage {
+  _type: "imageItem";
+  image: {
+    asset: { _ref: string; url?: string };
+    hotspot?: any;
+    crop?: any;
+  };
+  alt?: string;
+  caption?: string;
+}
+
+export interface MediaVideo {
+  _type: "videoItem";
+  videoType: "file" | "url";
+  /** Present when videoType === "file" */
+  videoFile?: {
+    asset: { url: string };
+  };
+  /** Present when videoType === "url" */
+  videoUrl?: string;
+  posterImage?: {
+    asset: { _ref: string; url?: string };
+  };
+  title?: string;
+  caption?: string;
+}
+
+export type MediaItem = MediaImage | MediaVideo;
+
+// ─── Portfolio ───────────────────────────────────────────────────────────────
+
 export interface Portfolio {
   _id: string;
   title: string;
@@ -36,11 +69,16 @@ export interface Portfolio {
   description: string;
   category: string;
   location?: string;
+  /** "ongoing" | "completed"  — replaces bare completionDate check */
+  projectStatus: "ongoing" | "completed";
   completionDate?: string;
   client?: string;
   projectValue?: number;
   currency: string;
-  images: Array<{
+  /** New mixed-media array */
+  media?: MediaItem[];
+  /** Legacy images array – still present on old docs */
+  images?: Array<{
     asset: any;
     alt?: string;
     caption?: string;
@@ -62,12 +100,12 @@ export interface BlogPost {
   excerpt: string;
   author?: {
     name: string;
-    image?: string; // Changed from 'any' to 'string' since query returns URL
+    image?: string;
     bio?: string;
   };
   publishedAt: string;
   featuredImage: {
-    url: string; // Changed from 'asset: any' to 'url: string'
+    url: string;
     alt?: string;
   };
   category?: string;
@@ -105,9 +143,7 @@ export interface FAQ {
 export interface Material {
   _id: string;
   name: string;
-  slug: {
-    current: string;
-  };
+  slug: { current: string };
   category:
     | "structural"
     | "finishing"
@@ -125,10 +161,7 @@ export interface Material {
     currency: "GHS" | "USD";
     note?: string;
   };
-  specifications?: Array<{
-    label: string;
-    value: string;
-  }>;
+  specifications?: Array<{ label: string; value: string }>;
   featured: boolean;
   order?: number;
 }

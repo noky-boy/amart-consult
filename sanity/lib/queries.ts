@@ -1,6 +1,30 @@
 import { groq } from "next-sanity";
 
-// Service Queries
+// ─── Shared media fragment ────────────────────────────────────────────────────
+// Reused in every portfolio query so the shape is consistent.
+const MEDIA_FRAGMENT = groq`
+  "media": media[]{
+    _type,
+    _type == "imageItem" => {
+      "url": image.asset->url,
+      "alt": alt,
+      "caption": caption,
+      "assetRef": image.asset._ref
+    },
+    _type == "videoItem" => {
+      videoType,
+      "videoUrl": select(
+        videoType == "file" => videoFile.asset->url,
+        videoType == "url"  => videoUrl
+      ),
+      "posterUrl": posterImage.asset->url,
+      title,
+      caption
+    }
+  }
+`;
+
+// ─── Service Queries ─────────────────────────────────────────────────────────
 
 export const servicesListQuery = groq`
   *[_type == "service"] | order(_createdAt asc) {
@@ -43,7 +67,8 @@ export const serviceBySlugQuery = groq`
   }
 `;
 
-// Package Queries
+// ─── Package Queries ──────────────────────────────────────────────────────────
+
 export const packagesQuery = groq`
   *[_type == "package"] | order(popular desc, price asc) {
     _id,
@@ -86,7 +111,8 @@ export const popularPackagesQuery = groq`
   }
 `;
 
-// Portfolio Queries
+// ─── Portfolio Queries ────────────────────────────────────────────────────────
+
 export const portfolioQuery = groq`
   *[_type == "portfolio"] | order(featured desc, completionDate desc) {
     _id,
@@ -95,10 +121,13 @@ export const portfolioQuery = groq`
     description,
     category,
     location,
+    projectStatus,
     completionDate,
     client,
     projectValue,
     currency,
+    ${MEDIA_FRAGMENT},
+    // Legacy fallback
     "images": images[]{
       "url": asset->url,
       "alt": alt,
@@ -117,10 +146,13 @@ export const portfolioBySlugQuery = groq`
     description,
     category,
     location,
+    projectStatus,
     completionDate,
     client,
     projectValue,
     currency,
+    ${MEDIA_FRAGMENT},
+    // Legacy fallback
     "images": images[]{
       "url": asset->url,
       "alt": alt,
@@ -145,10 +177,12 @@ export const portfolioByCategoryQuery = groq`
     description,
     category,
     location,
+    projectStatus,
     completionDate,
     client,
     projectValue,
     currency,
+    ${MEDIA_FRAGMENT},
     "images": images[]{
       "url": asset->url,
       "alt": alt,
@@ -167,17 +201,30 @@ export const featuredPortfolioQuery = groq`
     description,
     category,
     location,
+    projectStatus,
     completionDate,
+    "media": media[0]{
+      _type,
+      _type == "imageItem" => {
+        "url": image.asset->url,
+        "alt": alt
+      },
+      _type == "videoItem" => {
+        "posterUrl": posterImage.asset->url,
+        title
+      }
+    },
+    // Legacy
     "images": images[0]{
       "url": asset->url,
-      "alt": alt,
-      "caption": caption
+      "alt": alt
     },
     featured
   }
 `;
 
-// Blog Queries
+// ─── Blog Queries ─────────────────────────────────────────────────────────────
+
 export const blogPostsQuery = groq`
   *[_type == "blogPost" && publishedAt < now()] | order(publishedAt desc) {
     _id,
@@ -267,7 +314,8 @@ export const blogPostsByCategoryQuery = groq`
   }
 `;
 
-// Testimonial Queries
+// ─── Testimonials ─────────────────────────────────────────────────────────────
+
 export const testimonialsQuery = groq`
   *[_type == "testimonial"] | order(featured desc, date desc) {
     _id,
@@ -305,7 +353,8 @@ export const featuredTestimonialsQuery = groq`
   }
 `;
 
-// FAQ Queries
+// ─── FAQ Queries ──────────────────────────────────────────────────────────────
+
 export const faqsQuery = groq`
   *[_type == "faq"] | order(order asc, _createdAt asc) {
     _id,
@@ -338,7 +387,8 @@ export const featuredFaqsQuery = groq`
   }
 `;
 
-// Combined Queries for Homepage
+// ─── Homepage ─────────────────────────────────────────────────────────────────
+
 export const homepageDataQuery = groq`
 {
   "featuredPortfolio": *[_type == "portfolio" && featured == true] | order(completionDate desc) [0...6] {
@@ -348,10 +398,21 @@ export const homepageDataQuery = groq`
     description,
     category,
     location,
+    projectStatus,
+    "media": media[0]{
+      _type,
+      _type == "imageItem" => {
+        "url": image.asset->url,
+        "alt": alt
+      },
+      _type == "videoItem" => {
+        "posterUrl": posterImage.asset->url,
+        title
+      }
+    },
     "images": images[0]{
       "url": asset->url,
-      "alt": alt,
-      "caption": caption
+      "alt": alt
     }
   },
   "featuredBlogPosts": *[_type == "blogPost" && featured == true && publishedAt < now()] | order(publishedAt desc) [0...3] {
@@ -392,7 +453,8 @@ export const homepageDataQuery = groq`
 }
 `;
 
-// Search Queries
+// ─── Search ───────────────────────────────────────────────────────────────────
+
 export const searchQuery = groq`
   *[_type in ["portfolio", "blogPost", "service"] && (
     title match $searchTerm + "*" ||
@@ -405,14 +467,15 @@ export const searchQuery = groq`
     slug,
     description,
     "image": select(
-      _type == "portfolio" => images[0].asset->url,
-      _type == "blogPost" => featuredImage.asset->url,
-      _type == "service" => image.asset->url
+      _type == "portfolio" => coalesce(media[0].image.asset->url, images[0].asset->url),
+      _type == "blogPost"  => featuredImage.asset->url,
+      _type == "service"   => image.asset->url
     )
   }
 `;
 
-// Sitemap Queries
+// ─── Sitemap ──────────────────────────────────────────────────────────────────
+
 export const sitemapQuery = groq`
 {
   "services": *[_type == "service"] {
@@ -431,7 +494,8 @@ export const sitemapQuery = groq`
 }
 `;
 
-// Material Queries
+// ─── Material Queries ─────────────────────────────────────────────────────────
+
 export const materialsQuery = groq`
   *[_type == "material"] | order(order asc, name asc) {
     _id,
