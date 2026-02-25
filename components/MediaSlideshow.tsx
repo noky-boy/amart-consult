@@ -8,41 +8,26 @@ import { buildImageUrl } from "@/sanity/lib/image";
 
 export interface NormalisedMediaItem {
   type: "image" | "video";
-  // image
   imageUrl?: string;
   alt?: string;
   caption?: string;
   assetRef?: string;
-  // video
   videoUrl?: string;
   posterUrl?: string;
   videoTitle?: string;
 }
 
-// Re-export alias used in project-client
 export type MediaSlideItem = NormalisedMediaItem;
 
 interface MediaSlideshowProps {
   media?: any[];
   legacyImages?: any[];
   projectTitle: string;
-  /** Content rendered over the current slide (title, badges, etc.) */
   overlayContent?: React.ReactNode;
-  /** Called when user clicks on an image slide to open the lightbox */
   onOpenLightbox?: (index: number) => void;
 }
 
 // ─── normaliseMedia ───────────────────────────────────────────────────────────
-//
-// GROQ projections return a FLAT shape — not the raw Sanity schema shape.
-//
-// imageItem from query:  { _type: "imageItem", url: "https://cdn...", alt, caption }
-// videoItem from query:  { _type: "videoItem", videoUrl: "https://...", posterImage: { asset: { url } } }
-//
-// Legacy images from query: { url: "https://cdn...", alt, caption }
-//
-// This function handles both the flat projected shape and the raw nested shape
-// as a fallback, so it never breaks regardless of which query produced the data.
 
 export function normaliseMedia(
   media: any[] | undefined,
@@ -52,7 +37,6 @@ export function normaliseMedia(
     return media
       .map((item: any): NormalisedMediaItem | null => {
         if (item._type === "imageItem") {
-          // Flat projected field first, then nested schema field
           const imageUrl =
             item.url ??
             item.image?.asset?.url ??
@@ -72,13 +56,26 @@ export function normaliseMedia(
         }
 
         if (item._type === "videoItem") {
-          // videoUrl is already the resolved CDN/file URL from GROQ select()
-          const videoUrl: string | undefined = item.videoUrl || undefined;
+          // Try every possible field name — the query now returns both
+          // videoFileUrl (Sanity-hosted file) and videoUrl (external link).
+          // We pick whichever one is actually populated.
+          const videoUrl: string | undefined =
+            item.videoFileUrl || // Sanity file upload → asset->url
+            item.videoUrl || // external URL field
+            item.url || // catch-all
+            undefined;
+
           const posterUrl: string | undefined =
-            item.posterUrl ?? item.posterImage?.asset?.url;
+            item.posterUrl || item.posterImage?.asset?.url || undefined;
 
-          if (!videoUrl) return null;
+          // Log so you can see exactly what came back from Sanity
+          if (process.env.NODE_ENV === "development") {
+            console.log("[MediaSlideshow] videoItem raw:", item);
+            console.log("[MediaSlideshow] resolved videoUrl:", videoUrl);
+          }
 
+          // Keep the item even if videoUrl is undefined — it will render
+          // the poster image as a still frame instead of crashing
           return {
             type: "video",
             videoUrl,
@@ -93,8 +90,6 @@ export function normaliseMedia(
       .filter((x): x is NormalisedMediaItem => x !== null);
   }
 
-  // Fallback: legacy images
-  // Projected shape: { url, alt, caption }  OR raw: { asset: { url, _ref }, alt, caption }
   if (legacyImages && legacyImages.length > 0) {
     return legacyImages
       .map((img: any): NormalisedMediaItem | null => {
@@ -131,7 +126,6 @@ export default function MediaSlideshow({
   const items = normaliseMedia(media, legacyImages);
   const [current, setCurrent] = useState(0);
 
-  // Auto-advance every 6.5 s — same interval as the hero
   useEffect(() => {
     if (items.length <= 1) return;
     const timer = setInterval(
@@ -145,10 +139,11 @@ export default function MediaSlideshow({
 
   return (
     <section
-      className="relative h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] xl:h-screen overflow-hidden"
+      // ↓ Reduced height — fits in viewport without needing to scroll
+      className="relative h-[45vh] sm:h-[50vh] md:h-[55vh] lg:h-[60vh] overflow-hidden"
       aria-label={`${projectTitle} media showcase`}
     >
-      {/* ── Slides — stacked absolute divs, opacity-fade between them ── */}
+      {/* Stacked slides — opacity fade between them, same as the hero */}
       <div className="absolute inset-0 z-0">
         {items.map((item, index) => (
           <div
@@ -159,51 +154,75 @@ export default function MediaSlideshow({
           >
             {item.type === "image" && item.imageUrl ? (
               <>
-                {/* Exact same approach as the hero — fill + object-cover object-center */}
                 <div className="relative w-full h-full">
                   <Image
                     src={item.imageUrl}
                     alt={item.alt ?? `${projectTitle} — image ${index + 1}`}
                     fill
                     priority={index === 0}
-                    sizes="(max-width: 480px) 480px, (max-width: 768px) 768px, (max-width: 1024px) 1024px, (max-width: 1440px) 1440px, 1920px"
+                    sizes="(max-width: 480px) 480px, (max-width: 768px) 768px, (max-width: 1024px) 1024px, 1920px"
                     quality={85}
                     className="object-cover object-center"
                   />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10" />
               </>
-            ) : item.type === "video" && item.videoUrl ? (
-              /* Video plays exactly like an image — no controls, no UI chrome,
-                 just fills the slide and plays. Same dimensions as the image slot. */
-              <video
-                src={item.videoUrl}
-                poster={item.posterUrl}
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="absolute inset-0 w-full h-full object-cover object-center"
-                aria-label={
-                  item.videoTitle ?? `${projectTitle} — video ${index + 1}`
-                }
-              />
+            ) : item.type === "video" ? (
+              item.videoUrl ? (
+                // Video plays silently like a background image
+                <video
+                  src={item.videoUrl}
+                  poster={item.posterUrl}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover object-center"
+                  aria-label={item.videoTitle ?? `${projectTitle} — video`}
+                />
+              ) : item.posterUrl ? (
+                // No URL yet — show poster as a still image fallback
+                // (also renders while the video is loading)
+                <div className="relative w-full h-full">
+                  <Image
+                    src={item.posterUrl}
+                    alt={item.videoTitle ?? `${projectTitle} — video poster`}
+                    fill
+                    priority={index === 0}
+                    sizes="(max-width: 480px) 480px, (max-width: 768px) 768px, 1920px"
+                    quality={85}
+                    className="object-cover object-center opacity-80"
+                  />
+                  {/* Play icon overlay so user knows it's a video */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-black/40 rounded-full p-5">
+                      <svg
+                        className="w-10 h-10 fill-white"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              ) : null
             ) : null}
           </div>
         ))}
       </div>
 
-      {/* ── Overlay content (title, badges) ── */}
+      {/* Overlay content (title, badges) */}
       {overlayContent && (
         <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
           <div className="pointer-events-auto">{overlayContent}</div>
         </div>
       )}
 
-      {/* ── Dot indicators — same style as the hero ── */}
+      {/* Dot indicators */}
       {items.length > 1 && (
         <div
-          className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-20 flex space-x-2 sm:space-x-3"
+          className="absolute bottom-4 sm:bottom-5 left-1/2 -translate-x-1/2 z-20 flex space-x-2"
           role="tablist"
           aria-label="Media navigation"
         >
@@ -216,13 +235,12 @@ export default function MediaSlideshow({
               suppressHydrationWarning
               onClick={() => setCurrent(index)}
               className={`rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
-                // Video dots are slightly wider pills to distinguish them
                 item.type === "video"
-                  ? "h-3 w-6"
-                  : "w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4"
+                  ? "h-2.5 w-5"
+                  : "w-2.5 h-2.5 sm:w-3 sm:h-3"
               } ${
                 index === current
-                  ? "bg-terracotta scale-110 shadow-lg ring-1 sm:ring-2 ring-white/50"
+                  ? "bg-terracotta scale-110 shadow-lg"
                   : "bg-white/60 hover:bg-white/80 backdrop-blur-sm"
               }`}
             />
@@ -230,7 +248,7 @@ export default function MediaSlideshow({
         </div>
       )}
 
-      {/* ── Expand button (images only) ── */}
+      {/* Expand button for images */}
       {onOpenLightbox && items[current]?.type === "image" && (
         <button
           onClick={() => onOpenLightbox(current)}
@@ -254,11 +272,10 @@ export default function MediaSlideshow({
         </button>
       )}
 
-      {/* ── Screen-reader live region ── */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {items[current]?.type === "video"
-          ? `Video ${current + 1} of ${items.length}${items[current].videoTitle ? `: ${items[current].videoTitle}` : ""}`
-          : `Image ${current + 1} of ${items.length}${items[current]?.alt ? `: ${items[current].alt}` : ""}`}
+          ? `Video ${current + 1} of ${items.length}`
+          : `Image ${current + 1} of ${items.length}`}
       </div>
     </section>
   );
