@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // eslint moved to eslint.config.mjs or next lint CLI — not valid here in Next 16
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -14,77 +12,29 @@ const nextConfig = {
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     qualities: [75, 85],
-
-    // Add these configurations to fix your error
     remotePatterns: [
       {
         protocol: "https",
         hostname: "cdn.sanity.io",
         pathname: "/images/9mnu7l2c/**",
       },
+      {
+        protocol: "https",
+        hostname: "cdn.sanity.io",
+        pathname: "/files/9mnu7l2c/**",
+      },
     ],
     localPatterns: [
-      {
-        pathname: "/placeholder.svg",
-        search: "",
-      },
-      {
-        pathname: "/placeholder.jpg",
-        search: "",
-      },
-      {
-        pathname: "/placeholder-logo.svg",
-        search: "",
-      },
-      {
-        pathname: "/placeholder-logo.png",
-        search: "",
-      },
-      {
-        pathname: "/placeholder-user.jpg",
-        search: "",
-      },
-      {
-        pathname: "/images/**",
-        search: "",
-      },
-      {
-        pathname: "/resources/**",
-        search: "",
-      },
+      { pathname: "/placeholder.svg", search: "" },
+      { pathname: "/placeholder.jpg", search: "" },
+      { pathname: "/placeholder-logo.svg", search: "" },
+      { pathname: "/placeholder-logo.png", search: "" },
+      { pathname: "/placeholder-user.jpg", search: "" },
+      { pathname: "/images/**", search: "" },
+      { pathname: "/resources/**", search: "" },
     ],
   },
-
-  async headers() {
-    return [
-      {
-        // Apply to all routes
-        source: "/(.*)",
-        headers: [
-          {
-            key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              // Scripts — Next.js needs unsafe-inline/eval in dev
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              // Styles
-              "style-src 'self' 'unsafe-inline'",
-              // Images — self + Sanity CDN + data URIs (blur placeholders)
-              "img-src 'self' data: blob: https://cdn.sanity.io",
-              // ✅ Media (video/audio) — allow Sanity CDN files
-              "media-src 'self' https://cdn.sanity.io",
-              // Iframes — for YouTube/Vimeo embeds if you ever use them
-              "frame-src 'self' https://www.youtube.com https://player.vimeo.com",
-              // Fetch/XHR — Sanity API + your own API routes
-              "connect-src 'self' https://cdn.sanity.io https://*.sanity.io wss://*.sanity.io",
-              // Fonts
-              "font-src 'self' data:",
-            ].join("; "),
-          },
-        ],
-      },
-    ];
-  },
+  // NOTE: CSP headers live in middleware.ts — middleware takes precedence over next.config headers()
 };
 
 export default nextConfig;

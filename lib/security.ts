@@ -19,7 +19,7 @@ const rateLimitStore: RateLimitStore = {};
 // Rate limiting function
 export const rateLimit = (config: RateLimitConfig) => {
   return (
-    identifier: string
+    identifier: string,
   ): { allowed: boolean; remaining: number; resetTime: number } => {
     const now = Date.now();
     const windowStart = now - config.windowMs;
@@ -89,7 +89,7 @@ export const getClientIP = (request: NextRequest): string => {
 // Validate reCAPTCHA Enterprise token
 export const validateRecaptcha = async (
   token: string,
-  request?: NextRequest
+  request?: NextRequest,
 ): Promise<boolean> => {
   if (!token) return false;
 
@@ -117,7 +117,7 @@ const validateEnterpriseRecaptcha = async (
   token: string,
   projectId: string,
   apiKey: string,
-  request?: NextRequest
+  request?: NextRequest,
 ): Promise<boolean> => {
   try {
     // Option 1: Use Google Auth Library (install: npm install google-auth-library)
@@ -194,7 +194,7 @@ const validateEnterpriseRecaptcha = async (
     if (data.tokenProperties?.action !== "CONTACT_FORM") {
       console.warn(
         "Action mismatch. Expected: CONTACT_FORM, Got:",
-        data.tokenProperties?.action
+        data.tokenProperties?.action,
       );
       return false;
     }
@@ -231,7 +231,7 @@ const validateRegularRecaptcha = async (token: string): Promise<boolean> => {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: `secret=${secretKey}&response=${token}`,
-      }
+      },
     );
 
     const data = await response.json();
@@ -280,6 +280,8 @@ export const securityHeaders = {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: https: blob:",
+    // ✅ Allow Sanity CDN video/audio files (cdn.sanity.io/files/)
+    "media-src 'self' https://cdn.sanity.io",
     "connect-src 'self' https://api.github.com https://9mnu7l2c.api.sanity.io https://recaptchaenterprise.googleapis.com https://www.google.com https://iwimbcemuaocizmkjqpx.supabase.co ", // Added https://www.google.com
     "frame-src 'self' https://calendly.com https://www.google.com",
     "object-src 'none'",
@@ -300,7 +302,7 @@ const loginAttempts: { [key: string]: LoginAttempt } = {};
 
 export const trackLoginAttempt = (
   identifier: string,
-  success: boolean
+  success: boolean,
 ): { allowed: boolean; blockedUntil?: number } => {
   const now = Date.now();
   const maxAttempts = 5;
@@ -363,7 +365,7 @@ export const generateCSRFToken = (): string => {
 
 export const validateCSRFToken = (
   token: string,
-  sessionToken: string
+  sessionToken: string,
 ): boolean => {
   return token === sessionToken;
 };

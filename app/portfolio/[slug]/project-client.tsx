@@ -187,86 +187,136 @@ function GalleryGrid({
   projectTitle: string;
   onOpenLightbox: (imageIdx: number) => void;
 }) {
+  const [activeVideo, setActiveVideo] = useState<string | null>(null);
   let imageCount = -1;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-      {items.map((item, i) => {
-        if (item.type === "image") {
-          imageCount++;
-          const capturedIdx = imageCount;
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {items.map((item, i) => {
+          if (item.type === "image") {
+            imageCount++;
+            const capturedIdx = imageCount;
 
+            return (
+              <button
+                key={i}
+                onClick={() => onOpenLightbox(capturedIdx)}
+                className="relative aspect-square group overflow-hidden rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-deep"
+                aria-label={`Enlarge image ${capturedIdx + 1}`}
+              >
+                {item.imageUrl && (
+                  <Image
+                    src={item.imageUrl}
+                    alt={item.alt ?? `${projectTitle} — image ${i + 1}`}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                )}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/20 backdrop-blur-sm rounded-full p-3">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </button>
+            );
+          }
+
+          // ── Video card — clickable, opens inline video modal ──
           return (
             <button
               key={i}
-              onClick={() => onOpenLightbox(capturedIdx)}
-              className="relative aspect-square group overflow-hidden rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-deep"
-              aria-label={`Enlarge image ${capturedIdx + 1}`}
+              onClick={() => item.videoUrl && setActiveVideo(item.videoUrl)}
+              className="relative aspect-square group overflow-hidden rounded-lg bg-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-deep"
+              aria-label={
+                item.videoTitle
+                  ? `Play video: ${item.videoTitle}`
+                  : "Play video"
+              }
+              disabled={!item.videoUrl}
             >
-              {item.imageUrl && (
+              {item.posterUrl ? (
                 <Image
-                  src={item.imageUrl}
-                  alt={item.alt ?? `${projectTitle} — image ${i + 1}`}
+                  src={item.posterUrl}
+                  alt={item.videoTitle ?? "Video thumbnail"}
                   fill
                   sizes="(max-width: 768px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-110"
+                  className="object-cover opacity-70 group-hover:opacity-90 transition-opacity duration-300"
                 />
+              ) : (
+                <div className="absolute inset-0 bg-gray-800" />
               )}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/20 backdrop-blur-sm rounded-full p-3">
+              {/* Play button overlay */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="bg-white/20 backdrop-blur-sm group-hover:bg-white/30 rounded-full p-4 transition-all duration-300 group-hover:scale-110">
                   <svg
-                    className="w-5 h-5 text-white"
-                    fill="none"
-                    stroke="currentColor"
+                    className="w-8 h-8 fill-white"
                     viewBox="0 0 24 24"
                     aria-hidden="true"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
-                    />
+                    <path d="M8 5v14l11-7z" />
                   </svg>
                 </div>
               </div>
+              {/* "Video" badge */}
+              <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-0.5 rounded-full backdrop-blur-sm">
+                Video
+              </div>
+              {item.caption && (
+                <p className="absolute bottom-2 left-2 right-2 text-white text-xs text-center truncate bg-black/50 rounded px-1 py-0.5">
+                  {item.caption}
+                </p>
+              )}
             </button>
           );
-        }
+        })}
+      </div>
 
-        // Video item in gallery
-        return (
+      {/* Inline video modal */}
+      {activeVideo && (
+        <div
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Video player"
+          onClick={() => setActiveVideo(null)}
+        >
           <div
-            key={i}
-            className="relative aspect-square overflow-hidden rounded-lg bg-gray-900 flex items-center justify-center"
+            className="relative w-full max-w-4xl"
+            onClick={(e) => e.stopPropagation()}
           >
-            {item.posterUrl && (
-              <Image
-                src={item.posterUrl}
-                alt={item.videoTitle ?? "Video"}
-                fill
-                sizes="(max-width: 768px) 50vw, 33vw"
-                className="object-cover opacity-70"
-              />
-            )}
-            <div className="relative z-10 bg-white/20 backdrop-blur-sm rounded-full p-4">
-              <svg
-                className="w-8 h-8 fill-white text-white"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
-            {item.caption && (
-              <p className="absolute bottom-2 left-2 right-2 text-white text-xs text-center truncate bg-black/40 rounded px-1 py-0.5">
-                {item.caption}
-              </p>
-            )}
+            <button
+              onClick={() => setActiveVideo(null)}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded"
+              aria-label="Close video"
+            >
+              <X className="w-8 h-8" />
+            </button>
+            <video
+              src={activeVideo}
+              controls
+              autoPlay
+              className="w-full rounded-lg max-h-[80vh]"
+              aria-label="Project video"
+            />
           </div>
-        );
-      })}
-    </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -354,7 +404,8 @@ export default function ProjectPageClient({
     console.log("[ZIP DEBUG] allMedia (normalised):", allMedia);
     console.log("[ZIP DEBUG] imageItems:", imageItems);
 
-    // Collect all valid image URLs from the normalised list
+    // Use the raw CDN URLs from normalised items — NOT buildImageUrl()
+    // buildImageUrl() produces Next.js optimisation URLs that fail server-side
     const imageUrls = imageItems
       .map((i) => i.imageUrl)
       .filter((url): url is string => !!url);
@@ -363,7 +414,7 @@ export default function ProjectPageClient({
 
     if (imageUrls.length === 0) {
       alert(
-        "No image URLs found. Check browser console (F12) for '[ZIP DEBUG]' logs and share them so we can fix the data shape.",
+        "No image URLs found. Check browser console (F12) for '[ZIP DEBUG]' logs.",
       );
       return;
     }
@@ -384,21 +435,41 @@ export default function ProjectPageClient({
         throw new Error(err?.error ?? "Server error");
       }
 
-      const blob = await response.blob();
+      // Explicitly type the blob — some browsers misidentify ZIP MIME type
+      const rawBlob = await response.blob();
+      const blob = new Blob([rawBlob], { type: "application/zip" });
       const objectUrl = window.URL.createObjectURL(blob);
+      const filename = `${project.slug.current}-images.zip`;
       const a = document.createElement("a");
+      a.style.display = "none";
       a.href = objectUrl;
-      a.download = `${project.slug.current}-images.zip`;
+      a.download = filename;
       document.body.appendChild(a);
+      // Small delay lets the browser register the object URL before clicking
+      await new Promise((r) => setTimeout(r, 150));
       a.click();
-      a.remove();
-      window.URL.revokeObjectURL(objectUrl);
+      // Revoke after delay so download has time to start
+      setTimeout(() => {
+        window.URL.revokeObjectURL(objectUrl);
+        a.remove();
+      }, 3000);
     } catch (err) {
       console.error("ZIP download failed:", err);
       alert("Failed to download images. Please try again.");
     } finally {
       setIsDownloading(false);
     }
+  };
+
+  const handleDownloadVideo = (videoUrl: string, index: number) => {
+    // Open video URL directly — browser will download/stream it
+    const a = document.createElement("a");
+    a.href = videoUrl;
+    a.download = `${project.slug.current}-video-${index + 1}.mp4`;
+    a.target = "_blank";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
   const handleDownload = async () => {
@@ -729,6 +800,25 @@ export default function ProjectPageClient({
                       )}
                     </>
                   )}
+
+                  {/* Video download buttons */}
+                  {allMedia
+                    .filter((m) => m.type === "video" && m.videoUrl)
+                    .map((vid, i) => (
+                      <Button
+                        key={i}
+                        variant="outline"
+                        size="sm"
+                        className="w-full bg-transparent hover:bg-gray-800 hover:text-white transition-colors"
+                        onClick={() => handleDownloadVideo(vid.videoUrl!, i)}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Video
+                        {allMedia.filter((m) => m.type === "video").length > 1
+                          ? ` ${i + 1}`
+                          : ""}
+                      </Button>
+                    ))}
                 </div>
               </CardContent>
             </Card>
