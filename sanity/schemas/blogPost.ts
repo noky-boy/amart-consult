@@ -1,4 +1,4 @@
-import { defineField, defineType } from "sanity"
+import { defineField, defineType } from "sanity";
 
 export const blogPost = defineType({
   name: "blogPost",
@@ -33,7 +33,12 @@ export const blogPost = defineType({
       type: "object",
       fields: [
         { name: "name", type: "string", title: "Name" },
-        { name: "image", type: "image", title: "Image", options: { hotspot: true } },
+        {
+          name: "image",
+          type: "image",
+          title: "Image",
+          options: { hotspot: true },
+        },
         { name: "bio", type: "text", title: "Bio" },
       ],
     }),
@@ -78,6 +83,7 @@ export const blogPost = defineType({
       title: "Tags",
       type: "array",
       of: [{ type: "string" }],
+      validation: (Rule) => Rule.unique(),
     }),
     defineField({
       name: "content",
@@ -122,4 +128,21 @@ export const blogPost = defineType({
       ],
     }),
   ],
-})
+
+  // Add this after the last defineField(...), before the closing });
+  preview: {
+    select: {
+      title: "title",
+      author: "author.name",
+      media: "featuredImage",
+      publishedAt: "publishedAt",
+    },
+    prepare({ title, author, media, publishedAt }: any) {
+      return {
+        title,
+        subtitle: `${author ?? "Unknown"} · ${publishedAt?.slice(0, 10) ?? "Draft"}`,
+        media,
+      };
+    },
+  },
+});

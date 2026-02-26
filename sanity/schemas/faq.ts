@@ -1,4 +1,4 @@
-import { defineField, defineType } from "sanity"
+import { defineField, defineType } from "sanity";
 
 export const faq = defineType({
   name: "faq",
@@ -50,4 +50,11 @@ export const faq = defineType({
       initialValue: false,
     }),
   ],
-})
+
+  preview: {
+    select: {
+      title: "question",
+      subtitle: "category",
+    },
+  },
+});

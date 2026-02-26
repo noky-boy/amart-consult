@@ -74,11 +74,22 @@ export default defineType({
           name: "min",
           title: "Minimum Price",
           type: "number",
+          validation: (Rule: any) => Rule.min(0).precision(2),
         },
         {
           name: "max",
           title: "Maximum Price",
           type: "number",
+          validation: (Rule: any) =>
+            Rule.min(0)
+              .precision(2)
+              .custom((max: number, context: any) => {
+                const min = context?.parent?.min;
+                if (min !== undefined && max !== undefined && max < min) {
+                  return "Max price must be greater than or equal to min price";
+                }
+                return true;
+              }),
         },
         {
           name: "unit",

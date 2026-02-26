@@ -1,4 +1,4 @@
-import { defineField, defineType } from "sanity"
+import { defineField, defineType } from "sanity";
 
 export const servicePackage = defineType({
   name: "package",
@@ -77,14 +77,11 @@ export const servicePackage = defineType({
       popular: "popular",
     },
     prepare(selection) {
-      const { title, subtitle, popular } = selection
+      const { title, subtitle, popular } = selection;
       return {
         title: popular ? `⭐ ${title}` : title,
         subtitle,
-      }
+      };
     },
   },
-})
-
-export const pkg = servicePackage
-export { servicePackage as package }
+});

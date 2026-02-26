@@ -1,4 +1,4 @@
-import { defineField, defineType } from "sanity"
+import { defineField, defineType } from "sanity";
 
 export const service = defineType({
   name: "service",
@@ -85,4 +85,19 @@ export const service = defineType({
       ],
     }),
   ],
-})
+
+  preview: {
+    select: {
+      title: "title",
+      subtitle: "description",
+      media: "image",
+    },
+    prepare({ title, subtitle, media }: any) {
+      return {
+        title,
+        subtitle: subtitle?.slice(0, 60) + "...",
+        media,
+      };
+    },
+  },
+});

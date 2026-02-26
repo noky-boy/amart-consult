@@ -1,4 +1,4 @@
-import { defineField, defineType } from "sanity"
+import { defineField, defineType } from "sanity";
 
 export const testimonial = defineType({
   name: "testimonial",
@@ -66,7 +66,16 @@ export const testimonial = defineType({
       name: "date",
       title: "Date",
       type: "date",
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) =>
+        Rule.required().max(new Date().toISOString().split("T")[0]),
     }),
   ],
-})
+
+  preview: {
+    select: {
+      title: "name",
+      subtitle: "company",
+      media: "image",
+    },
+  },
+});
