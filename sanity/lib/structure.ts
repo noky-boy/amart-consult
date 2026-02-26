@@ -1,4 +1,4 @@
-import type { StructureBuilder } from "sanity/structure"
+import type { StructureBuilder } from "sanity/structure";
 
 export const structure = (S: StructureBuilder) =>
   S.list()
@@ -11,8 +11,12 @@ export const structure = (S: StructureBuilder) =>
           S.list()
             .title("Services Management")
             .items([
-              S.listItem().title("All Services").child(S.documentTypeList("service").title("All Services")),
-              S.listItem().title("Service Packages").child(S.documentTypeList("package").title("Service Packages")),
+              S.listItem()
+                .title("All Services")
+                .child(S.documentTypeList("service").title("All Services")),
+              S.listItem()
+                .title("Service Packages")
+                .child(S.documentTypeList("package").title("Service Packages")),
             ]),
         ),
 
@@ -23,10 +27,16 @@ export const structure = (S: StructureBuilder) =>
           S.list()
             .title("Portfolio Management")
             .items([
-              S.listItem().title("All Projects").child(S.documentTypeList("portfolio").title("All Projects")),
+              S.listItem()
+                .title("All Projects")
+                .child(S.documentTypeList("portfolio").title("All Projects")),
               S.listItem()
                 .title("Featured Projects")
-                .child(S.documentTypeList("portfolio").title("Featured Projects").filter("featured == true")),
+                .child(
+                  S.documentTypeList("portfolio")
+                    .title("Featured Projects")
+                    .filter("featured == true"),
+                ),
               S.listItem()
                 .title("By Category")
                 .child(
@@ -66,13 +76,23 @@ export const structure = (S: StructureBuilder) =>
           S.list()
             .title("Blog Management")
             .items([
-              S.listItem().title("All Posts").child(S.documentTypeList("blogPost").title("All Blog Posts")),
+              S.listItem()
+                .title("All Posts")
+                .child(S.documentTypeList("blogPost").title("All Blog Posts")),
               S.listItem()
                 .title("Featured Posts")
-                .child(S.documentTypeList("blogPost").title("Featured Posts").filter("featured == true")),
+                .child(
+                  S.documentTypeList("blogPost")
+                    .title("Featured Posts")
+                    .filter("featured == true"),
+                ),
               S.listItem()
                 .title("Published Posts")
-                .child(S.documentTypeList("blogPost").title("Published Posts").filter("publishedAt < now()")),
+                .child(
+                  S.documentTypeList("blogPost")
+                    .title("Published Posts")
+                    .filter("publishedAt < now()"),
+                ),
               S.listItem()
                 .title("Draft Posts")
                 .child(
@@ -90,11 +110,46 @@ export const structure = (S: StructureBuilder) =>
           S.list()
             .title("Testimonials & FAQs")
             .items([
-              S.listItem().title("All Testimonials").child(S.documentTypeList("testimonial").title("All Testimonials")),
+              S.listItem()
+                .title("All Testimonials")
+                .child(
+                  S.documentTypeList("testimonial").title("All Testimonials"),
+                ),
               S.listItem()
                 .title("Featured Testimonials")
-                .child(S.documentTypeList("testimonial").title("Featured Testimonials").filter("featured == true")),
-              S.listItem().title("FAQs").child(S.documentTypeList("faq").title("Frequently Asked Questions")),
+                .child(
+                  S.documentTypeList("testimonial")
+                    .title("Featured Testimonials")
+                    .filter("featured == true"),
+                ),
+              S.listItem()
+                .title("FAQs")
+                .child(
+                  S.documentTypeList("faq").title("Frequently Asked Questions"),
+                ),
+            ]),
+        ),
+
+      // ── paste this block between Client Feedback and S.divider() ──
+
+      S.listItem()
+        .title("About Page")
+        .child(
+          S.list()
+            .title("About Page Content")
+            .items([
+              S.listItem()
+                .title("Process Steps")
+                .child(
+                  S.documentTypeList("processStep").title("Process Steps"),
+                ),
+              S.listItem()
+                .title("Professional Credentials")
+                .child(
+                  S.documentTypeList("credential").title(
+                    "Professional Credentials",
+                  ),
+                ),
             ]),
         ),
 
@@ -102,11 +157,9 @@ export const structure = (S: StructureBuilder) =>
       S.divider(),
 
       // Settings (if needed in future)
-      S.listItem()
-        .title("Site Settings")
-        .child(
-          S.list().title("Settings").items([
-            // Placeholder for future settings
-          ]),
-        ),
-    ])
+      S.listItem().title("Site Settings").child(
+        S.list().title("Settings").items([
+          // Placeholder for future settings
+        ]),
+      ),
+    ]);

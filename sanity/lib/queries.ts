@@ -560,3 +560,27 @@ export const materialBySlugQuery = groq`
     featured
   }
 `;
+
+// ─── About Page ───────────────────────────────────────────────────────────────
+
+export const processStepsQuery = groq`
+  *[_type == "processStep" && active == true] | order(stepNumber asc) {
+    _id,
+    title,
+    description,
+    stepNumber,
+    "image": image.asset->url,
+    "imageAlt": image.alt
+  }
+`;
+
+export const credentialsQuery = groq`
+  *[_type == "credential" && active == true] | order(order asc) {
+    _id,
+    title,
+    subtitle,
+    "image": image.asset->url,
+    "imageAlt": image.alt,
+    order
+  }
+`;

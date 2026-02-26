@@ -165,3 +165,23 @@ export interface Material {
   featured: boolean;
   order?: number;
 }
+
+// ─── About Page ──────────────────────────────────────────────────────────────
+
+export interface ProcessStep {
+  _id: string;
+  title: string;
+  description: string;
+  stepNumber: number;
+  image?: string;
+  imageAlt?: string;
+}
+
+export interface Credential {
+  _id: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  imageAlt?: string;
+  order: number;
+}

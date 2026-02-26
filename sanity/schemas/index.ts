@@ -5,6 +5,8 @@ import { blogPost } from "./blogPost";
 import { testimonial } from "./testimonial";
 import material from "./material";
 import { faq } from "./faq";
+import { credential } from "./credential";
+import { processStep } from "./processStep";
 
 export const schemaTypes = [
   service,
@@ -14,4 +16,6 @@ export const schemaTypes = [
   testimonial,
   material,
   faq,
+  credential, // ← add
+  processStep, // ← add
 ];
